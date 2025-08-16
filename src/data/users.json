@@ -1,0 +1,96 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "director@nidopro.edu",
+      "password": "director123",
+      "role": "administracion",
+      "name": "María González",
+      "fullName": "Dra. María González Rivera",
+      "avatar": "👩‍💼",
+      "permissions": ["all"]
+    },
+    {
+      "id": 2,
+      "username": "docente1@nidopro.edu",
+      "password": "docente123",
+      "role": "docente",
+      "name": "Carlos Ruiz",
+      "fullName": "Prof. Carlos Ruiz Mendoza",
+      "avatar": "👨‍🏫",
+      "aula": "Aula Amarilla",
+      "grado": "Inicial 3 años",
+      "permissions": ["students", "grades", "attendance", "reports"]
+    },
+    {
+      "id": 3,
+      "username": "padre1@gmail.com",
+      "password": "padre123",
+      "role": "padre",
+      "name": "Ana Morales",
+      "fullName": "Ana Morales de Pérez",
+      "avatar": "👩",
+      "children": [
+        {
+          "name": "Sofía Pérez Morales",
+          "grade": "Inicial 4 años",
+          "teacher": "Prof. Carlos Ruiz"
+        }
+      ],
+      "permissions": ["child_info", "attendance", "payments", "messages"]
+    },
+    {
+      "id": 4,
+      "username": "psicologa@nidopro.edu",
+      "password": "especialista123",
+      "role": "especialista",
+      "name": "Dra. Elena Vásquez",
+      "fullName": "Dra. Elena Vásquez Torres",
+      "avatar": "👩‍⚕️",
+      "specialty": "Psicología Infantil",
+      "permissions": ["evaluations", "reports", "students", "consultations"]
+    },
+    {
+      "id": 5,
+      "username": "docente2@nidopro.edu",
+      "password": "docente456",
+      "role": "docente",
+      "name": "Lucía Fernández",
+      "fullName": "Prof. Lucía Fernández Silva",
+      "avatar": "👩‍🏫",
+      "aula": "Aula Azul",
+      "grado": "Inicial 5 años",
+      "permissions": ["students", "grades", "attendance", "reports"]
+    }
+  ],
+  "roles": {
+    "administracion": {
+      "displayName": "Administración/Dirección",
+      "color": "#667eea",
+      "icon": "👩‍💼",
+      "description": "Acceso completo al sistema",
+      "dashboard": "admin"
+    },
+    "docente": {
+      "displayName": "Docente",
+      "color": "#38a169",
+      "icon": "👨‍🏫",
+      "description": "Gestión de aula y estudiantes",
+      "dashboard": "teacher"
+    },
+    "padre": {
+      "displayName": "Padre de Familia",
+      "color": "#d69e2e",
+      "icon": "👪",
+      "description": "Seguimiento de hijos",
+      "dashboard": "parent"
+    },
+    "especialista": {
+      "displayName": "Especialista",
+      "color": "#9f7aea",
+      "icon": "👩‍⚕️",
+      "description": "Evaluaciones y consultas",
+      "dashboard": "specialist"
+    }
+  }
+}
