@@ -17,7 +17,9 @@ import {
   CheckCircle,
   AlertCircle,
   User,
-  Home
+  Home,
+  Menu,
+  X
 } from "lucide-react";
 
 // Importar los componentes que crearemos
@@ -31,6 +33,7 @@ import Learning from "./Learning";
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { logout, getCurrentUser } = useAuth();
   const user = getCurrentUser();
 
@@ -133,6 +136,12 @@ const ParentDashboard = () => {
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
+  };
+
+  // Función para cerrar el menú móvil al seleccionar una opción
+  const handleMenuItemClick = (sectionId) => {
+    setActiveSection(sectionId);
+    setIsMobileMenuOpen(false);
   };
 
   const renderOverview = () => (
@@ -263,17 +272,33 @@ const ParentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+      {/* Mobile menu overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/20 bg-opacity-50 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-purple-100 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
+            {/* Mobile menu button */}
+            <button
+              className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+
             <div className="flex items-center space-x-4">
               <div className="flex-shrink-0">
                 <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-sm">N</span>
                 </div>
               </div>
-              <div>
+              <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-gray-900">Portal de Padres</h1>
                 <p className="text-sm text-gray-600">Seguimiento del progreso de tu hijo</p>
               </div>
@@ -310,10 +335,18 @@ const ParentDashboard = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar */}
-          <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden">
-              <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-400">
+          <div className={`lg:w-64 flex-shrink-0 fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+          } lg:bg-transparent lg:shadow-none`}>
+            <div className="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden h-full lg:h-auto mt-16 lg:mt-0">
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-blue-400 lg:justify-start">
                 <h2 className="text-lg font-bold text-white">Navegación</h2>
+                <button
+                  className="lg:hidden p-2 text-white hover:text-gray-200"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
               <nav className="p-2">
                 {menuItems.map((item) => {
@@ -321,7 +354,7 @@ const ParentDashboard = () => {
                   return (
                     <button
                       key={item.id}
-                      onClick={() => setActiveSection(item.id)}
+                      onClick={() => handleMenuItemClick(item.id)}
                       className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
                         activeSection === item.id
                           ? "bg-gradient-to-r from-blue-100 to-blue-100 text-blue-700 border border-blue-200"

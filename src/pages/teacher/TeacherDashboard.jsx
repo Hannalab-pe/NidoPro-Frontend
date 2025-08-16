@@ -19,7 +19,9 @@ import {
   ChevronRight,
   Bot,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Menu,
+  X
 } from "lucide-react";
 
 // Importar los componentes que creamos
@@ -34,6 +36,7 @@ import MyClassrooms from "./MyClassrooms";
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { logout, getCurrentUser } = useAuth();
   const user = getCurrentUser();
 
@@ -107,16 +110,38 @@ const TeacherDashboard = () => {
     }
   ];
 
+  // Función para cerrar el menú móvil al seleccionar una opción
+  const handleMenuItemClick = (sectionId) => {
+    setActiveSection(sectionId);
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-gray-50">
+      {/* Mobile menu overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/30 bg-opacity-50 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-white shadow-lg">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+        isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
+      }`}>
         {/* Logo */}
-        <div className="flex items-center justify-start p-6 border-b border-gray-200">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 lg:justify-start">
           <div className="flex items-center space-x-3">
             <GraduationCap className="w-8 h-8 text-green-600" />
             <span className="text-xl font-bold text-gray-900">NidoPro</span>
           </div>
+          <button
+            className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
         
         {/* Navigation */}
@@ -132,7 +157,7 @@ const TeacherDashboard = () => {
                     ? "bg-green-50 text-green-700 border-r-4 border-green-600" 
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
-                onClick={() => setActiveSection(item.id)}
+                onClick={() => handleMenuItemClick(item.id)}
               >
                 <div className="flex items-center space-x-3">
                   <IconComponent className={`w-5 h-5 ${isActive ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"}`} />
@@ -157,15 +182,23 @@ const TeacherDashboard = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <header className="bg-white border-b border-gray-200 px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex-1">
-              <h1 className="text-2xl font-bold text-gray-900">
+            {/* Mobile menu button */}
+            <button
+              className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+              onClick={() => setIsMobileMenuOpen(true)}
+            >
+              <Menu className="w-6 h-6" />
+            </button>
+            
+            <div className="flex-1 lg:ml-0 ml-4">
+              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
                 {menuItems.find(item => item.id === activeSection)?.label || "Panel Profesor"}
               </h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 mt-1 hidden sm:block">
                 Bienvenido/a, {user?.username} | {new Date().toLocaleDateString('es-ES', { 
                   weekday: 'long', 
                   year: 'numeric', 
@@ -175,14 +208,14 @@ const TeacherDashboard = () => {
               </p>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 lg:space-x-4">
               {/* Search Box */}
-              <div className="relative">
+              <div className="relative hidden md:block">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input 
                   type="text" 
                   placeholder="Buscar estudiantes, materias..." 
-                  className="pl-10 pr-4 py-2 w-64 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="pl-10 pr-4 py-2 w-48 lg:w-64 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
               </div>
               
@@ -196,7 +229,7 @@ const TeacherDashboard = () => {
         </header>
 
         {/* Content Area */}
-        <div className="p-6 h-full overflow-y-auto">
+        <div className="p-4 lg:p-6 h-full overflow-y-auto">
           {activeSection === "overview" && (
             <div className="space-y-8">
               {/* Stats Grid */}
