@@ -33,6 +33,7 @@ import Notes from "./notas/Notes";
 import Games from "./juegos/Games";
 import MyStudents from "./misestudiantes/MyStudents";
 import MyClassrooms from "./misaulas/MyClassrooms";
+import Classes from "./clases/Classes";
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
