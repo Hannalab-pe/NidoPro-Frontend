@@ -17,7 +17,7 @@ import {
   AlertCircle,
   CheckCircle
 } from 'lucide-react';
-import openaiService from '../../services/openaiService';
+import openaiService from '../../../services/openaiService';
 
 const AIChat = () => {
   const [messages, setMessages] = useState([

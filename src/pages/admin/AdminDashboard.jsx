@@ -22,14 +22,14 @@ import {
 } from "lucide-react";
 
 // Importar todos los componentes de administración
-import Students from './Students';
-import Teachers from './Teachers';
-import Parents from './Parents';
-import Classes from './Classes';
-import Finances from './Finances';
-import Reports from './Reports';
-import SettingsPage from './Settings';
-import Users from './Users';
+import Students from './estudiantes/Students';
+import Teachers from './profesores/Teachers';
+import Parents from './padres/Parents';
+import Classes from './clases/Classes';
+import Finances from './finanzas/Finances';
+import Reports from './reportes/Reports';
+import SettingsPage from './configuracion/Settings';
+import Users from './usuarios/Users';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");

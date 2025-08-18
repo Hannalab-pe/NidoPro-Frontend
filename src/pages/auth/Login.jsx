@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import AuthLayout from "../components/layout/AuthLayout";
-import Button from "../components/common/Button";
-import Input from "../components/common/Input";
-import { useAuth } from "../hooks/useAuth";
+import AuthLayout from "../../components/layout/AuthLayout";
+import Button from "../../components/common/Button";
+import Input from "../../components/common/Input";
+import { useAuth } from "../../hooks/useAuth";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {

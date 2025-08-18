@@ -25,14 +25,14 @@ import {
 } from "lucide-react";
 
 // Importar los componentes que creamos
-import Goals from "./Goals";
-import AIChat from "./AIChat";
-import Schedule from "./Schedule";
-import Attendance from "./Attendance";
-import Notes from "./Notes";
-import Games from "./Games";
-import MyStudents from "./MyStudents";
-import MyClassrooms from "./MyClassrooms";
+import Goals from "./objetivos/Goals";
+import AIChat from "./chatia/AIChat";
+import Schedule from "./horarios/Schedule";
+import Attendance from "./asistencia/Attendance";
+import Notes from "./notas/Notes";
+import Games from "./juegos/Games";
+import MyStudents from "./misestudiantes/MyStudents";
+import MyClassrooms from "./misaulas/MyClassrooms";
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");

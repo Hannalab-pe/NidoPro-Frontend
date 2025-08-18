@@ -1,9 +1,9 @@
 import React, { useEffect } from "react";
-import { useAuth } from "../hooks/useAuth";
-import AdminDashboard from "./admin/AdminDashboard";
-import TeacherDashboard from "./teacher/TeacherDashboard";
-import ParentDashboard from "./parent/ParentDashboard";
-import SpecialistDashboard from "./specialist/SpecialistDashboard";
+import { useAuth } from "../../hooks/useAuth";
+import AdminDashboard from "../admin/AdminDashboard";
+import TeacherDashboard from "../teacher/TeacherDashboard";
+import ParentDashboard from "../parent/ParentDashboard";
+import SpecialistDashboard from "../specialist/SpecialistDashboard";
 
 const Dashboard = () => {
   const { getCurrentUser, isAuthenticated } = useAuth();
