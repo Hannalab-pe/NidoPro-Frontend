@@ -6,12 +6,11 @@ import {
   Star
 } from 'lucide-react';
 import TablaProfesores from './tablas/TablaProfesores';
+import ModalAgregarProfesor from './modales/ModalAgregarProfesor';
 
 const Profesores = () => {
   const [showModal, setShowModal] = useState(false);
-
-  // Datos fake de profesores
-  const profesores = [
+  const [profesores, setProfesores] = useState([
     {
       id: 1,
       name: 'María Elena Vásquez',
@@ -92,7 +91,7 @@ const Profesores = () => {
       photo: 'https://via.placeholder.com/40',
       address: 'Surco, Lima'
     }
-  ];
+  ]);
 
   const stats = [
     { title: 'Total Profesores', value: '24', icon: GraduationCap, color: 'bg-blue-500' },
@@ -131,6 +130,11 @@ const Profesores = () => {
     console.log('Exportar profesores');
   };
 
+  const handleSaveProfesor = (nuevoProfesor) => {
+    setProfesores(prev => [...prev, nuevoProfesor]);
+    console.log('Profesor agregado:', nuevoProfesor);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -161,6 +165,13 @@ const Profesores = () => {
         onView={handleView}
         onImport={handleImport}
         onExport={handleExport}
+      />
+
+      {/* Modal Agregar Profesor */}
+      <ModalAgregarProfesor
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSaveProfesor}
       />
     </div>
   );

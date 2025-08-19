@@ -234,14 +234,7 @@ const TeacherDashboard = () => {
           {activeSection === "overview" && (
             <div className="space-y-8">
               {/* Stats Grid */}
-              <div>
-                <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                  Panel de Control
-                </h1>
-                <p className="text-gray-600">
-                  Monitorea el progreso de tus estudiantes y ajusta tus estrategias de enseñanza.
-                </p>
-              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((stat, index) => {
                   const IconComponent = stat.icon;
