@@ -12,6 +12,7 @@ import {
   Save,
   Camera
 } from 'lucide-react';
+import ImageUploader from '../../../../components/common/ImageUploader';
 
 const ModalEditarEstudiante = ({ isOpen, onClose, estudiante, onSave }) => {
   const [formData, setFormData] = useState({
@@ -33,6 +34,7 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante, onSave }) => {
 
   const [errors, setErrors] = useState({});
   const [loading, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (estudiante) {
@@ -50,7 +52,10 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante, onSave }) => {
         emergencyPhone: estudiante.emergencyPhone || '',
         allergies: estudiante.allergies || '',
         medicalNotes: estudiante.medicalNotes || '',
-        photo: estudiante.photo || ''
+        photo: {
+          url: estudiante.photo || '',
+          publicId: estudiante.photoPublicId || ''
+        }
       });
     }
   }, [estudiante]);
@@ -69,6 +74,26 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante, onSave }) => {
       setErrors(prev => ({
         ...prev,
         [name]: ''
+      }));
+    }
+  };
+
+  // Manejar upload de imagen
+  const handleImageUpload = (imageResult) => {
+    if (imageResult) {
+      setFormData(prev => ({
+        ...prev,
+        photo: {
+          url: imageResult.url,
+          publicId: imageResult.publicId,
+          thumbnailUrl: imageResult.thumbnailUrl,
+          detailUrl: imageResult.detailUrl
+        }
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        photo: null
       }));
     }
   };
@@ -128,7 +153,9 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante, onSave }) => {
       const updatedStudent = {
         ...estudiante,
         ...formData,
-        age: parseInt(formData.age)
+        age: parseInt(formData.age),
+        photo: formData.photo?.url || '/default-avatar.png',
+        photoPublicId: formData.photo?.publicId || ''
       };
       
       await onSave(updatedStudent);
@@ -159,7 +186,7 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante, onSave }) => {
         <div className="flex items-center justify-between p-6 border-b bg-blue-50">
           <div className="flex items-center gap-3">
             <img
-              src={formData.photo || '/default-avatar.png'}
+              src={formData.photo?.url || '/default-avatar.png'}
               alt="Estudiante"
               className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
             />
@@ -191,6 +218,19 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante, onSave }) => {
               <User className="w-5 h-5 text-blue-600" />
               Información Personal
             </h3>
+            
+            {/* Foto del Estudiante */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Foto del Estudiante
+              </label>
+              <ImageUploader
+                onImageUpload={handleImageUpload}
+                currentImage={formData.photo?.thumbnailUrl || formData.photo?.url || formData.photo}
+                disabled={uploading || loading}
+                required={false}
+              />
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

@@ -20,6 +20,7 @@ import {
   Briefcase,
   Calendar
 } from 'lucide-react';
+import UserAvatar from '../../../../components/common/UserAvatar';
 
 const TablaPadres = ({ 
   padres = [], 
@@ -267,10 +268,10 @@ const TablaPadres = ({
               <tr key={padre.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <img
-                      src={padre.photo}
-                      alt={padre.name}
-                      className="w-10 h-10 rounded-full object-cover"
+                    <UserAvatar 
+                      user={padre}
+                      userType="parent"
+                      size="md"
                     />
                     <div className="ml-3">
                       <div className="text-sm font-medium text-gray-900">
@@ -360,10 +361,10 @@ const TablaPadres = ({
           <div key={padre.id} className="p-4 border-b border-gray-200 last:border-b-0">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center">
-                <img
-                  src={padre.photo}
-                  alt={padre.name}
-                  className="w-12 h-12 rounded-full object-cover"
+                <UserAvatar 
+                  user={padre}
+                  userType="parent"
+                  size="md"
                 />
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-gray-900">{padre.name}</h3>

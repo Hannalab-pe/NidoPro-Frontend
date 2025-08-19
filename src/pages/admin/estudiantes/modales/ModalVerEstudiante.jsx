@@ -13,9 +13,18 @@ import {
   UserCheck,
   AlertCircle
 } from 'lucide-react';
+import StudentAvatar from '../../../../components/common/StudentAvatar';
 
 const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
   if (!isOpen || !estudiante) return null;
+
+  // Obtener URL de imagen directa
+  const getStudentPhoto = () => {
+    if (estudiante.photo) {
+      return estudiante.photo;
+    }
+    return '/default-avatar.png';
+  };
 
   const getStatusColor = (status) => {
     return status === 'active' 
@@ -45,10 +54,10 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b bg-blue-50">
           <div className="flex items-center gap-3">
-            <img
-              src={estudiante.photo}
-              alt={estudiante.name}
-              className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+            <StudentAvatar
+              student={estudiante}
+              size="lg"
+              className="border-2 border-blue-200"
             />
             <div>
               <h2 className="text-xl font-semibold text-gray-900">{estudiante.name}</h2>

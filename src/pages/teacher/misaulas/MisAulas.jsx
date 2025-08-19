@@ -252,15 +252,7 @@ const MisAulas = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-gray-900">
-            Mis Aulas
-          </h1>
-          <p className="text-gray-600">
-            Gestiona y supervisa el estado de tus espacios de enseñanza
-          </p>
-        </div>
-        
+
         <div className="flex items-center space-x-3">
           <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
             <Download className="w-4 h-4" />
