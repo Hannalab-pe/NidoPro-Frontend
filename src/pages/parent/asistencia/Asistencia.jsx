@@ -11,12 +11,12 @@ import {
   User
 } from "lucide-react";
 
-const Attendance = () => {
+const Asistencia = () => {
   const [selectedMonth, setSelectedMonth] = useState("marzo");
   const [selectedView, setSelectedView] = useState("calendar");
 
   // Datos de asistencia simulados
-  const attendanceData = {
+  const AsistenciaData = {
     marzo: {
       stats: {
         total: 20,
@@ -442,4 +442,5 @@ const Attendance = () => {
   );
 };
 
-export default Attendance;
+export default Asistencia;
+

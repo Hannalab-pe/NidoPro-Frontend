@@ -18,7 +18,7 @@ import {
   X
 } from 'lucide-react';
 
-const Attendance = () => {
+const Asistencia = () => {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedClass, setSelectedClass] = useState('5A');
   const [isEditing, setIsEditing] = useState(false);
@@ -432,4 +432,4 @@ const Attendance = () => {
   );
 };
 
-export default Attendance;
+export default Asistencia;

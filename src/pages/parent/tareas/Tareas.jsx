@@ -10,10 +10,10 @@ import {
   Filter
 } from "lucide-react";
 
-const Tasks = () => {
+const Tareas = () => {
   const [selectedFilter, setSelectedFilter] = useState("todas");
 
-  const tasks = [
+  const tareas = [
     {
       id: 1,
       title: "Lectura: 'El Principito' - Capítulos 1-3",
@@ -128,16 +128,16 @@ const Tasks = () => {
     return diffDays;
   };
 
-  const filteredTasks = tasks.filter(task => {
+  const filteredTasks = tareas.filter(task => {
     if (selectedFilter === "todas") return true;
     return task.status === selectedFilter;
   });
 
-  const taskStats = {
+  const Tareastats = {
     total: tasks.length,
-    completed: tasks.filter(t => t.status === 'completed').length,
-    pending: tasks.filter(t => t.status === 'pending').length,
-    overdue: tasks.filter(t => t.status === 'overdue').length
+    completed: tareas.filter(t => t.status === 'completed').length,
+    pending: tareas.filter(t => t.status === 'pending').length,
+    overdue: tareas.filter(t => t.status === 'overdue').length
   };
 
   return (
@@ -348,4 +348,5 @@ const Tasks = () => {
   );
 };
 
-export default Tasks;
+export default Tareas;
+

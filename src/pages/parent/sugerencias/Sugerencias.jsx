@@ -12,10 +12,11 @@ import {
   Play
 } from "lucide-react";
 
-const Suggestions = () => {
+const Sugerencias = () => {
   const [selectedCategory, setSelectedCategory] = useState("todas");
 
-  const suggestions = [
+    // Datos fake de sugerencias
+  const sugerencias = [
     {
       id: 1,
       category: "academic",
@@ -159,14 +160,14 @@ const Suggestions = () => {
     }
   };
 
-  const filteredSuggestions = suggestions.filter(suggestion => {
+  const filteredSuggestions = sugerencias.filter(suggestion => {
     if (selectedCategory === "todas") return true;
     return suggestion.category === selectedCategory;
   });
 
-  const suggestionStats = {
+  const Sugerenciastats = {
     total: suggestions.length,
-    high: suggestions.filter(s => s.priority === 'high').length,
+    high: sugerencias.filter(s => s.priority === 'high').length,
     implemented: Math.floor(suggestions.length * 0.4), // Simulado
     inProgress: Math.floor(suggestions.length * 0.3) // Simulado
   };
@@ -380,4 +381,5 @@ const Suggestions = () => {
   );
 };
 
-export default Suggestions;
+export default Sugerencias;
+

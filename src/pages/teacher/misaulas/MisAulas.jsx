@@ -26,7 +26,7 @@ import {
   Share2
 } from 'lucide-react';
 
-const MyClassrooms = () => {
+const MisAulas = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedClassroom, setSelectedClassroom] = useState(null);
@@ -668,4 +668,4 @@ const MyClassrooms = () => {
   );
 };
 
-export default MyClassrooms;
+export default MisAulas;

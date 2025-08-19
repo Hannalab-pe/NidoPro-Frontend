@@ -23,7 +23,7 @@ import {
   Star
 } from 'lucide-react';
 
-const MyStudents = () => {
+const MisEstudiantes = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedClass, setSelectedClass] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -178,7 +178,7 @@ const MyStudents = () => {
     }
   ];
 
-  const classes = [
+  const clases = [
     { id: 'all', name: 'Todas las clases' },
     { id: '5A', name: '5to Grado A' },
     { id: '5B', name: '5to Grado B' },
@@ -369,7 +369,7 @@ const MyStudents = () => {
               onChange={(e) => setSelectedClass(e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
             >
-              {classes.map((cls) => (
+              {clases.map((cls) => (
                 <option key={cls.id} value={cls.id}>
                   {cls.name}
                 </option>
@@ -662,4 +662,4 @@ const MyStudents = () => {
   );
 };
 
-export default MyStudents;
+export default MisEstudiantes;

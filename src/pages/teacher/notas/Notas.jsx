@@ -21,7 +21,7 @@ import {
   AlertTriangle
 } from 'lucide-react';
 
-const Notes = () => {
+const Notas = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreating, setIsCreating] = useState(false);
@@ -497,4 +497,4 @@ const Notes = () => {
   );
 };
 
-export default Notes;
+export default Notas;

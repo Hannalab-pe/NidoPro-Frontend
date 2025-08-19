@@ -14,12 +14,12 @@ import {
   Search
 } from 'lucide-react';
 
-const Goals = () => {
+const Objetivos = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('month');
   const [selectedStatus, setSelectedStatus] = useState('all');
 
   // Datos fake de metas
-  const goals = [
+  const objetivos = [
     {
       id: 1,
       title: "Completar evaluaciones de Matemáticas",
@@ -242,7 +242,7 @@ const Goals = () => {
 
       {/* Goals List */}
       <div className="space-y-4">
-        {goals.map((goal) => (
+        {objetivos.map((goal) => (
           <div key={goal.id} className={`bg-white rounded-xl shadow-sm border-l-4 ${getPriorityColor(goal.priority)} border-t border-r border-b border-gray-100 p-6`}>
             <div className="flex items-start justify-between mb-4">
               <div className="flex-1">
@@ -322,4 +322,4 @@ const Goals = () => {
   );
 };
 
-export default Goals;
+export default Objetivos;

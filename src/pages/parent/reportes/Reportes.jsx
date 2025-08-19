@@ -11,7 +11,7 @@ import {
   Activity
 } from "lucide-react";
 
-const Reports = () => {
+const Reportes = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("mes");
 
   const academicData = {
@@ -26,7 +26,7 @@ const Reports = () => {
     ]
   };
 
-  const attendanceData = {
+  const AsistenciaData = {
     percentage: 95,
     present: 18,
     absent: 1,
@@ -291,4 +291,5 @@ const Reports = () => {
   );
 };
 
-export default Reports;
+export default Reportes;
+

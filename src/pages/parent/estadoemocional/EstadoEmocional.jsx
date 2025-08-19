@@ -12,7 +12,7 @@ import {
   Activity
 } from "lucide-react";
 
-const EmotionalState = () => {
+const EstadoEmocional = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("semana");
 
   const emotionalData = {
@@ -390,4 +390,5 @@ const EmotionalState = () => {
   );
 };
 
-export default EmotionalState;
+export default EstadoEmocional;
+

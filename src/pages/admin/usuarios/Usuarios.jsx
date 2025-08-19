@@ -1,0 +1,162 @@
+import React, { useState } from 'react';
+import { 
+  Users as UsersIcon, 
+  Shield,
+  Crown,
+  UserCheck
+} from 'lucide-react';
+import TablaUsuarios from './tablas/TablaUsuarios';
+
+const Usuarios = () => {
+  const [showModal, setShowModal] = useState(false);
+
+  // Datos fake de usuarios
+  const usuarios = [
+    {
+      id: 1,
+      name: 'Dr. Carmen Rodríguez',
+      email: 'carmen.rodriguez@nidopro.edu',
+      phone: '+51 987 654 321',
+      role: 'admin',
+      status: 'active',
+      lastLogin: '2024-08-15 09:30',
+      photo: 'https://via.placeholder.com/40',
+      department: 'Dirección',
+      permissions: ['all']
+    },
+    {
+      id: 2,
+      name: 'María Elena Vásquez',
+      email: 'maria.vasquez@nidopro.edu',
+      phone: '+51 987 654 322',
+      role: 'teacher',
+      status: 'active',
+      lastLogin: '2024-08-15 08:15',
+      photo: 'https://via.placeholder.com/40',
+      department: 'Matemáticas',
+      permissions: ['grades', 'attendance', 'reports']
+    },
+    {
+      id: 3,
+      name: 'Carlos Mendoza Ruiz',
+      email: 'carlos.mendoza@nidopro.edu',
+      phone: '+51 987 654 323',
+      role: 'teacher',
+      status: 'active',
+      lastLogin: '2024-08-14 16:45',
+      photo: 'https://via.placeholder.com/40',
+      department: 'Ciencias Naturales',
+      permissions: ['grades', 'attendance', 'reports']
+    },
+    {
+      id: 4,
+      name: 'Ana Torres García',
+      email: 'ana.torres@nidopro.edu',
+      phone: '+51 987 654 324',
+      role: 'secretary',
+      status: 'active',
+      lastLogin: '2024-08-15 07:30',
+      photo: 'https://via.placeholder.com/40',
+      department: 'Administración',
+      permissions: ['students', 'parents', 'finances']
+    },
+    {
+      id: 5,
+      name: 'Luis García Silva',
+      email: 'luis.garcia@nidopro.edu',
+      phone: '+51 987 654 325',
+      role: 'teacher',
+      status: 'inactive',
+      lastLogin: '2024-08-10 14:20',
+      photo: 'https://via.placeholder.com/40',
+      department: 'Historia',
+      permissions: ['grades', 'attendance']
+    },
+    {
+      id: 6,
+      name: 'Rosa Morales Castro',
+      email: 'rosa.morales@nidopro.edu',
+      phone: '+51 987 654 326',
+      role: 'specialist',
+      status: 'active',
+      lastLogin: '2024-08-15 10:15',
+      photo: 'https://via.placeholder.com/40',
+      department: 'Psicología',
+      permissions: ['students', 'reports', 'evaluations']
+    }
+  ];
+
+  const stats = [
+    { title: 'Total Usuarios', value: '24', icon: UsersIcon, color: 'bg-blue-500' },
+    { title: 'Usuarios Activos', value: '22', icon: UserCheck, color: 'bg-green-500' },
+    { title: 'Administradores', value: '3', icon: Crown, color: 'bg-yellow-500' },
+    { title: 'Roles Definidos', value: '5', icon: Shield, color: 'bg-purple-500' }
+  ];
+
+  // Funciones para manejar las acciones de la tabla
+  const handleAdd = () => {
+    console.log('Agregar nuevo usuario');
+    setShowModal(true);
+  };
+
+  const handleEdit = (usuario) => {
+    console.log('Editar usuario:', usuario);
+    setShowModal(true);
+  };
+
+  const handleDelete = (usuario) => {
+    console.log('Eliminar usuario:', usuario);
+    if (window.confirm(`¿Estás seguro de que deseas eliminar a ${usuario.name}?`)) {
+      // Aquí iría la lógica para eliminar
+    }
+  };
+
+  const handleView = (usuario) => {
+    console.log('Ver detalles del usuario:', usuario);
+  };
+
+  const handleImport = () => {
+    console.log('Importar usuarios');
+  };
+
+  const handleExport = () => {
+    console.log('Exportar usuarios');
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {stats.map((stat, index) => (
+          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
+                <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
+              </div>
+              <div className={`p-3 rounded-full ${stat.color} text-white`}>
+                <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Componente de Tabla de Usuarios */}
+      <TablaUsuarios
+        usuarios={usuarios}
+        onAdd={handleAdd}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onView={handleView}
+        onImport={handleImport}
+        onExport={handleExport}
+      />
+    </div>
+  );
+};
+
+export default Usuarios;

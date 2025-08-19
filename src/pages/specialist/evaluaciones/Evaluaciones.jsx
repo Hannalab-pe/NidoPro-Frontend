@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Evaluations = () => {
+const Evaluaciones = () => {
   return (
     <div className="evaluations-page">
       <div className="page-header">
@@ -98,4 +98,4 @@ const Evaluations = () => {
   );
 };
 
-export default Evaluations;
+export default Evaluaciones;

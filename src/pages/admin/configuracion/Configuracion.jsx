@@ -25,7 +25,7 @@ import {
   Check
 } from 'lucide-react';
 
-const SettingsPage = () => {
+const ConfiguracionPage = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [showPassword, setShowPassword] = useState(false);
   const [settings, setSettings] = useState({
@@ -498,15 +498,6 @@ const SettingsPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-          Configuración del Sistema
-        </h1>
-        <p className="text-gray-600">
-          Gestiona la configuración y preferencias del centro educativo
-        </p>
-      </div>
-
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar Navigation */}
         <div className="lg:w-64">
@@ -566,4 +557,4 @@ const SettingsPage = () => {
   );
 };
 
-export default SettingsPage;
+export default ConfiguracionPage;

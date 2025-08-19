@@ -12,7 +12,7 @@ import {
   Zap
 } from "lucide-react";
 
-const Learning = () => {
+const Aprendizaje = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("mes");
   const [selectedSubject, setSelectedSubject] = useState("todas");
 
@@ -561,4 +561,4 @@ const Learning = () => {
   );
 };
 
-export default Learning;
+export default Aprendizaje;

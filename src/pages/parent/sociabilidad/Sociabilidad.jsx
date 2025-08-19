@@ -12,7 +12,7 @@ import {
   Zap
 } from "lucide-react";
 
-const Sociability = () => {
+const Sociabilidad = () => {
   const [selectedView, setSelectedView] = useState("overview");
 
   const socialData = {
@@ -532,4 +532,5 @@ const Sociability = () => {
   );
 };
 
-export default Sociability;
+export default Sociabilidad;
+

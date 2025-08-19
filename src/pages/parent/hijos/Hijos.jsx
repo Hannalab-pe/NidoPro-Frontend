@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Children = () => {
+const Hijos = () => {
   return (
     <div className="children-page">
       <div className="page-header">
@@ -97,4 +97,5 @@ const Children = () => {
   );
 };
 
-export default Children;
+export default Hijos;
+

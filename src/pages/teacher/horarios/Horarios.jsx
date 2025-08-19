@@ -17,13 +17,13 @@ import {
   MoreVertical
 } from 'lucide-react';
 
-const Schedule = () => {
+const Horarios = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedView, setSelectedView] = useState('week'); // week, month, day
   const [selectedDay, setSelectedDay] = useState(new Date());
 
   // Datos fake del cronograma
-  const scheduleData = [
+  const HorariosData = [
     {
       id: 1,
       title: "Matemáticas - 5to A",
@@ -465,4 +465,4 @@ const Schedule = () => {
   );
 };
 
-export default Schedule;
+export default Horarios;

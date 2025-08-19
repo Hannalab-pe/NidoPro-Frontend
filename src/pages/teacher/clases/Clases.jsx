@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Classes = () => {
+const Clases = () => {
   return (
     <div className="p-8 max-w-6xl mx-auto">
       {/* Header */}
@@ -89,4 +89,4 @@ const Classes = () => {
   );
 };
 
-export default Classes;
+export default Clases;

@@ -22,14 +22,14 @@ import {
 } from "lucide-react";
 
 // Importar todos los componentes de administración
-import Students from './estudiantes/Students';
-import Teachers from './profesores/Teachers';
-import Parents from './padres/Parents';
-import Classes from './clases/Classes';
-import Finances from './finanzas/Finances';
-import Reports from './reportes/Reports';
-import SettingsPage from './configuracion/Settings';
-import Users from './usuarios/Users';
+import Estudiantes from './estudiantes/Estudiantes';
+import Profesores from './profesores/Profesores';
+import Padres from './padres/Padres';
+import Clases from './clases/Clases';
+import Finanzas from './finanzas/Finanzas';
+import Reportes from './reportes/Reportes';
+import Configuracion from './configuracion/Configuracion';
+import Usuarios from './usuarios/Usuarios';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -172,7 +172,7 @@ const AdminDashboard = () => {
                 {menuItems.find(item => item.id === activeSection)?.label || "Dashboard"}
               </h1>
               <p className="text-sm text-gray-600 mt-1 hidden sm:block">
-                Bienvenido/a, {user?.username} | {new Date().toLocaleDateString('es-ES', { 
+                {user?.username} | {new Date().toLocaleDateString('es-ES', { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
@@ -182,15 +182,7 @@ const AdminDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {/* Search Box - Hidden on mobile */}
-              <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar..." 
-                  className="pl-10 pr-4 py-2 w-48 lg:w-64 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
+    
               
               {/* Notifications */}
               <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
@@ -267,14 +259,14 @@ const AdminDashboard = () => {
           )}
 
           {/* Renderizar componentes según la sección activa */}
-          {activeSection === "students" && <Students />}
-          {activeSection === "teachers" && <Teachers />}
-          {activeSection === "parents" && <Parents />}
-          {activeSection === "classes" && <Classes />}
-          {activeSection === "finances" && <Finances />}
-          {activeSection === "reports" && <Reports />}
-          {activeSection === "users" && <Users />}
-          {activeSection === "settings" && <SettingsPage />}
+          {activeSection === "students" && <Estudiantes />}
+          {activeSection === "teachers" && <Profesores />}
+          {activeSection === "parents" && <Padres />}
+          {activeSection === "classes" && <Clases />}
+          {activeSection === "finances" && <Finanzas />}
+          {activeSection === "reports" && <Reportes />}
+          {activeSection === "users" && <Usuarios />}
+          {activeSection === "settings" && <Configuracion />}
         </div>
       </main>
     </div>

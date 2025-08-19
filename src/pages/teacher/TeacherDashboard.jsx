@@ -25,15 +25,15 @@ import {
 } from "lucide-react";
 
 // Importar los componentes que creamos
-import Goals from "./objetivos/Goals";
-import AIChat from "./chatia/AIChat";
-import Schedule from "./horarios/Schedule";
-import Attendance from "./asistencia/Attendance";
-import Notes from "./notas/Notes";
-import Games from "./juegos/Games";
-import MyStudents from "./misestudiantes/MyStudents";
-import MyClassrooms from "./misaulas/MyClassrooms";
-import Classes from "./clases/Classes";
+import Objetivos from "./objetivos/Objetivos";
+import AIChat from "./iachat/AIChat";
+import Horarios from "./horarios/Horarios";
+import Asistencia from "./asistencia/Asistencia";
+import Notas from "./notas/Notas";
+import Juegos from "./juegos/Juegos";
+import MisEstudiantes from "./misestudiantes/MisEstudiantes";
+import MisAulas from "./misaulas/MisAulas";
+import Clases from "./clases/Clases";
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -410,16 +410,16 @@ const TeacherDashboard = () => {
           )}
 
           {/* Renderizar componentes */}
-          {activeSection === "goals" && <Goals />}
+          {activeSection === "goals" && <Objetivos />}
           {activeSection === "ai-chat" && <AIChat />}
-          {activeSection === "schedule" && <Schedule />}
-          {activeSection === "attendance" && <Attendance />}
-          {activeSection === "notes" && <Notes />}
-          {activeSection === "games" && <Games />}
-          {activeSection === "students" && <MyStudents />}
+          {activeSection === "schedule" && <Horarios />}
+          {activeSection === "attendance" && <Asistencia />}
+          {activeSection === "notes" && <Notas />}
+          {activeSection === "games" && <Juegos />}
+          {activeSection === "students" && <MisEstudiantes />}
           {activeSection === "classrooms" && (
             <div>
-              <MyClassrooms />
+              <MisAulas />
             </div>
           )}
         </div>

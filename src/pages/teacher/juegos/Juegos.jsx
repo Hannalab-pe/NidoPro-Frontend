@@ -25,13 +25,13 @@ import {
   Award
 } from 'lucide-react';
 
-const Games = () => {
+const Juegos = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGame, setSelectedGame] = useState(null);
 
   // Datos fake de juegos educativos
-  const games = [
+  const juegos = [
     {
       id: 1,
       title: "Suma Divertida",
@@ -152,7 +152,7 @@ const Games = () => {
     { id: 'advanced', name: 'Avanzado', color: '#EF4444' }
   ];
 
-  const filteredGames = games.filter(game => {
+  const filteredGames = juegos.filter(game => {
     const matchesCategory = selectedCategory === 'all' || game.category === selectedCategory;
     const matchesSearch = game.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          game.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -503,4 +503,4 @@ const Games = () => {
   );
 };
 
-export default Games;
+export default Juegos;

@@ -20,7 +20,7 @@ import {
   Calculator
 } from 'lucide-react';
 
-const Finances = () => {
+const Finanzas = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
@@ -211,14 +211,6 @@ const Finances = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-          Gestión Financiera
-        </h1>
-        <p className="text-gray-600">
-          Administra los ingresos, gastos y pagos del centro educativo
-        </p>
-      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -567,4 +559,4 @@ const Finances = () => {
   );
 };
 
-export default Finances;
+export default Finanzas;

@@ -23,13 +23,13 @@ import {
 } from "lucide-react";
 
 // Importar los componentes que crearemos
-import Reports from "./reportes/Reports";
-import Tasks from "./tareas/Tasks";
-import Suggestions from "./sugerencias/Suggestions";
-import Attendance from "./asistencia/Attendance";
-import EmotionalState from "./estadoemocional/EmotionalState";
-import Sociability from "./sociabilidad/Sociability";
-import Learning from "./aprendizaje/Learning";
+import Reportes from "./reportes/Reportes";
+import Tareas from "./tareas/Tareas";
+import Sugerencias from "./sugerencias/Sugerencias";
+import Asistencia from "./asistencia/Asistencia";
+import EstadoEmocional from "./estadoemocional/EstadoEmocional";
+import Sociabilidad from "./sociabilidad/Sociabilidad";
+import Aprendizaje from "./aprendizaje/Aprendizaje";
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -252,19 +252,19 @@ const ParentDashboard = () => {
       case "overview":
         return renderOverview();
       case "reports":
-        return <Reports />;
+        return <Reportes />;
       case "tasks":
-        return <Tasks />;
+        return <Tareas />;
       case "suggestions":
-        return <Suggestions />;
+        return <Sugerencias />;
       case "attendance":
-        return <Attendance />;
+        return <Asistencia />;
       case "emotional":
-        return <EmotionalState />;
+        return <EstadoEmocional />;
       case "sociability":
-        return <Sociability />;
+        return <Sociabilidad />;
       case "learning":
-        return <Learning />;
+        return <Aprendizaje />;
       default:
         return renderOverview();
     }
