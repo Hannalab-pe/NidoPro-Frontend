@@ -10,6 +10,7 @@ import {
   Save,
   UserPlus
 } from 'lucide-react';
+import ImageUploader from '../../../../components/common/ImageUploader';
 
 const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
   const [formData, setFormData] = useState({
@@ -25,10 +26,12 @@ const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
     emergencyContact: '',
     emergencyPhone: '',
     allergies: '',
-    medicalNotes: ''
+    medicalNotes: '',
+    photo: null // Agregar campo para la foto
   });
 
   const [errors, setErrors] = useState({});
+  const [uploading, setUploading] = useState(false);
 
   const grades = ['1ro Grado', '2do Grado', '3ro Grado', '4to Grado', '5to Grado', '6to Grado'];
 
@@ -48,6 +51,34 @@ const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
     }
   };
 
+  // Manejar upload de imagen
+  const handleImageUpload = (imageResult) => {
+    if (imageResult) {
+      setFormData(prev => ({
+        ...prev,
+        photo: {
+          url: imageResult.url,
+          publicId: imageResult.publicId,
+          thumbnailUrl: imageResult.thumbnailUrl,
+          detailUrl: imageResult.detailUrl
+        }
+      }));
+      
+      // Limpiar error de foto si existe
+      if (errors.photo) {
+        setErrors(prev => ({
+          ...prev,
+          photo: ''
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        photo: null
+      }));
+    }
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
@@ -62,6 +93,7 @@ const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
       newErrors.email = 'El email no es válido';
     }
     if (!formData.address.trim()) newErrors.address = 'La dirección es requerida';
+    if (!formData.photo) newErrors.photo = 'La foto del estudiante es requerida';
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -77,7 +109,7 @@ const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
         status: 'active',
         attendance: 100,
         average: 0,
-        photo: 'https://via.placeholder.com/40'
+        photo: formData.photo?.url || '/default-avatar.png'
       };
       
       onSave(newStudent);
@@ -99,9 +131,11 @@ const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
       emergencyContact: '',
       emergencyPhone: '',
       allergies: '',
-      medicalNotes: ''
+      medicalNotes: '',
+      photo: null
     });
     setErrors({});
+    setUploading(false);
     onClose();
   };
 
@@ -132,6 +166,20 @@ const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
               <User className="w-5 h-5 text-blue-600" />
               Información Personal
             </h3>
+            
+            {/* Foto del Estudiante */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
+                Foto del Estudiante *
+              </label>
+              <ImageUploader
+                onImageUpload={handleImageUpload}
+                currentImage={formData.photo?.thumbnailUrl || formData.photo?.url}
+                disabled={uploading}
+                required={true}
+              />
+              {errors.photo && <p className="text-red-500 text-sm mt-2">{errors.photo}</p>}
+            </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

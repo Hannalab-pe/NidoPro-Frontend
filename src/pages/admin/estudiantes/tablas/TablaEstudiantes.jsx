@@ -15,6 +15,7 @@ import {
   ChevronDown,
   ChevronsUpDown
 } from 'lucide-react';
+import StudentAvatar from '../../../../components/common/StudentAvatar';
 
 const TablaEstudiantes = ({ 
   estudiantes = [], 
@@ -213,10 +214,10 @@ const TablaEstudiantes = ({
                 <tr key={estudiante.id} className="hover:bg-gray-50">
                   <td className="px-4 lg:px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <img 
-                        className="w-8 h-8 lg:w-10 lg:h-10 rounded-full" 
-                        src={estudiante.photo} 
-                        alt={estudiante.name}
+                      <StudentAvatar 
+                        student={estudiante}
+                        size="md"
+                        className="lg:w-10 lg:h-10"
                       />
                       <div className="ml-3">
                         <div className="text-sm font-medium text-gray-900">
@@ -294,10 +295,9 @@ const TablaEstudiantes = ({
             <div key={estudiante.id} className="p-4 border-b border-gray-200">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center">
-                  <img 
-                    className="w-10 h-10 rounded-full" 
-                    src={estudiante.photo} 
-                    alt={estudiante.name}
+                  <StudentAvatar 
+                    student={estudiante}
+                    size="md"
                   />
                   <div className="ml-3">
                     <div className="text-sm font-medium text-gray-900">

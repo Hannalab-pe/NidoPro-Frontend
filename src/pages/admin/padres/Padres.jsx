@@ -6,12 +6,11 @@ import {
   Calendar
 } from 'lucide-react';
 import TablaPadres from './tablas/TablaPadres';
+import ModalAgregarPadre from './modales/ModalAgregarPadre';
 
 const Padres = () => {
   const [showModal, setShowModal] = useState(false);
-
-  // Datos fake de padres de familia
-  const padres = [
+  const [padres, setPadres] = useState([
     {
       id: 1,
       name: 'María Rodríguez García',
@@ -124,7 +123,7 @@ const Padres = () => {
       participationLevel: 'high',
       lastVisit: '2024-08-14'
     }
-  ];
+  ]);
 
   const stats = [
     { title: 'Total Padres', value: '156', icon: UserCheck, color: 'bg-blue-500' },
@@ -163,6 +162,11 @@ const Padres = () => {
     console.log('Exportar padres');
   };
 
+  const handleSavePadre = (nuevoPadre) => {
+    setPadres(prev => [...prev, nuevoPadre]);
+    console.log('Padre agregado:', nuevoPadre);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -193,6 +197,13 @@ const Padres = () => {
         onView={handleView}
         onImport={handleImport}
         onExport={handleExport}
+      />
+
+      {/* Modal Agregar Padre */}
+      <ModalAgregarPadre
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSavePadre}
       />
     </div>
   );

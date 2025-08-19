@@ -36,7 +36,8 @@ const Estudiantes = () => {
       status: 'active',
       attendance: 95,
       average: 18.5,
-      photo: 'https://via.placeholder.com/40'
+      photo: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=400&h=400&fit=crop&crop=face',
+      photoPublicId: null
     },
     {
       id: 2,
@@ -56,7 +57,8 @@ const Estudiantes = () => {
       status: 'active',
       attendance: 88,
       average: 16.8,
-      photo: 'https://via.placeholder.com/40'
+      photo: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=400&h=400&fit=crop&crop=face',
+      photoPublicId: null
     },
     {
       id: 3,
@@ -76,7 +78,8 @@ const Estudiantes = () => {
       status: 'inactive',
       attendance: 78,
       average: 15.2,
-      photo: 'https://via.placeholder.com/40'
+      photo: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=400&h=400&fit=crop&crop=face',
+      photoPublicId: null
     },
     {
       id: 4,
@@ -96,7 +99,8 @@ const Estudiantes = () => {
       status: 'active',
       attendance: 92,
       average: 17.3,
-      photo: 'https://via.placeholder.com/40'
+      photo: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=400&h=400&fit=crop&crop=face',
+      photoPublicId: null
     },
     {
       id: 5,
@@ -116,7 +120,8 @@ const Estudiantes = () => {
       status: 'active',
       attendance: 98,
       average: 19.1,
-      photo: 'https://via.placeholder.com/40'
+      photo: 'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=400&h=400&fit=crop&crop=face',
+      photoPublicId: null
     }
   ]);
 

@@ -6,12 +6,11 @@ import {
   UserCheck
 } from 'lucide-react';
 import TablaUsuarios from './tablas/TablaUsuarios';
+import ModalAgregarUsuario from './modales/ModalAgregarUsuario';
 
 const Usuarios = () => {
   const [showModal, setShowModal] = useState(false);
-
-  // Datos fake de usuarios
-  const usuarios = [
+  const [usuarios, setUsuarios] = useState([
     {
       id: 1,
       name: 'Dr. Carmen Rodríguez',
@@ -20,7 +19,7 @@ const Usuarios = () => {
       role: 'admin',
       status: 'active',
       lastLogin: '2024-08-15 09:30',
-      photo: 'https://via.placeholder.com/40',
+      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/admin-carmen.jpg',
       department: 'Dirección',
       permissions: ['all']
     },
@@ -32,7 +31,7 @@ const Usuarios = () => {
       role: 'teacher',
       status: 'active',
       lastLogin: '2024-08-15 08:15',
-      photo: 'https://via.placeholder.com/40',
+      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/teacher-maria.jpg',
       department: 'Matemáticas',
       permissions: ['grades', 'attendance', 'reports']
     },
@@ -44,7 +43,7 @@ const Usuarios = () => {
       role: 'teacher',
       status: 'active',
       lastLogin: '2024-08-14 16:45',
-      photo: 'https://via.placeholder.com/40',
+      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/teacher-carlos.jpg',
       department: 'Ciencias Naturales',
       permissions: ['grades', 'attendance', 'reports']
     },
@@ -56,7 +55,7 @@ const Usuarios = () => {
       role: 'secretary',
       status: 'active',
       lastLogin: '2024-08-15 07:30',
-      photo: 'https://via.placeholder.com/40',
+      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/secretary-ana.jpg',
       department: 'Administración',
       permissions: ['students', 'parents', 'finances']
     },
@@ -68,7 +67,7 @@ const Usuarios = () => {
       role: 'teacher',
       status: 'inactive',
       lastLogin: '2024-08-10 14:20',
-      photo: 'https://via.placeholder.com/40',
+      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/teacher-luis.jpg',
       department: 'Historia',
       permissions: ['grades', 'attendance']
     },
@@ -80,11 +79,11 @@ const Usuarios = () => {
       role: 'specialist',
       status: 'active',
       lastLogin: '2024-08-15 10:15',
-      photo: 'https://via.placeholder.com/40',
+      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/specialist-rosa.jpg',
       department: 'Psicología',
       permissions: ['students', 'reports', 'evaluations']
     }
-  ];
+  ]);
 
   const stats = [
     { title: 'Total Usuarios', value: '24', icon: UsersIcon, color: 'bg-blue-500' },
@@ -97,6 +96,26 @@ const Usuarios = () => {
   const handleAdd = () => {
     console.log('Agregar nuevo usuario');
     setShowModal(true);
+  };
+
+  const handleSave = async (userData) => {
+    try {
+      // Generar ID único
+      const newId = Math.max(...usuarios.map(u => u.id)) + 1;
+      const newUser = {
+        ...userData,
+        id: newId
+      };
+
+      // Actualizar estado
+      setUsuarios(prev => [...prev, newUser]);
+      
+      console.log('Usuario guardado:', newUser);
+      return newUser;
+    } catch (error) {
+      console.error('Error saving user:', error);
+      throw error;
+    }
   };
 
   const handleEdit = (usuario) => {
@@ -154,6 +173,13 @@ const Usuarios = () => {
         onView={handleView}
         onImport={handleImport}
         onExport={handleExport}
+      />
+
+      {/* Modal para agregar usuario */}
+      <ModalAgregarUsuario
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        onSave={handleSave}
       />
     </div>
   );

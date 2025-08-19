@@ -21,6 +21,7 @@ import {
   Settings,
   Clock
 } from 'lucide-react';
+import UserAvatar from '../../../../components/common/UserAvatar';
 
 const TablaUsuarios = ({ 
   usuarios = [], 
@@ -280,10 +281,10 @@ const TablaUsuarios = ({
               <tr key={usuario.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <img
-                      src={usuario.photo}
-                      alt={usuario.name}
-                      className="w-10 h-10 rounded-full object-cover"
+                    <UserAvatar
+                      user={usuario}
+                      userType={usuario.role}
+                      size="md"
                     />
                     <div className="ml-3">
                       <div className="text-sm font-medium text-gray-900">
@@ -369,10 +370,10 @@ const TablaUsuarios = ({
           <div key={usuario.id} className="p-4 border-b border-gray-200 last:border-b-0">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center">
-                <img
-                  src={usuario.photo}
-                  alt={usuario.name}
-                  className="w-12 h-12 rounded-full object-cover"
+                <UserAvatar
+                  user={usuario}
+                  userType={usuario.role}
+                  size="lg"
                 />
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-gray-900">{usuario.name}</h3>
