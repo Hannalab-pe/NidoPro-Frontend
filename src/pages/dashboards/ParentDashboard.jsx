@@ -23,13 +23,13 @@ import {
 } from "lucide-react";
 
 // Importar los componentes que crearemos
-import Reportes from "./reportes/Reportes";
-import Tareas from "./tareas/Tareas";
-import Sugerencias from "./sugerencias/Sugerencias";
-import Asistencia from "./asistencia/Asistencia";
-import EstadoEmocional from "./estadoemocional/EstadoEmocional";
-import Sociabilidad from "./sociabilidad/Sociabilidad";
-import Aprendizaje from "./aprendizaje/Aprendizaje";
+import Reportes from "../parent/reportes/Reportes";
+import Tareas from "../parent/tareas/Tareas";
+import Sugerencias from "../parent/sugerencias/Sugerencias";
+import Asistencia from "../parent/asistencia/Asistencia";
+import EstadoEmocional from "../parent/estadoemocional/EstadoEmocional";
+import Sociabilidad from "../parent/sociabilidad/Sociabilidad";
+import Aprendizaje from "../parent/aprendizaje/Aprendizaje";
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");

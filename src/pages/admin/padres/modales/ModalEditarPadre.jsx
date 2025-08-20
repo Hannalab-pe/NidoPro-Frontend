@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -9,17 +9,15 @@ import {
   Phone, 
   Mail, 
   MapPin, 
-  GraduationCap,
-  BookOpen,
-  Clock,
-  Award,
+  Heart,
+  Briefcase,
+  AlertCircle,
   Save,
-  UserPlus,
-  Loader2,
-  Star
+  Edit3,
+  Loader2
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
-import { useProfesores } from '../../../../hooks/useProfesores';
+import { usePadres } from '../../../../hooks/usePadres';
 
 // Esquema de validación con Yup
 const validationSchema = yup.object({
@@ -28,17 +26,18 @@ const validationSchema = yup.object({
     .email('El email no es válido')
     .required('El email es requerido'),
   phone: yup.string().required('El teléfono es requerido').trim(),
-  subject: yup.string().required('La materia es requerida'),
-  experience: yup.number()
-    .required('La experiencia es requerida')
-    .min(0, 'La experiencia debe ser positiva')
-    .max(50, 'La experiencia no puede ser mayor a 50 años'),
-  degree: yup.string().required('El título es requerido').trim(),
+  relation: yup.string().required('La relación es requerida'),
   address: yup.string().required('La dirección es requerida').trim(),
-  schedule: yup.string().required('El horario es requerido'),
+  occupation: yup.string(),
+  participationLevel: yup.string().oneOf(['high', 'medium', 'low']),
+  notes: yup.string(),
+  // Para editar, la foto no es requerida si ya existe
   photo: yup.object().nullable(),
-  specializations: yup.array().of(yup.string()),
-  notes: yup.string()
+  emergencyContact: yup.object({
+    name: yup.string(),
+    phone: yup.string(),
+    relation: yup.string()
+  })
 });
 
 // Componente FormField reutilizable
@@ -63,17 +62,16 @@ const FormSection = ({ title, icon: Icon, iconColor, children }) => (
   </div>
 );
 
-const subjects = [
-  'Matemáticas', 'Comunicación', 'Ciencias Naturales', 'Ciencias Sociales',
-  'Inglés', 'Educación Física', 'Arte y Cultura', 'Música', 'Computación',
-  'Personal Social', 'Religión', 'Tutoría'
+const relations = ['Madre', 'Padre', 'Abuelo', 'Abuela', 'Tutor', 'Tía', 'Tío', 'Otro'];
+const participationLevels = [
+  { value: 'high', label: 'Alta' },
+  { value: 'medium', label: 'Media' },
+  { value: 'low', label: 'Baja' }
 ];
 
-const schedules = ['Mañana', 'Tarde', 'Completo'];
-
-const ModalAgregarProfesor = ({ isOpen, onClose }) => {
-  // Hook personalizado para gestión de profesores
-  const { createTeacher, creating, uploading } = useProfesores();
+const ModalEditarPadre = ({ isOpen, onClose, padre }) => {
+  // Hook personalizado para gestión de padres
+  const { updateParent, updating, uploading } = usePadres();
 
   const {
     register,
@@ -88,19 +86,51 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
       name: '',
       email: '',
       phone: '',
-      subject: '',
-      experience: '',
-      degree: '',
+      relation: '',
       address: '',
-      schedule: '',
+      occupation: '',
+      participationLevel: 'medium',
+      notes: '',
       photo: null,
       photoFile: null,
-      specializations: [],
-      notes: ''
+      emergencyContact: {
+        name: '',
+        phone: '',
+        relation: ''
+      }
     }
   });
 
   const photoValue = watch('photo');
+
+  // Cargar datos del padre cuando se abre el modal
+  useEffect(() => {
+    if (padre && isOpen) {
+      console.log('📝 Cargando datos del padre para editar:', padre);
+      
+      // Resetear y cargar datos
+      reset({
+        name: padre.name || '',
+        email: padre.email || '',
+        phone: padre.phone || '',
+        relation: padre.relation || '',
+        address: padre.address || '',
+        occupation: padre.occupation || '',
+        participationLevel: padre.participationLevel || 'medium',
+        notes: padre.notes || '',
+        photo: padre.photo ? {
+          url: padre.photo.url || padre.photo,
+          publicId: padre.photo.publicId
+        } : null,
+        photoFile: null,
+        emergencyContact: {
+          name: padre.emergencyContact?.name || '',
+          phone: padre.emergencyContact?.phone || '',
+          relation: padre.emergencyContact?.relation || ''
+        }
+      });
+    }
+  }, [padre, isOpen, reset]);
 
   // Función para subir imagen (maneja solo el archivo local)
   const handleUploadImage = async (file) => {
@@ -120,7 +150,15 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
       setValue('photo', { url: previewUrl });
     } else {
       setValue('photoFile', null);
-      setValue('photo', null);
+      // Mantener la foto original si no se sube una nueva
+      if (padre?.photo) {
+        setValue('photo', {
+          url: padre.photo.url || padre.photo,
+          publicId: padre.photo.publicId
+        });
+      } else {
+        setValue('photo', null);
+      }
     }
   };
 
@@ -129,12 +167,12 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
     
     try {
       // El hook se encarga de todo el proceso (upload + save)
-      await createTeacher(data);
+      await updateParent(padre.id, data);
       
       // Cerrar modal después del éxito
       handleClose();
     } catch (error) {
-      console.error('❌ Error al crear profesor:', error);
+      console.error('❌ Error al actualizar padre:', error);
       // El error ya está siendo manejado por el hook con toast
     }
   };
@@ -150,7 +188,9 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
     }`;
 
   // Estado de carga general
-  const isLoading = creating || uploading;
+  const isLoading = updating || uploading;
+
+  if (!padre) return null;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -180,12 +220,20 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
-                  <div className="flex items-center gap-2">
-                    <UserPlus className="w-6 h-6 text-blue-600" />
-                    <Dialog.Title className="text-xl font-semibold text-gray-900">
-                      Agregar Nuevo Profesor
-                    </Dialog.Title>
+                <div className="flex items-center justify-between p-6 border-b bg-blue-50">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={photoValue?.url || padre.photo?.url || padre.photo || '/default-avatar.png'}
+                      alt="Padre/Madre"
+                      className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+                    />
+                    <div>
+                      <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                        <Edit3 className="w-6 h-6 text-blue-600" />
+                        Editar Padre/Madre
+                      </Dialog.Title>
+                      <p className="text-blue-600 font-medium">{padre.name}</p>
+                    </div>
                   </div>
                   <button
                     onClick={handleClose}
@@ -200,9 +248,9 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
                 <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                   {/* Información Personal */}
                   <FormSection title="Información Personal" icon={User} iconColor="text-blue-600">
-                    {/* Foto del Profesor */}
+                    {/* Foto del Padre */}
                     <FormField 
-                      label="Foto del Profesor" 
+                      label="Foto del Padre/Madre" 
                       error={errors.photo?.message}
                       className="mb-6"
                     >
@@ -220,9 +268,22 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
                         <input
                           {...register('name')}
                           className={inputClassName(errors.name)}
-                          placeholder="Ej: María Elena Vásquez"
+                          placeholder="Ej: María Rodríguez García"
                           disabled={isLoading}
                         />
+                      </FormField>
+
+                      <FormField label="Relación/Parentesco" required error={errors.relation?.message}>
+                        <select
+                          {...register('relation')}
+                          className={inputClassName(errors.relation)}
+                          disabled={isLoading}
+                        >
+                          <option value="">Seleccionar relación</option>
+                          {relations.map(relation => (
+                            <option key={relation} value={relation}>{relation}</option>
+                          ))}
+                        </select>
                       </FormField>
 
                       <FormField label="Email" required error={errors.email?.message}>
@@ -230,7 +291,7 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
                           type="email"
                           {...register('email')}
                           className={inputClassName(errors.email)}
-                          placeholder="Ej: maria.vasquez@colegio.edu"
+                          placeholder="Ej: maria.rodriguez@email.com"
                           disabled={isLoading}
                         />
                       </FormField>
@@ -240,99 +301,86 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
                           type="tel"
                           {...register('phone')}
                           className={inputClassName(errors.phone)}
-                          placeholder="Ej: +51 987 123 456"
+                          placeholder="Ej: +51 987 654 321"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Dirección" required error={errors.address?.message}>
+                      <FormField label="Ocupación" error={errors.occupation?.message}>
                         <input
-                          {...register('address')}
-                          className={inputClassName(errors.address)}
-                          placeholder="Ej: San Isidro, Lima"
+                          {...register('occupation')}
+                          className={inputClassName(errors.occupation)}
+                          placeholder="Ej: Enfermera, Ingeniero, etc."
                           disabled={isLoading}
                         />
                       </FormField>
-                    </div>
-                  </FormSection>
 
-                  {/* Información Académica */}
-                  <FormSection title="Información Académica" icon={GraduationCap} iconColor="text-green-600">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Materia Principal" required error={errors.subject?.message}>
+                      <FormField label="Nivel de Participación" error={errors.participationLevel?.message}>
                         <select
-                          {...register('subject')}
-                          className={inputClassName(errors.subject)}
+                          {...register('participationLevel')}
+                          className={inputClassName(errors.participationLevel)}
                           disabled={isLoading}
                         >
-                          <option value="">Seleccionar materia</option>
-                          {subjects.map(subject => (
-                            <option key={subject} value={subject}>{subject}</option>
-                          ))}
-                        </select>
-                      </FormField>
-
-                      <FormField label="Años de Experiencia" required error={errors.experience?.message}>
-                        <input
-                          type="number"
-                          {...register('experience')}
-                          className={inputClassName(errors.experience)}
-                          placeholder="Ej: 8"
-                          min="0"
-                          max="50"
-                          disabled={isLoading}
-                        />
-                      </FormField>
-
-                      <FormField label="Título/Grado Académico" required error={errors.degree?.message}>
-                        <input
-                          {...register('degree')}
-                          className={inputClassName(errors.degree)}
-                          placeholder="Ej: Licenciada en Educación Matemática"
-                          disabled={isLoading}
-                        />
-                      </FormField>
-
-                      <FormField label="Horario de Trabajo" required error={errors.schedule?.message}>
-                        <select
-                          {...register('schedule')}
-                          className={inputClassName(errors.schedule)}
-                          disabled={isLoading}
-                        >
-                          <option value="">Seleccionar horario</option>
-                          {schedules.map(schedule => (
-                            <option key={schedule} value={schedule}>{schedule}</option>
+                          {participationLevels.map(level => (
+                            <option key={level.value} value={level.value}>
+                              {level.label}
+                            </option>
                           ))}
                         </select>
                       </FormField>
                     </div>
-                  </FormSection>
 
-                  {/* Información Adicional */}
-                  <FormSection title="Información Adicional (Opcional)" icon={Star} iconColor="text-purple-600">
-                    <FormField label="Especializaciones" error={errors.specializations?.message} className="mb-4">
+                    <FormField label="Dirección" required error={errors.address?.message}>
                       <input
-                        {...register('specializations')}
-                        className={inputClassName(errors.specializations)}
-                        placeholder="Ej: Álgebra, Geometría, Cálculo (separados por comas)"
+                        {...register('address')}
+                        className={inputClassName(errors.address)}
+                        placeholder="Ej: Av. Universitaria 123, San Miguel, Lima"
                         disabled={isLoading}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const specializations = value ? value.split(',').map(s => s.trim()).filter(s => s) : [];
-                          setValue('specializations', specializations);
-                        }}
                       />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Separe múltiples especializaciones con comas
-                      </p>
                     </FormField>
+                  </FormSection>
 
+                  {/* Contacto de Emergencia */}
+                  <FormSection title="Contacto de Emergencia (Opcional)" icon={AlertCircle} iconColor="text-red-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Nombre del Contacto" error={errors.emergencyContact?.name?.message}>
+                        <input
+                          {...register('emergencyContact.name')}
+                          className={inputClassName(errors.emergencyContact?.name)}
+                          placeholder="Ej: Carlos García"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Teléfono de Emergencia" error={errors.emergencyContact?.phone?.message}>
+                        <input
+                          type="tel"
+                          {...register('emergencyContact.phone')}
+                          className={inputClassName(errors.emergencyContact?.phone)}
+                          placeholder="Ej: +51 987 654 322"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Relación" error={errors.emergencyContact?.relation?.message}>
+                        <input
+                          {...register('emergencyContact.relation')}
+                          className={inputClassName(errors.emergencyContact?.relation)}
+                          placeholder="Ej: Abuelo, Tía, etc."
+                          disabled={isLoading}
+                        />
+                      </FormField>
+                    </div>
+                  </FormSection>
+
+                  {/* Notas Adicionales */}
+                  <FormSection title="Información Adicional (Opcional)" icon={Briefcase} iconColor="text-purple-600">
                     <FormField label="Notas" error={errors.notes?.message}>
                       <textarea
                         {...register('notes')}
                         className={inputClassName(errors.notes)}
                         rows="3"
-                        placeholder="Información adicional sobre el profesor, metodología, logros, etc."
+                        placeholder="Notas adicionales sobre el padre/madre..."
                         disabled={isLoading}
                       />
                     </FormField>
@@ -362,7 +410,7 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
                     ) : (
                       <>
                         <Save className="w-4 h-4" />
-                        Guardar Profesor
+                        Guardar Cambios
                       </>
                     )}
                   </button>
@@ -376,4 +424,4 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
   );
 };
 
-export default ModalAgregarProfesor;
+export default ModalEditarPadre;

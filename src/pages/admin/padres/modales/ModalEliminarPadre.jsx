@@ -4,32 +4,36 @@ import {
   X, 
   AlertTriangle, 
   Trash2,
-  Loader2
+  Loader2,
+  Heart,
+  Users,
+  Mail,
+  Phone
 } from 'lucide-react';
-import { useStudents } from '../../../../hooks/useStudents';
+import { usePadres } from '../../../../hooks/usePadres';
 
-const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
-  // Hook personalizado para gestión de estudiantes
-  const { deleteStudent, deleting } = useStudents();
+const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
+  // Hook personalizado para gestión de padres
+  const { deleteParent, deleting } = usePadres();
   
   // Estado local para confirmación
   const [confirmName, setConfirmName] = useState('');
   
-  if (!estudiante) return null;
+  if (!padre) return null;
 
-  const isConfirmDisabled = confirmName.trim().toLowerCase() !== estudiante.name.toLowerCase();
+  const isConfirmDisabled = confirmName.trim().toLowerCase() !== padre.name.toLowerCase();
 
   const handleConfirm = async () => {
     if (isConfirmDisabled) return;
     
     try {
       // El hook se encarga de todo el proceso (delete + toast + update state)
-      await deleteStudent(estudiante.id);
+      await deleteParent(padre.id);
       
       // Limpiar y cerrar modal después del éxito
       handleClose();
     } catch (error) {
-      console.error('❌ Error al eliminar estudiante:', error);
+      console.error('❌ Error al eliminar padre:', error);
       // El error ya está siendo manejado por el hook con toast
     }
   };
@@ -37,6 +41,17 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
   const handleClose = () => {
     setConfirmName('');
     onClose();
+  };
+
+  // Función para obtener imagen del padre
+  const getParentPhoto = () => {
+    if (padre.photo) {
+      if (typeof padre.photo === 'object' && padre.photo.url) {
+        return padre.photo.thumbnailUrl || padre.photo.url;
+      }
+      return padre.photo;
+    }
+    return '/default-avatar.png';
   };
 
   return (
@@ -90,18 +105,53 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
 
                 {/* Content */}
                 <div className="p-6">
-                  {/* Estudiante Info */}
+                  {/* Información del Padre */}
                   <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <div className="flex items-center gap-3">
                       <img
-                        src={estudiante.photo?.url || estudiante.photo || '/default-avatar.png'}
-                        alt={estudiante.name}
+                        src={getParentPhoto()}
+                        alt={padre.name}
                         className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
                       />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{estudiante.name}</h3>
-                        <p className="text-sm text-gray-600">{estudiante.grade}</p>
-                        <p className="text-sm text-gray-500">Padre/Madre: {estudiante.parent}</p>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-gray-900">{padre.name}</h3>
+                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                          <Heart className="w-3 h-3 text-pink-500" />
+                          <span>{padre.relation}</span>
+                          {padre.occupation && (
+                            <>
+                              <span>•</span>
+                              <span>{padre.occupation}</span>
+                            </>
+                          )}
+                        </div>
+                        
+                        {/* Información de contacto */}
+                        <div className="mt-2 space-y-1">
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Mail className="w-3 h-3" />
+                            <span>{padre.email}</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Phone className="w-3 h-3" />
+                            <span>{padre.phone}</span>
+                          </div>
+                        </div>
+
+                        {/* Hijos */}
+                        {padre.children && padre.children.length > 0 && (
+                          <div className="mt-2">
+                            <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                              <Users className="w-3 h-3 text-blue-500" />
+                              <span className="font-medium">Hijos registrados:</span>
+                            </div>
+                            {padre.children.map((child, index) => (
+                              <div key={index} className="text-xs text-gray-500 ml-4">
+                                • {child.name} - {child.grade}
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -112,12 +162,15 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                       <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <h4 className="font-medium text-red-800 mb-2">
-                          ¿Estás seguro de eliminar a "{estudiante.name}"?
+                          ¿Estás seguro de eliminar a "{padre.name}"?
                         </h4>
                         <ul className="text-sm text-red-700 space-y-1">
-                          <li>• Se eliminará toda la información del estudiante</li>
-                          <li>• Se perderán todos los registros académicos</li>
-                          <li>• Se eliminará el historial de asistencia</li>
+                          <li>• Se eliminará toda la información del padre/madre</li>
+                          <li>• Se perderán todos los datos de contacto</li>
+                          <li>• Se eliminará el historial de participación</li>
+                          {padre.children && padre.children.length > 0 && (
+                            <li>• Sus {padre.children.length} hijo(s) quedarán sin apoderado asignado</li>
+                          )}
                           <li>• Esta acción no se puede deshacer</li>
                         </ul>
                       </div>
@@ -127,7 +180,7 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                   {/* Confirmation Input */}
                   <div className="mb-6">
                     <p className="text-sm text-gray-700 mb-3">
-                      Para confirmar la eliminación, escribe <strong>"{estudiante.name}"</strong> en el campo de abajo:
+                      Para confirmar la eliminación, escribe <strong>"{padre.name}"</strong> en el campo de abajo:
                     </p>
                     <input
                       type="text"
@@ -135,7 +188,7 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                       value={confirmName}
                       onChange={(e) => setConfirmName(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      placeholder={`Escribe "${estudiante.name}" para confirmar`}
+                      placeholder={`Escribe "${padre.name}" para confirmar`}
                       disabled={deleting}
                     />
                   </div>
@@ -162,7 +215,7 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                       ) : (
                         <>
                           <Trash2 className="w-4 h-4" />
-                          Eliminar Estudiante
+                          Eliminar Padre
                         </>
                       )}
                     </button>
@@ -177,4 +230,4 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
   );
 };
 
-export default ModalEliminarEstudiante;
+export default ModalEliminarPadre;

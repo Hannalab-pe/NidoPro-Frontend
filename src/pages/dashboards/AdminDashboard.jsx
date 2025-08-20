@@ -22,14 +22,14 @@ import {
 } from "lucide-react";
 
 // Importar todos los componentes de administración
-import Estudiantes from './estudiantes/Estudiantes';
-import Profesores from './profesores/Profesores';
-import Padres from './padres/Padres';
-import Clases from './clases/Clases';
-import Finanzas from './finanzas/Finanzas';
-import Reportes from './reportes/Reportes';
-import Configuracion from './configuracion/Configuracion';
-import Usuarios from './usuarios/Usuarios';
+import Estudiantes from '../admin/estudiantes/Estudiantes';
+import Profesores from '../admin/profesores/Profesores';
+import Padres from '../admin/padres/Padres';
+import Clases from '../admin/clases/Clases';
+import Finanzas from '../admin/finanzas/Finanzas';
+import Reportes from '../admin/reportes/Reportes';
+import Configuraciones from "../admin/configuraciones/Configuracion";
+import Usuarios from '../admin/usuarios/Usuarios';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -46,7 +46,7 @@ const AdminDashboard = () => {
     { id: "finances", label: "Finanzas", icon: DollarSign },
     { id: "reports", label: "Reportes", icon: FileText },
     { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
-    { id: "settings", label: "Configuración", icon: Settings },
+    { id: "settings", label: "Configuraciones", icon: Settings },
   ];
 
   const stats = [
@@ -202,7 +202,7 @@ const AdminDashboard = () => {
                 {stats.map((stat, index) => {
                   const IconComponent = stat.icon;
                   return (
-                    <div key={index} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <div key={index} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-black hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-4">
                         <div 
                           className="p-3 rounded-lg"
@@ -266,7 +266,7 @@ const AdminDashboard = () => {
           {activeSection === "finances" && <Finanzas />}
           {activeSection === "reports" && <Reportes />}
           {activeSection === "users" && <Usuarios />}
-          {activeSection === "settings" && <Configuracion />}
+          {activeSection === "settings" && <Configuraciones />}
         </div>
       </main>
     </div>
