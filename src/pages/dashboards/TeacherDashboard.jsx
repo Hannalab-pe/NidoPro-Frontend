@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuthStore } from "../../store";
 import { 
   BarChart3, 
   Target, 
@@ -38,8 +38,7 @@ import Clases from "../teacher/clases/Clases";
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, getCurrentUser } = useAuth();
-  const user = getCurrentUser();
+  const { logout, user } = useAuthStore();
 
   const menuItems = [
     { id: "overview", label: "Panel Principal", icon: BarChart3 },

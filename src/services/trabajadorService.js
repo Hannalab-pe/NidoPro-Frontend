@@ -1,8 +1,8 @@
-// src/services/api/profesoresService.js
+// src/services/api/trabajadorService.js
 import axios from 'axios';
 
 // Base URL del API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
 
 // Configuración de axios
 const api = axios.create({
@@ -43,15 +43,15 @@ api.interceptors.response.use(
 );
 
 /**
- * Servicio para gestionar profesores
+ * Servicio para gestionar trabajadores
  */
-export const profesorService = {
+export const trabajadorService = {
   /**
-   * Obtener todos los profesores
-   * @param {Object} filters - Filtros opcionales (status, subject, schedule, etc.)
-   * @returns {Promise<Array>} Lista de profesores
+   * Obtener todos los trabajadores
+   * @param {Object} filters - Filtros opcionales
+   * @returns {Promise<Array>} Lista de trabajadores
    */
-  async getAllTeachers(filters = {}) {
+  async getAllTrabajadores(filters = {}) {
     try {
       const params = new URLSearchParams();
       
@@ -62,85 +62,79 @@ export const profesorService = {
         }
       });
       
-      const response = await api.get(`/teachers?${params.toString()}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener profesores:', error);
-      throw new Error(error.response?.data?.message || 'Error al obtener profesores');
-    }
-  },
-
-  /**
-   * Obtener un profesor por ID
-   * @param {string|number} id - ID del profesor
-   * @returns {Promise<Object>} Datos del profesor
-   */
-  async getTeacherById(id) {
-    try {
-      const response = await api.get(`/teachers/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error al obtener profesor:', error);
-      throw new Error(error.response?.data?.message || 'Error al obtener profesor');
-    }
-  },
-
-  /**
-   * Crear un nuevo profesor
-   * @param {Object} teacherData - Datos del profesor
-   * @returns {Promise<Object>} Profesor creado
-   */
-  async createTeacher(teacherData) {
-    try {
-      console.log('📤 Enviando datos del profesor al backend:', teacherData);
+      const response = await api.get(`/trabajador?${params.toString()}`);
+      console.log('📋 Respuesta del backend:', response.data);
       
-      // Validar datos requeridos
-      const requiredFields = ['name', 'email', 'phone', 'subject', 'degree', 'address', 'schedule'];
-      const missingFields = requiredFields.filter(field => !teacherData[field]);
+      // Extraer el array de trabajadores de la respuesta
+      // El backend tiene un typo: "sucess" en lugar de "success"
+      if ((response.data.success || response.data.sucess) && response.data.trabajadores) {
+        return response.data.trabajadores;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener trabajadores:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener trabajadores');
+    }
+  },
+
+  /**
+   * Obtener un trabajador por ID
+   * @param {string|number} id - ID del trabajador
+   * @returns {Promise<Object>} Datos del trabajador
+   */
+  async getTrabajadorById(id) {
+    try {
+      const response = await api.get(`/trabajador/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener trabajador:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener trabajador');
+    }
+  },
+
+  /**
+   * Crear un nuevo trabajador
+   * @param {Object} trabajadorData - Datos del trabajador
+   * @returns {Promise<Object>} Trabajador creado
+   */
+  async createTrabajador(trabajadorData) {
+    try {
+      console.log('📤 Enviando datos del trabajador al backend:', trabajadorData);
+      
+      // Validar datos requeridos según el backend
+      const requiredFields = ['nombre', 'apellido', 'tipoDocumento', 'nroDocumento', 'direccion', 'correo', 'telefono'];
+      const missingFields = requiredFields.filter(field => !trabajadorData[field]);
       
       if (missingFields.length > 0) {
         throw new Error(`Campos requeridos faltantes: ${missingFields.join(', ')}`);
       }
 
-      // Preparar datos para el backend
+      // Preparar datos exactamente como espera el backend
       const payload = {
-        // Información personal
-        name: teacherData.name.trim(),
-        email: teacherData.email.trim(),
-        phone: teacherData.phone.trim(),
-        address: teacherData.address.trim(),
-        
-        // Información académica
-        subject: teacherData.subject,
-        degree: teacherData.degree.trim(),
-        experience: Number(teacherData.experience) || 0,
-        schedule: teacherData.schedule,
-        
-        // Información adicional
-        specializations: Array.isArray(teacherData.specializations) 
-          ? teacherData.specializations 
-          : (teacherData.specializations ? 
-              teacherData.specializations.split(',').map(s => s.trim()).filter(s => s) 
-              : []),
-        notes: teacherData.notes?.trim() || null,
-        
-        // Foto
-        photo: teacherData.photo || null,
-        
-        // Campos adicionales
-        status: 'active',
-        rating: 0,
-        students: 0,
-        classes: [],
-        registrationDate: new Date().toISOString().split('T')[0]
+        nombre: trabajadorData.nombre.trim(),
+        apellido: trabajadorData.apellido.trim(),
+        tipoDocumento: trabajadorData.tipoDocumento || 'DNI',
+        nroDocumento: trabajadorData.nroDocumento.trim(),
+        direccion: trabajadorData.direccion.trim(),
+        correo: trabajadorData.correo.trim(),
+        telefono: trabajadorData.telefono.trim(),
+        estaActivo: trabajadorData.estaActivo !== undefined ? trabajadorData.estaActivo : true,
+        idRol: '6f915b56-56c4-42bd-8403-54a76981adfb' // ID fijo del rol trabajador
       };
 
-      const response = await api.post('/teachers', payload);
-      console.log('✅ Profesor creado exitosamente:', response.data);
+      const response = await api.post('/trabajador', payload);
+      console.log('✅ Trabajador creado exitosamente:', response.data);
+      
+      // Extraer el trabajador de la respuesta del backend
+      if (response.data.trabajador) {
+        return response.data.trabajador;
+      }
+      
       return response.data;
     } catch (error) {
-      console.error('❌ Error al crear profesor:', error);
-      throw new Error(error.response?.data?.message || 'Error al crear profesor');
+      console.error('❌ Error al crear trabajador:', error);
+      throw new Error(error.response?.data?.message || 'Error al crear trabajador');
     }
   },
 
@@ -194,18 +188,19 @@ export const profesorService = {
   },
 
   /**
-   * Eliminar un profesor
-   * @param {string|number} id - ID del profesor
-   * @returns {Promise<void>}
+   * Desactivar/Activar un trabajador
+   * @param {string|number} id - ID del trabajador
+   * @returns {Promise<Object>} Respuesta del servidor
    */
-  async deleteTeacher(id) {
+  async toggleTrabajadorStatus(id) {
     try {
-      console.log('🗑️ Eliminando profesor:', id);
-      await api.delete(`/teachers/${id}`);
-      console.log('✅ Profesor eliminado exitosamente');
+      console.log(`🔄 Cambiando estado del trabajador ID: ${id}`);
+      const response = await api.delete(`/trabajador/${id}`);
+      console.log('✅ Estado del trabajador actualizado:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('❌ Error al eliminar profesor:', error);
-      throw new Error(error.response?.data?.message || 'Error al eliminar profesor');
+      console.error('❌ Error al cambiar estado del trabajador:', error);
+      throw new Error(error.response?.data?.message || 'Error al cambiar estado del trabajador');
     }
   },
 
@@ -446,4 +441,4 @@ export const profesorService = {
   }
 };
 
-export default profesorService;
+export default trabajadorService;

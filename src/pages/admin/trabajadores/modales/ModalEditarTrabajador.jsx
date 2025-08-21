@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -14,14 +14,14 @@ import {
   Clock,
   Award,
   Save,
-  UserPlus,
+  Edit3,
   Loader2,
   Star
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
-import { useProfesores } from '../../../../hooks/useProfesores';
+import { useTrabajadores } from '../../../../hooks/useTrabajadores';
 
-// Esquema de validación con Yup
+// Esquema de validación con Yup (igual que crear)
 const validationSchema = yup.object({
   name: yup.string().required('El nombre es requerido').trim(),
   email: yup.string()
@@ -36,6 +36,7 @@ const validationSchema = yup.object({
   degree: yup.string().required('El título es requerido').trim(),
   address: yup.string().required('La dirección es requerida').trim(),
   schedule: yup.string().required('El horario es requerido'),
+  // Para editar, la foto no es requerida si ya existe
   photo: yup.object().nullable(),
   specializations: yup.array().of(yup.string()),
   notes: yup.string()
@@ -71,9 +72,9 @@ const subjects = [
 
 const schedules = ['Mañana', 'Tarde', 'Completo'];
 
-const ModalAgregarProfesor = ({ isOpen, onClose }) => {
+const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
   // Hook personalizado para gestión de profesores
-  const { createTeacher, creating, uploading } = useProfesores();
+  const { updateTeacher, updating, uploading } = useTrabajadores();
 
   const {
     register,
@@ -102,6 +103,32 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
 
   const photoValue = watch('photo');
 
+  // Cargar datos del profesor cuando se abre el modal
+  useEffect(() => {
+    if (profesor && isOpen) {
+      console.log('📝 Cargando datos del profesor para editar:', profesor);
+      
+      // Resetear y cargar datos
+      reset({
+        name: profesor.name || '',
+        email: profesor.email || '',
+        phone: profesor.phone || '',
+        subject: profesor.subject || '',
+        experience: profesor.experience || '',
+        degree: profesor.degree || '',
+        address: profesor.address || '',
+        schedule: profesor.schedule || '',
+        specializations: profesor.specializations || [],
+        notes: profesor.notes || '',
+        photo: profesor.photo ? {
+          url: profesor.photo.url || profesor.photo,
+          publicId: profesor.photo.publicId || profesor.photoPublicId
+        } : null,
+        photoFile: null
+      });
+    }
+  }, [profesor, isOpen, reset]);
+
   // Función para subir imagen (maneja solo el archivo local)
   const handleUploadImage = async (file) => {
     console.log('🔄 handleUploadImage called with file:', file);
@@ -120,7 +147,15 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
       setValue('photo', { url: previewUrl });
     } else {
       setValue('photoFile', null);
-      setValue('photo', null);
+      // Mantener la foto original si no se sube una nueva
+      if (profesor?.photo) {
+        setValue('photo', {
+          url: profesor.photo.url || profesor.photo,
+          publicId: profesor.photo.publicId || profesor.photoPublicId
+        });
+      } else {
+        setValue('photo', null);
+      }
     }
   };
 
@@ -129,12 +164,12 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
     
     try {
       // El hook se encarga de todo el proceso (upload + save)
-      await createTeacher(data);
+      await updateTeacher(profesor.id, data);
       
       // Cerrar modal después del éxito
       handleClose();
     } catch (error) {
-      console.error('❌ Error al crear profesor:', error);
+      console.error('❌ Error al actualizar profesor:', error);
       // El error ya está siendo manejado por el hook con toast
     }
   };
@@ -150,7 +185,9 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
     }`;
 
   // Estado de carga general
-  const isLoading = creating || uploading;
+  const isLoading = updating || uploading;
+
+  if (!profesor) return null;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -180,12 +217,20 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
-                  <div className="flex items-center gap-2">
-                    <UserPlus className="w-6 h-6 text-blue-600" />
-                    <Dialog.Title className="text-xl font-semibold text-gray-900">
-                      Agregar Nuevo Profesor
-                    </Dialog.Title>
+                <div className="flex items-center justify-between p-6 border-b bg-blue-50">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={photoValue?.url || profesor.photo?.url || profesor.photo || '/default-avatar.png'}
+                      alt="Profesor"
+                      className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
+                    />
+                    <div>
+                      <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                        <Edit3 className="w-6 h-6 text-blue-600" />
+                        Editar Profesor
+                      </Dialog.Title>
+                      <p className="text-blue-600 font-medium">{profesor.name}</p>
+                    </div>
                   </div>
                   <button
                     onClick={handleClose}
@@ -316,6 +361,7 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
                         className={inputClassName(errors.specializations)}
                         placeholder="Ej: Álgebra, Geometría, Cálculo (separados por comas)"
                         disabled={isLoading}
+                        defaultValue={profesor.specializations?.join(', ') || ''}
                         onChange={(e) => {
                           const value = e.target.value;
                           const specializations = value ? value.split(',').map(s => s.trim()).filter(s => s) : [];
@@ -362,7 +408,7 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
                     ) : (
                       <>
                         <Save className="w-4 h-4" />
-                        Guardar Profesor
+                        Guardar Cambios
                       </>
                     )}
                   </button>
@@ -376,4 +422,4 @@ const ModalAgregarProfesor = ({ isOpen, onClose }) => {
   );
 };
 
-export default ModalAgregarProfesor;
+export default ModalEditarTrabajador;

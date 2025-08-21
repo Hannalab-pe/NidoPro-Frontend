@@ -5,56 +5,43 @@ import {
   Award,
   Star
 } from 'lucide-react';
-import { useProfesores } from '../../../hooks/useProfesores';
-import TablaProfesores from './tablas/TablaProfesores';
-import ModalAgregarProfesor from './modales/ModalAgregarProfesor';
-import ModalVerProfesor from './modales/ModalVerProfesor';
-import ModalEditarProfesor from './modales/ModalEditarProfesor';
-import ModalEliminarProfesor from './modales/ModalEliminarProfesor';
+import { useTrabajadores } from '../../../hooks/useTrabajadores';
+import TablaTrabajadores from './tablas/TablaTrabajadores';
+import ModalAgregarTrabajador from './modales/ModalAgregarTrabajador';
+import ModalVerTrabajador from './modales/ModalVerTrabajador';
+import ModalEditarTrabajador from './modales/ModalEditarTrabajador';
+import ModalEliminarTrabajador from './modales/ModalEliminarTrabajador';
 
-const Profesores = () => {
-  // Hook personalizado para gestión de profesores
+const Trabajadores = () => {
+  // Hook personalizado para gestión de trabajadores
   const { 
-    teachers, 
+    trabajadores, 
     loading,
-    getActiveTeachers,
-    getTotalTeachers,
-    getAverageExperience,
-    getAverageRating
-  } = useProfesores();
+    getActiveTrabajadores,
+    getTotalTrabajadores,
+    refreshTrabajadores
+  } = useTrabajadores();
 
   // Estados locales solo para UI
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedTeacher, setSelectedTeacher] = useState(null);
+  const [selectedTrabajador, setSelectedTrabajador] = useState(null);
 
   // Estadísticas dinámicas basadas en datos reales
   const stats = [
     { 
-      title: 'Total Profesores', 
-      value: getTotalTeachers().toString(), 
+      title: 'Total Trabajadores', 
+      value: getTotalTrabajadores()?.toString() || '0', 
       icon: GraduationCap, 
       color: 'bg-blue-500' 
     },
     { 
-      title: 'Profesores Activos', 
-      value: getActiveTeachers().length.toString(), 
+      title: 'Trabajadores Activos', 
+      value: getActiveTrabajadores()?.length?.toString() || '0', 
       icon: Users, 
       color: 'bg-green-500' 
-    },
-    { 
-      title: 'Promedio de Experiencia', 
-      value: `${getAverageExperience()} años`, 
-      icon: Award, 
-      color: 'bg-yellow-500' 
-    },
-    { 
-      title: 'Satisfacción Promedio', 
-      value: `${getAverageRating()}/5`, 
-      icon: Star, 
-      color: 'bg-purple-500' 
     }
   ];
 
@@ -63,28 +50,28 @@ const Profesores = () => {
     setShowModal(true);
   };
 
-  const handleEdit = (profesor) => {
-    setSelectedTeacher(profesor);
+  const handleEdit = (trabajador) => {
+    setSelectedTrabajador(trabajador);
     setShowEditModal(true);
   };
 
-  const handleDelete = (profesor) => {
-    setSelectedTeacher(profesor);
+  const handleToggleStatus = (trabajador) => {
+    setSelectedTrabajador(trabajador);
     setShowDeleteModal(true);
   };
 
-  const handleView = (profesor) => {
-    setSelectedTeacher(profesor);
+  const handleView = (trabajador) => {
+    setSelectedTrabajador(trabajador);
     setShowViewModal(true);
   };
 
   const handleImport = () => {
-    console.log('Importar profesores');
+    console.log('Importar trabajadores');
     // TODO: Implementar funcionalidad de importación
   };
 
   const handleExport = () => {
-    console.log('Exportar profesores');
+    console.log('Exportar trabajadores');
     // TODO: Implementar funcionalidad de exportación
   };
 
@@ -96,7 +83,7 @@ const Profesores = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border">
+          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
@@ -110,55 +97,67 @@ const Profesores = () => {
         ))}
       </div>
 
-      {/* Componente de Tabla de Profesores */}
-      <TablaProfesores
-        profesores={teachers}
+      {/* Componente de Tabla de Trabajadores */}
+      <TablaTrabajadores
+        trabajadores={trabajadores}
         loading={loading}
         onAdd={handleAdd}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={handleToggleStatus}
         onView={handleView}
         onImport={handleImport}
         onExport={handleExport}
       />
 
-      {/* Modal para agregar profesor */}
-      <ModalAgregarProfesor
+      {/* Modal para agregar trabajador */}
+      <ModalAgregarTrabajador
         isOpen={showModal}
         onClose={() => setShowModal(false)}
+        onSuccess={() => {
+          setShowModal(false);
+          // Forzar recarga inmediata de la tabla
+          refreshTrabajadores();
+        }}
       />
 
-      {/* Modal para ver profesor */}
-      <ModalVerProfesor
+      {/* Modal para ver trabajador */}
+      <ModalVerTrabajador
         isOpen={showViewModal}
         onClose={() => {
           setShowViewModal(false);
-          setSelectedTeacher(null);
+          setSelectedTrabajador(null);
         }}
-        profesor={selectedTeacher}
+        trabajador={selectedTrabajador}
       />
 
-      {/* Modal para editar profesor */}
-      <ModalEditarProfesor
+      {/* Modal para editar trabajador */}
+      <ModalEditarTrabajador
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false);
-          setSelectedTeacher(null);
+          setSelectedTrabajador(null);
         }}
-        profesor={selectedTeacher}
+        trabajador={selectedTrabajador}
       />
 
-      {/* Modal para eliminar profesor */}
-      <ModalEliminarProfesor
+      {/* Modal para cambiar estado del trabajador */}
+      <ModalEliminarTrabajador
         isOpen={showDeleteModal}
         onClose={() => {
           setShowDeleteModal(false);
-          setSelectedTeacher(null);
+          setSelectedTrabajador(null);
         }}
-        profesor={selectedTeacher}
+        onSuccess={() => {
+          setShowDeleteModal(false);
+          setSelectedTrabajador(null);
+          // Forzar recarga inmediata de la tabla
+          refreshTrabajadores();
+        }}
+        trabajador={selectedTrabajador}
       />
+
     </div>
   );
 };
 
-export default Profesores;
+export default Trabajadores;

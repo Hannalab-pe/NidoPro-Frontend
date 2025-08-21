@@ -1,10 +1,9 @@
 import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuthStore } from "../../store";
 
 const SpecialistDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
-  const { logout, getCurrentUser } = useAuth();
-  const user = getCurrentUser();
+  const { logout, user } = useAuthStore();
 
   const menuItems = [
     { id: "overview", label: "Resumen", icon: "📊" },

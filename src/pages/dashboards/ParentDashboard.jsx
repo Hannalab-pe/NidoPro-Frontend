@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuthStore } from "../../store";
 import { 
   BarChart3, 
   FileText, 
@@ -34,8 +34,7 @@ import Aprendizaje from "../parent/aprendizaje/Aprendizaje";
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, getCurrentUser } = useAuth();
-  const user = getCurrentUser();
+  const { logout, user } = useAuthStore();
 
   const menuItems = [
     { id: "overview", label: "Inicio", icon: Home },

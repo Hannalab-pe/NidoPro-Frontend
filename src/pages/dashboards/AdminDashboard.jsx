@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuthStore } from "../../store";
 import { 
   BarChart3, 
   Users as UsersIcon, 
@@ -23,7 +23,8 @@ import {
 
 // Importar todos los componentes de administración
 import Estudiantes from '../admin/estudiantes/Estudiantes';
-import Profesores from '../admin/profesores/Profesores';
+import Matricula from '../admin/matricula/Matricula';
+import Trabajadores from '../admin/trabajadores/Trabajadores';
 import Padres from '../admin/padres/Padres';
 import Clases from '../admin/clases/Clases';
 import Finanzas from '../admin/finanzas/Finanzas';
@@ -34,13 +35,13 @@ import Usuarios from '../admin/usuarios/Usuarios';
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, getCurrentUser } = useAuth();
-  const user = getCurrentUser();
+  const { logout, user } = useAuthStore();
 
   const menuItems = [
     { id: "overview", label: "Resumen General", icon: BarChart3 },
+    { id: "matricula", label: "Matrícula", icon: GraduationCap },
     { id: "students", label: "Estudiantes", icon: UsersIcon },
-    { id: "teachers", label: "Profesores", icon: GraduationCap },
+    { id: "trabajadores", label: "Trabajadores", icon: UsersIcon },
     { id: "parents", label: "Padres de Familia", icon: UserCheck },
     { id: "classes", label: "Aulas y Clases", icon: BookOpen },
     { id: "finances", label: "Finanzas", icon: DollarSign },
@@ -260,7 +261,8 @@ const AdminDashboard = () => {
 
           {/* Renderizar componentes según la sección activa */}
           {activeSection === "students" && <Estudiantes />}
-          {activeSection === "teachers" && <Profesores />}
+          {activeSection === "matricula" && <Matricula />}
+          {activeSection === "trabajadores" && <Trabajadores />}
           {activeSection === "parents" && <Padres />}
           {activeSection === "classes" && <Clases />}
           {activeSection === "finances" && <Finanzas />}

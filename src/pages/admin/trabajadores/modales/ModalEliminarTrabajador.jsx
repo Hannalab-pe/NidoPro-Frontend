@@ -12,30 +12,38 @@ import {
   Clock,
   Award
 } from 'lucide-react';
-import { useProfesores } from '../../../../hooks/useProfesores';
+import { useTrabajadores } from '../../../../hooks/useTrabajadores';
 
-const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
-  // Hook personalizado para gestión de profesores
-  const { deleteTeacher, deleting } = useProfesores();
+const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => {
+  // Hook personalizado para gestión de trabajadores
+  const { toggleTrabajadorStatus, deleting } = useTrabajadores();
   
   // Estado local para confirmación
   const [confirmName, setConfirmName] = useState('');
   
-  if (!profesor) return null;
+  if (!trabajador) return null;
 
-  const isConfirmDisabled = confirmName.trim().toLowerCase() !== profesor.name.toLowerCase();
+  const trabajadorName = `${trabajador.nombre} ${trabajador.apellido}`;
+  const isConfirmDisabled = confirmName.trim().toLowerCase() !== trabajadorName.toLowerCase();
+  const action = trabajador.estaActivo ? 'desactivar' : 'activar';
+  const actionTitle = trabajador.estaActivo ? 'Desactivar' : 'Activar';
 
   const handleConfirm = async () => {
     if (isConfirmDisabled) return;
     
     try {
-      // El hook se encarga de todo el proceso (delete + toast + update state)
-      await deleteTeacher(profesor.id);
+      // El hook se encarga de todo el proceso (toggle status + toast + update state)
+      await toggleTrabajadorStatus(trabajador);
       
       // Limpiar y cerrar modal después del éxito
       handleClose();
+      
+      // Llamar onSuccess para refresh adicional
+      if (onSuccess) {
+        onSuccess();
+      }
     } catch (error) {
-      console.error('❌ Error al eliminar profesor:', error);
+      console.error(`❌ Error al ${action} trabajador:`, error);
       // El error ya está siendo manejado por el hook con toast
     }
   };
@@ -129,16 +137,16 @@ const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
             >
               <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-red-50">
+                <div className="flex items-center justify-between p-6 border-b bg-orange-50">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
-                      <AlertTriangle className="w-6 h-6 text-red-600" />
+                    <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6 text-orange-600" />
                     </div>
                     <div>
                       <Dialog.Title className="text-xl font-semibold text-gray-900">
-                        Confirmar Eliminación
+                        {actionTitle} Trabajador
                       </Dialog.Title>
-                      <p className="text-sm text-red-600 font-medium">Esta acción no se puede deshacer</p>
+                      <p className="text-sm text-orange-600 font-medium">¿Estás seguro de continuar?</p>
                     </div>
                   </div>
                   <button
@@ -152,30 +160,32 @@ const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
 
                 {/* Content */}
                 <div className="p-6">
-                  {/* Información del Profesor */}
+                  {/* Información del Trabajador */}
                   <div className="bg-gray-50 rounded-lg p-4 mb-6 border">
                     <div className="flex items-center gap-4 mb-4">
-                      <img
-                        src={getTeacherPhoto()}
-                        alt={profesor.name}
-                        className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                      />
+                      <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-2 border-gray-200">
+                        <span className="text-lg font-medium text-blue-600">
+                          {trabajador.nombre?.charAt(0)}{trabajador.apellido?.charAt(0)}
+                        </span>
+                      </div>
                       <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-gray-900">{profesor.name}</h3>
+                        <h3 className="text-lg font-semibold text-gray-900">{trabajadorName}</h3>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
-                          <BookOpen className="w-4 h-4" />
-                          <span className="font-medium">{profesor.subject}</span>
+                          <Users className="w-4 h-4" />
+                          <span className="font-medium">{trabajador.correo}</span>
                           <span>•</span>
-                          <Clock className="w-4 h-4" />
-                          <span>{profesor.schedule}</span>
+                          <span>{trabajador.telefono}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(profesor.status)}`}>
-                            {getStatusText(profesor.status)}
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            trabajador.estaActivo 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {trabajador.estaActivo ? 'Activo' : 'Inactivo'}
                           </span>
                           <div className="flex items-center gap-1">
-                            <Award className="w-4 h-4 text-yellow-600" />
-                            <span className="text-sm font-medium">{profesor.experience || 0} años</span>
+                            <span className="text-sm font-medium">{trabajador.idRol?.nombre || 'Sin rol'}</span>
                           </div>
                         </div>
                       </div>
@@ -185,90 +195,60 @@ const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <GraduationCap className="w-4 h-4 text-blue-600" />
-                          <span className="text-sm font-medium text-gray-700">Título</span>
+                          <span className="text-sm font-medium text-gray-700">Documento</span>
                         </div>
-                        <p className="text-xs text-gray-600 truncate" title={profesor.degree}>
-                          {profesor.degree || 'No especificado'}
+                        <p className="text-xs text-gray-600">
+                          {trabajador.tipoDocumento} {trabajador.nroDocumento}
                         </p>
                       </div>
                       
                       <div className="text-center">
                         <div className="flex items-center justify-center gap-1 mb-1">
-                          <Users className="w-4 h-4 text-green-600" />
-                          <span className="text-sm font-medium text-gray-700">Estudiantes</span>
+                          <span className="text-sm font-medium text-gray-700">Dirección</span>
                         </div>
-                        <p className="text-sm font-semibold text-green-600">
-                          {profesor.students || 0}
+                        <p className="text-xs text-gray-600 truncate" title={trabajador.direccion}>
+                          {trabajador.direccion}
                         </p>
                       </div>
                     </div>
 
-                    {/* Rating si existe */}
-                    {profesor.rating && Number(profesor.rating) > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-200 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <span className="text-sm font-medium text-gray-700">Calificación:</span>
-                          {renderRating(profesor.rating)}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Clases asignadas */}
-                    {profesor.classes && profesor.classes.length > 0 && (
-                      <div className="mt-3 pt-3 border-t border-gray-200">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Clases asignadas:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {profesor.classes.slice(0, 4).map((clase, index) => (
-                            <span 
-                              key={index}
-                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                            >
-                              {clase}
-                            </span>
-                          ))}
-                          {profesor.classes.length > 4 && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
-                              +{profesor.classes.length - 4} más
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* Warning Message */}
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
                     <div className="flex gap-3">
-                      <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <AlertTriangle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
                       <div>
-                        <h4 className="font-medium text-red-800 mb-3">
-                          ¿Estás seguro de eliminar al profesor "{profesor.name}"?
+                        <h4 className="font-medium text-orange-800 mb-3">
+                          ¿Estás seguro de {action} al trabajador "{trabajadorName}"?
                         </h4>
-                        <div className="text-sm text-red-700 space-y-2">
+                        <div className="text-sm text-orange-700 space-y-2">
                           <div className="flex items-start gap-2">
-                            <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <span>Se eliminará toda la información personal y académica del profesor</span>
+                            <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>
+                              {trabajador.estaActivo 
+                                ? 'El trabajador será desactivado y no podrá acceder al sistema'
+                                : 'El trabajador será reactivado y podrá acceder al sistema nuevamente'
+                              }
+                            </span>
                           </div>
                           <div className="flex items-start gap-2">
-                            <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <span>Se perderán todos los registros de evaluaciones y calificaciones</span>
+                            <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <span>
+                              {trabajador.estaActivo
+                                ? 'Se suspenderán temporalmente sus permisos y responsabilidades'
+                                : 'Se restaurarán sus permisos y responsabilidades según su rol'
+                              }
+                            </span>
                           </div>
                           <div className="flex items-start gap-2">
-                            <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <span>Se desasignarán automáticamente todas las clases actuales</span>
-                          </div>
-                          {profesor.students > 0 && (
-                            <div className="flex items-start gap-2">
-                              <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-2 flex-shrink-0"></div>
-                              <span className="font-medium">
-                                Los {profesor.students} estudiantes a su cargo quedarán sin profesor asignado en {profesor.subject}
-                              </span>
-                            </div>
-                          )}
-                          <div className="flex items-start gap-2">
-                            <div className="w-1.5 h-1.5 bg-red-600 rounded-full mt-2 flex-shrink-0"></div>
-                            <span className="font-medium">Esta acción es permanente e irreversible</span>
+                            <div className="w-1.5 h-1.5 bg-orange-600 rounded-full mt-2 flex-shrink-0"></div>
+                            <span className="font-medium">
+                              {trabajador.estaActivo
+                                ? 'Esta acción se puede revertir posteriormente'
+                                : 'El trabajador volverá a estar operativo'
+                              }
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -278,8 +258,8 @@ const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
                   {/* Confirmation Input */}
                   <div className="mb-6">
                     <p className="text-sm text-gray-700 mb-3">
-                      Para confirmar la eliminación, escribe exactamente{' '}
-                      <span className="font-bold text-red-600">"{profesor.name}"</span>{' '}
+                      Para confirmar la acción, escribe exactamente{' '}
+                      <span className="font-bold text-orange-600">"{trabajadorName}"</span>{' '}
                       en el campo de abajo:
                     </p>
                     <input
@@ -294,7 +274,7 @@ const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
                           ? 'border-green-300 focus:ring-green-500 focus:border-green-500 bg-green-50'
                           : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                       }`}
-                      placeholder={`Escribe "${profesor.name}" para confirmar`}
+                      placeholder={`Escribe "${trabajadorName}" para confirmar`}
                       disabled={deleting}
                       autoComplete="off"
                     />
@@ -325,18 +305,20 @@ const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
                       className={`px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[160px] ${
                         isConfirmDisabled 
                           ? 'bg-gray-400 text-white cursor-not-allowed'
-                          : 'bg-red-600 text-white hover:bg-red-700'
+                          : trabajador.estaActivo
+                          ? 'bg-orange-600 text-white hover:bg-orange-700'
+                          : 'bg-green-600 text-white hover:bg-green-700'
                       }`}
                     >
                       {deleting ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Eliminando...
+                          {trabajador.estaActivo ? 'Desactivando...' : 'Activando...'}
                         </>
                       ) : (
                         <>
-                          <Trash2 className="w-4 h-4" />
-                          Eliminar Profesor
+                          <AlertTriangle className="w-4 h-4" />
+                          {actionTitle} Trabajador
                         </>
                       )}
                     </button>
@@ -351,4 +333,4 @@ const ModalEliminarProfesor = ({ isOpen, onClose, profesor }) => {
   );
 };
 
-export default ModalEliminarProfesor;
+export default ModalEliminarTrabajador;

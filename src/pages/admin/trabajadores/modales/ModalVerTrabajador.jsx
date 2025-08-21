@@ -19,7 +19,7 @@ import {
   Briefcase
 } from 'lucide-react';
 
-const ModalVerProfesor = ({ isOpen, onClose, profesor }) => {
+const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
   if (!profesor) return null;
 
   // Obtener URL de imagen segura
@@ -455,4 +455,4 @@ const ModalVerProfesor = ({ isOpen, onClose, profesor }) => {
   );
 };
 
-export default ModalVerProfesor;
+export default ModalVerTrabajador;
