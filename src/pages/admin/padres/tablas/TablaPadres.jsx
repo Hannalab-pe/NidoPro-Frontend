@@ -16,35 +16,36 @@ const TablaPadres = ({
   onExport
 }) => {
   return (
-    <DataTable
-      data={padres}
-      columns={parentsColumns}
-      loading={loading}
-      title="Gestión de Padres de Familia"
-      icon={UserCheck}
-      onAdd={onAdd}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onView={onView}
-      onImport={onImport}
-      onExport={onExport}
-      actions={{
-        add: true,
-        edit: true,
-        delete: true,
-        view: true,
-        import: true,
-        export: true
-      }}
-      filters={parentsFilters}
-      addButtonText="Agregar Padre"
-      loadingMessage="Cargando padres..."
-      emptyMessage="No hay padres registrados"
-      itemsPerPage={10}
-      enablePagination={true}
-      enableSearch={true}
-      enableSort={true}
-    />
+    <div>
+      <DataTable
+        data={padres}
+        columns={parentsColumns}
+        loading={loading}
+        title="Gestión de Padres de Familia"
+        icon={UserCheck}
+        onAdd={onAdd}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onView={onView}
+        onImport={onImport}
+        onExport={onExport}
+        actions={{
+          add: true,
+          edit: true,
+          delete: true,
+          view: true,
+          import: true,
+          export: true
+        }}
+        filters={parentsFilters}
+        loadingMessage="Cargando padres..."
+        emptyMessage="No hay padres registrados"
+        itemsPerPage={10}
+        enablePagination={true}
+        enableSearch={true}
+        enableSort={true}
+      />
+    </div>
   );
 };
 

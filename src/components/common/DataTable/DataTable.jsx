@@ -14,31 +14,6 @@ import {
 } from 'lucide-react';
 import TableLoading from '../TableLoading';
 
-/**
- * DataTable - Componente de tabla reutilizable y configurable
- * 
- * @param {Object} props - Propiedades del componente
- * @param {Array} props.data - Array de datos para mostrar
- * @param {Array} props.columns - Configuración de columnas
- * @param {boolean} props.loading - Estado de carga
- * @param {string} props.title - Título de la tabla
- * @param {Object} props.icon - Icono para el header (componente Lucide)
- * @param {Function} props.onAdd - Función para agregar elemento
- * @param {Function} props.onEdit - Función para editar elemento
- * @param {Function} props.onDelete - Función para eliminar elemento
- * @param {Function} props.onView - Función para ver detalles
- * @param {Function} props.onImport - Función para importar datos
- * @param {Function} props.onExport - Función para exportar datos
- * @param {Object} props.actions - Configuración de acciones disponibles
- * @param {Object} props.filters - Configuración de filtros personalizados
- * @param {number} props.itemsPerPage - Items por página (default: 10)
- * @param {boolean} props.enablePagination - Habilitar paginación (default: true)
- * @param {boolean} props.enableSearch - Habilitar búsqueda global (default: true)
- * @param {boolean} props.enableSort - Habilitar ordenamiento (default: true)
- * @param {string} props.addButtonText - Texto del botón agregar
- * @param {string} props.loadingMessage - Mensaje de carga personalizado
- * @param {string} props.emptyMessage - Mensaje cuando no hay datos
- */
 const DataTable = ({
   data = [],
   columns = [],
@@ -261,9 +236,9 @@ const DataTable = ({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border ${className}`}>
+    <div className={`bg-white rounded-lg shadow-sm ${className}`}>
       {/* Header */}
-      <div className="p-4 lg:p-6 border-b">
+      <div className="p-4 lg:p-6">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             {Icon && <Icon className="w-6 h-6 text-blue-600" />}
@@ -288,7 +263,7 @@ const DataTable = ({
             {actions.export && onExport && (
               <button
                 onClick={onExport}
-                className="flex items-center gap-2 px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 text-sm border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
               >
                 <Download className="w-4 h-4" />
                 Exportar
@@ -309,7 +284,7 @@ const DataTable = ({
 
       {/* Filtros */}
       {(enableSearch || Object.keys(filters).length > 0) && (
-        <div className="p-4 lg:p-6 bg-gray-50 border-b">
+        <div className="p-4 lg:p-6 bg-gray-50">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Búsqueda global */}
             {enableSearch && (

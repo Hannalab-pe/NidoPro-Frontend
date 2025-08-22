@@ -22,7 +22,8 @@ import {
   DollarSign
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
-import { useMatricula } from '../../../../hooks/useMatricula';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 // Esquema de validación con Yup según backend
 const validationSchema = yup.object({
@@ -63,8 +64,10 @@ const FormField = ({ label, error, required, children, className = "" }) => (
 );
 
 const ModalAgregarMatricula = ({ isOpen, onClose }) => {
-  const { createStudent, loading } = useMatricula();
+  const [loading, setLoading] = useState(false);
   const [voucherImage, setVoucherImage] = useState(null);
+  const [voucherFile, setVoucherFile] = useState(null);
+  const [uploadingVoucher, setUploadingVoucher] = useState(false);
 
   const {
     register,
@@ -79,7 +82,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
       // Datos de matrícula
       costoMatricula: '',
       fechaIngreso: '',
-      idGrado: '',
+      idGrado: 'd59cef90-422d-4562-88df-85dbf9514a9b',
       metodoPago: 'Transferencia bancaria',
       
       // Datos del apoderado
@@ -104,48 +107,83 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
 
   const onSubmit = async (data) => {
     try {
-      // Estructurar datos según el formato del backend
+      setLoading(true);
+      
+      // Estructurar datos según el formato esperado
       const matriculaData = {
         costoMatricula: data.costoMatricula.toString(),
-        fechaIngreso: data.fechaIngreso,
-        idGrado: data.idGrado,
+        fechaIngreso: data.fechaIngreso instanceof Date ? data.fechaIngreso.toISOString().split('T')[0] : data.fechaIngreso,
         metodoPago: data.metodoPago,
-        voucherImg: voucherImage || "",
-        idApoderado: "", // Se generará en el backend
-        idEstudiante: "", // Se generará en el backend
+        voucherImg: "", // Simplificado por ahora
+        idGrado: data.idGrado,
+        
         apoderadoData: {
           nombre: data.apoderadoNombre,
           apellido: data.apoderadoApellido,
+          numero: data.apoderadoTelefono || "",
+          correo: data.apoderadoCorreo || "",
+          direccion: data.apoderadoDireccion || "",
           tipoDocumentoIdentidad: data.apoderadoTipoDoc,
-          documentoIdentidad: data.apoderadoDocumento,
-          numero: data.apoderadoTelefono,
-          correo: data.apoderadoCorreo,
-          direccion: data.apoderadoDireccion
+          documentoIdentidad: data.apoderadoDocumento
         },
+        
         estudianteData: {
           nombre: data.estudianteNombre,
           apellido: data.estudianteApellido,
+          contactoEmergencia: data.contactoEmergencia || "",
+          nroEmergencia: data.nroEmergencia || "",
+          tipoDocumento: data.estudianteTipoDoc || "DNI",
           nroDocumento: data.estudianteDocumento,
-          tipoDocumento: data.estudianteTipoDoc,
-          contactoEmergencia: data.contactoEmergencia,
-          nroEmergencia: data.nroEmergencia,
           observaciones: data.observaciones || "",
-          idRol: "estudiante" // Valor por defecto
+          idRol: "6f915b56-56c4-42bd-8403-54a76981adfb"
         }
       };
 
-      await createStudent(matriculaData);
+      console.log('📋 Datos de matrícula preparados:', matriculaData);
+      
+      // Hacer la llamada al backend
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+      const token = localStorage.getItem('token');
+      
+      const response = await axios.post(`${API_BASE_URL}/matricula`, matriculaData, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token ? `Bearer ${token}` : ''
+        }
+      });
+
+      console.log('✅ Respuesta del servidor:', response.data);
+      toast.success('Matrícula registrada correctamente');
+      
+      // Limpiar formulario
       reset();
       setVoucherImage(null);
+      setVoucherFile(null);
       onClose();
     } catch (error) {
-      console.error('Error al matricular estudiante:', error);
+      console.error('❌ Error al matricular estudiante:', error);
+      
+      // Manejo específico de errores
+      if (error.response) {
+        const errorMessage = error.response.data?.message || 'Error del servidor';
+        toast.error(`Error: ${errorMessage}`);
+        console.error('Error del servidor:', error.response.data);
+      } else if (error.request) {
+        toast.error('No se pudo conectar con el servidor');
+        console.error('Error de conexión:', error.request);
+      } else {
+        toast.error('Error al procesar la solicitud');
+        console.error('Error:', error.message);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleClose = () => {
     reset();
     setVoucherImage(null);
+    setVoucherFile(null);
     onClose();
   };
 
@@ -164,13 +202,9 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
     'Plin'
   ];
 
+  // Grado real del backend
   const grados = [
-    { id: 'c3d4e5f6-g7h8-9012-cdef-345678901234', nombre: 'Inicial 3 años' },
-    { id: 'c3d4e5f6-g7h8-9012-cdef-345678901235', nombre: 'Inicial 4 años' },
-    { id: 'c3d4e5f6-g7h8-9012-cdef-345678901236', nombre: 'Inicial 5 años' },
-    { id: 'c3d4e5f6-g7h8-9012-cdef-345678901237', nombre: '1er Grado Primaria' },
-    { id: 'c3d4e5f6-g7h8-9012-cdef-345678901238', nombre: '2do Grado Primaria' },
-    { id: 'c3d4e5f6-g7h8-9012-cdef-345678901239', nombre: '3er Grado Primaria' }
+    { id: 'd59cef90-422d-4562-88df-85dbf9514a9b', nombre: 'PreNatal' }
   ];
 
   return (
@@ -311,7 +345,10 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
                                 />
                                 <button
                                   type="button"
-                                  onClick={() => setVoucherImage(null)}
+                                  onClick={() => {
+                                    setVoucherImage(null);
+                                    setVoucherFile(null);
+                                  }}
                                   className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
                                 >
                                   <X className="w-4 h-4" />
@@ -329,6 +366,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
                                   onChange={(e) => {
                                     const file = e.target.files[0];
                                     if (file) {
+                                      setVoucherFile(file);
                                       const reader = new FileReader();
                                       reader.onload = (e) => setVoucherImage(e.target.result);
                                       reader.readAsDataURL(file);
@@ -574,15 +612,25 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
                     </button>
                     <button
                       type="submit"
-                      disabled={loading}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                      disabled={loading || uploadingVoucher}
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      {loading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
+                      {uploadingVoucher ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Subiendo voucher...
+                        </>
+                      ) : loading ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Matriculando...
+                        </>
                       ) : (
-                        <Save className="w-4 h-4" />
+                        <>
+                          <Save className="w-4 h-4" />
+                          Matricular Estudiante
+                        </>
                       )}
-                      <span>{loading ? 'Matriculando...' : 'Matricular Estudiante'}</span>
                     </button>
                   </div>
                 </form>

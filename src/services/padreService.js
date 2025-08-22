@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Base URL del API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
 
 // Configuración de axios
 const api = axios.create({
@@ -62,7 +62,7 @@ export const padreService = {
         }
       });
       
-      const response = await api.get(`/parents?${params.toString()}`);
+      const response = await api.get(`/apoderado?${params.toString()}`);
       return response.data;
     } catch (error) {
       console.error('Error al obtener padres:', error);
@@ -77,7 +77,7 @@ export const padreService = {
    */
   async getParentById(id) {
     try {
-      const response = await api.get(`/parents/${id}`);
+      const response = await api.get(`/apoderado/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error al obtener padre:', error);
@@ -132,7 +132,7 @@ export const padreService = {
         lastVisit: null
       };
 
-      const response = await api.post('/parents', payload);
+      const response = await api.post('/apoderado', payload);
       console.log('✅ Padre creado exitosamente:', response.data);
       return response.data;
     } catch (error) {
@@ -178,7 +178,7 @@ export const padreService = {
         }
       });
 
-      const response = await api.put(`/parents/${id}`, payload);
+      const response = await api.put(`/apoderado/${id}`, payload);
       console.log('✅ Padre actualizado exitosamente:', response.data);
       return response.data;
     } catch (error) {
@@ -195,7 +195,7 @@ export const padreService = {
   async deleteParent(id) {
     try {
       console.log('🗑️ Eliminando padre:', id);
-      await api.delete(`/parents/${id}`);
+      await api.delete(`/apoderado/${id}`);
       console.log('✅ Padre eliminado exitosamente');
     } catch (error) {
       console.error('❌ Error al eliminar padre:', error);
@@ -212,7 +212,7 @@ export const padreService = {
   async changeParentStatus(id, status) {
     try {
       console.log('🔄 Cambiando estado del padre:', id, status);
-      const response = await api.patch(`/parents/${id}/status`, { status });
+      const response = await api.patch(`/apoderado/${id}/status`, { status });
       console.log('✅ Estado cambiado exitosamente:', response.data);
       return response.data;
     } catch (error) {

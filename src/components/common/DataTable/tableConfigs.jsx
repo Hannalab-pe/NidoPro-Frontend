@@ -9,78 +9,74 @@ import StudentAvatar from '../StudentAvatar';
 export const studentsColumns = [
   {
     Header: 'Estudiante',
-    accessor: 'name',
+    accessor: 'nombre',
     sortable: true,
     Cell: ({ value, row }) => (
       <div className="flex items-center space-x-3">
-        <StudentAvatar 
-          student={row} 
-          size="sm"
-        />
+        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+          {row.foto ? (
+            <img 
+              src={row.foto} 
+              alt={`${value} ${row.apellido}`} 
+              className="w-10 h-10 rounded-full object-cover"
+            />
+          ) : (
+            <span className="text-gray-600 font-medium">
+              {value?.charAt(0)?.toUpperCase()}
+            </span>
+          )}
+        </div>
         <div>
-          <div className="font-medium text-gray-900">{value}</div>
-          <div className="text-sm text-gray-500">{row.email}</div>
+          <div className="font-medium text-gray-900">{`${value} ${row.apellido || ''}`}</div>
+          <div className="text-sm text-gray-500">{row.nroDocumento || 'Sin documento'}</div>
         </div>
       </div>
     )
   },
   {
-    Header: 'Grado',
-    accessor: 'grade',
-    sortable: true
-  },
-  {
-    Header: 'Edad',
-    accessor: 'age',
-    type: 'number',
+    Header: 'Documento',
+    accessor: 'nroDocumento',
     sortable: true,
-    Cell: ({ value }) => `${value} años`
-  },
-  {
-    Header: 'Promedio',
-    accessor: 'average',
-    type: 'number',
-    sortable: true,
-    Cell: ({ value }) => (
-      <span className={`font-semibold ${
-        value >= 9 ? 'text-green-600' : 
-        value >= 7 ? 'text-yellow-600' : 
-        'text-red-600'
-      }`}>
-        {value || '-'}
-      </span>
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="font-mono text-sm">{value || 'Sin documento'}</div>
+        <div className="text-xs text-gray-500">{row.tipoDocumento || 'DNI'}</div>
+      </div>
     )
   },
   {
-    Header: 'Asistencia',
-    accessor: 'attendance',
-    type: 'percentage',
+    Header: 'Contacto Emergencia',
+    accessor: 'contactoEmergencia',
     sortable: true,
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="text-sm">{value || 'Sin contacto'}</div>
+        <div className="text-xs text-gray-500">{row.nroEmergencia || ''}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Observaciones',
+    accessor: 'observaciones',
+    sortable: false,
     Cell: ({ value }) => (
-      <span className={`font-semibold ${
-        value >= 90 ? 'text-green-600' : 
-        value >= 80 ? 'text-yellow-600' : 
-        'text-red-600'
-      }`}>
-        {value}%
+      <span className="text-sm text-gray-600">
+        {value ? (value.length > 30 ? `${value.substring(0, 30)}...` : value) : 'Sin observaciones'}
       </span>
     )
   },
   {
     Header: 'Estado',
-    accessor: 'status',
+    accessor: 'estaActivo',
     type: 'status',
     sortable: true,
-    statusColors: {
-      'active': 'bg-green-100 text-green-800',
-      'inactive': 'bg-red-100 text-red-800',
-      'pending': 'bg-yellow-100 text-yellow-800'
-    },
-    statusLabels: {
-      'active': 'Activo',
-      'inactive': 'Inactivo',
-      'pending': 'Pendiente'
-    }
+    Cell: ({ value }) => (
+      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+        value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      }`}>
+        {value ? 'Activo' : 'Inactivo'}
+      </span>
+    )
   }
 ];
 
@@ -109,6 +105,95 @@ export const studentsFilters = {
       { value: 'active', label: 'Activo' },
       { value: 'inactive', label: 'Inactivo' },
       { value: 'pending', label: 'Pendiente' }
+    ]
+  }
+};
+
+// Configuración de columnas para trabajadores
+export const trabajadoresColumns = [
+  {
+    Header: 'Trabajador',
+    accessor: 'nombre',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <span className="text-sm font-medium text-blue-600">
+            {value?.charAt(0)?.toUpperCase()}{row.apellido?.charAt(0)?.toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">{`${value} ${row.apellido || ''}`}</div>
+          <div className="text-sm text-gray-500">{row.correo || 'Sin correo'}</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Documento',
+    accessor: 'nroDocumento',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="text-sm text-gray-900">{row.tipoDocumento || 'DNI'}</div>
+        <div className="text-sm text-gray-500">{value || 'Sin documento'}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Contacto',
+    accessor: 'telefono',
+    sortable: false,
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="text-sm text-gray-900">{value || 'Sin teléfono'}</div>
+        <div className="text-sm text-gray-500">{row.direccion || 'Sin dirección'}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Rol',
+    accessor: 'idRol',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div>
+        <div className="text-sm text-gray-900">{value?.nombre || 'Sin rol'}</div>
+        <div className="text-sm text-gray-500">{value?.descripcion || ''}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estaActivo',
+    type: 'status',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+        value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      }`}>
+        {value ? 'Activo' : 'Inactivo'}
+      </span>
+    )
+  }
+];
+
+// Filtros para trabajadores
+export const trabajadoresFilters = {
+  tipoDocumento: {
+    label: 'Tipo de Documento',
+    placeholder: 'Todos los tipos',
+    options: [
+      { value: 'DNI', label: 'DNI' },
+      { value: 'CE', label: 'Carnet de Extranjería' },
+      { value: 'Pasaporte', label: 'Pasaporte' }
+    ]
+  },
+  estaActivo: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'true', label: 'Activos' },
+      { value: 'false', label: 'Inactivos' }
     ]
   }
 };
@@ -218,15 +303,15 @@ export const teachersFilters = {
 export const parentsColumns = [
   {
     Header: 'Padre/Madre',
-    accessor: 'name',
+    accessor: 'nombre',
     sortable: true,
     Cell: ({ value, row }) => (
       <div className="flex items-center space-x-3">
         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-          {row.photo ? (
+          {row.foto ? (
             <img 
-              src={row.photo} 
-              alt={value} 
+              src={row.foto} 
+              alt={`${value} ${row.apellido}`} 
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
@@ -236,58 +321,55 @@ export const parentsColumns = [
           )}
         </div>
         <div>
-          <div className="font-medium text-gray-900">{value}</div>
-          <div className="text-sm text-gray-500">{row.email}</div>
+          <div className="font-medium text-gray-900">{`${value} ${row.apellido || ''}`}</div>
+          <div className="text-sm text-gray-500">{row.correo || 'Sin correo'}</div>
         </div>
       </div>
     )
   },
   {
     Header: 'Relación',
-    accessor: 'relation',
+    accessor: 'relacion',
     sortable: true,
     Cell: ({ value }) => (
-      <span className="capitalize">{value}</span>
+      <span className="capitalize">{value || 'No especificado'}</span>
     )
   },
   {
     Header: 'Teléfono',
-    accessor: 'phone',
-    sortable: false
+    accessor: 'numero',
+    sortable: false,
+    Cell: ({ value }) => (
+      <span>{value || 'Sin teléfono'}</span>
+    )
   },
   {
-    Header: 'Participación',
-    accessor: 'participationLevel',
+    Header: 'DNI',
+    accessor: 'dni',
     sortable: true,
     Cell: ({ value }) => (
-      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-        value === 'high' ? 'bg-green-100 text-green-800' :
-        value === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-        'bg-red-100 text-red-800'
-      }`}>
-        {value === 'high' ? 'Alta' : value === 'medium' ? 'Media' : 'Baja'}
-      </span>
+      <span className="font-mono">{value || 'Sin DNI'}</span>
     )
   },
   {
     Header: 'Estado',
-    accessor: 'status',
+    accessor: 'estado',
     type: 'status',
     sortable: true,
     statusColors: {
-      'active': 'bg-green-100 text-green-800',
-      'inactive': 'bg-red-100 text-red-800'
+      'activo': 'bg-green-100 text-green-800',
+      'inactivo': 'bg-red-100 text-red-800'
     },
     statusLabels: {
-      'active': 'Activo',
-      'inactive': 'Inactivo'
+      'activo': 'Activo',
+      'inactivo': 'Inactivo'
     }
   }
 ];
 
 // Filtros para padres
 export const parentsFilters = {
-  relation: {
+  relacion: {
     label: 'Relación',
     placeholder: 'Todas las relaciones',
     options: [
@@ -298,13 +380,12 @@ export const parentsFilters = {
       { value: 'otro', label: 'Otro' }
     ]
   },
-  participationLevel: {
-    label: 'Participación',
-    placeholder: 'Todos los niveles',
+  estado: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
     options: [
-      { value: 'high', label: 'Alta' },
-      { value: 'medium', label: 'Media' },
-      { value: 'low', label: 'Baja' }
+      { value: 'activo', label: 'Activo' },
+      { value: 'inactivo', label: 'Inactivo' }
     ]
   }
 };

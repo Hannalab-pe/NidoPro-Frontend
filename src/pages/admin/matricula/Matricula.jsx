@@ -1,185 +1,58 @@
 import React, { useState } from 'react';
-import { 
-  UserPlus, 
-  Users,
-  GraduationCap,
-  Calendar
-} from 'lucide-react';
-import { useMatricula } from '../../../hooks/useMatricula';
-import TablaMatricula from './tablas/TablaMatricula';
+import { UserPlus } from 'lucide-react';
 import ModalAgregarMatricula from './modales/ModalAgregarMatricula';
-import ModalVerMatricula from './modales/ModalVerMatricula';
-import ModalEditarMatricula from './modales/ModalEditarMatricula';
-import ModalEliminarMatricula from './modales/ModalEliminarMatricula';
 
 const Matricula = () => {
-  // Hook personalizado para gestión de estudiantes
-  const { 
-    students, 
-    loading,
-    getActiveStudents,
-    getTotalStudents,
-    getStudentsByGrade,
-    getRecentEnrollments
-  } = useMatricula();
-
-  // Estados locales solo para UI
+  // Estado simple para el modal de registro
   const [showModal, setShowModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
 
-  // Estadísticas dinámicas basadas en datos reales
-  const stats = [
-    { 
-      title: 'Total Matriculados', 
-      value: (getTotalStudents() || 0).toString(), 
-      icon: UserPlus, 
-      color: 'bg-blue-500' 
-    },
-    { 
-      title: 'Estudiantes Activos', 
-      value: (getActiveStudents()?.length || 0).toString(), 
-      icon: Users, 
-      color: 'bg-green-500' 
-    },
-    { 
-      title: 'Grados Disponibles', 
-      value: (getStudentsByGrade()?.length || 0).toString(), 
-      icon: GraduationCap, 
-      color: 'bg-yellow-500' 
-    },
-    { 
-      title: 'Matrículas Recientes', 
-      value: (getRecentEnrollments() || 0).toString(), 
-      icon: Calendar, 
-      color: 'bg-purple-500' 
-    }
-  ];
 
-  // Funciones para manejar las acciones de la tabla
   const handleAdd = () => {
     setShowModal(true);
-  };
-
-  const handleEdit = (estudiante) => {
-    setSelectedStudent(estudiante);
-    setShowEditModal(true);
-  };
-
-  const handleDelete = (estudiante) => {
-    setSelectedStudent(estudiante);
-    setShowDeleteModal(true);
-  };
-
-  const handleView = (estudiante) => {
-    setSelectedStudent(estudiante);
-    setShowViewModal(true);
-  };
-
-  const handleImport = () => {
-    console.log('Importar matrículas');
-    // TODO: Implementar funcionalidad de importación
-  };
-
-  const handleExport = () => {
-    console.log('Exportar matrículas');
-    // TODO: Implementar funcionalidad de exportación
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      {/* TODO: Agregar header si es necesario */}
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-full ${stat.color} text-white`}>
-                <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
-              </div>
-            </div>
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Matrícula de Estudiantes</h1>
+            <p className="text-gray-600 mt-1">Registra nuevos estudiantes en el sistema</p>
           </div>
-        ))}
-      </div>
-
-      {/* Componente de Tabla de Matrícula */}
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Gestión de Matrícula</h2>
           <button
             onClick={handleAdd}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
           >
-            Matricular Estudiante
+            <UserPlus className="w-5 h-5" />
+            <span>Nueva Matrícula</span>
           </button>
-        </div>
-        <div className="text-center py-12">
-          <div className="text-gray-400 mb-4">
-            <UserPlus className="w-16 h-16 mx-auto" />
-          </div>
-          <h3 className="text-lg font-medium text-gray-600 mb-2">
-            Módulo en Desarrollo
-          </h3>
-          <p className="text-gray-500">
-            La tabla de estudiantes estará disponible cuando se configure el endpoint del backend.
-          </p>
         </div>
       </div>
 
-      {/* Tabla comentada temporalmente
-      <TablaMatricula
-        estudiantes={students || []}
-        loading={loading}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
-        onImport={handleImport}
-        onExport={handleExport}
-      />
+      {/* Información temporal */}
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-yellow-800">
+              Módulo en desarrollo
+            </h3>
+            <div className="mt-2 text-sm text-yellow-700">
+              <p>La tabla de estudiantes está temporalmente deshabilitada. Solo está disponible el registro de nuevas matrículas.</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Modal para agregar matrícula */}
       <ModalAgregarMatricula
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-      />
-
-      {/* Modal para ver matrícula */}
-      <ModalVerMatricula
-        isOpen={showViewModal}
-        onClose={() => {
-          setShowViewModal(false);
-          setSelectedStudent(null);
-        }}
-        estudiante={selectedStudent}
-      />
-
-      {/* Modal para editar matrícula */}
-      <ModalEditarMatricula
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedStudent(null);
-        }}
-        estudiante={selectedStudent}
-      />
-
-      {/* Modal para eliminar matrícula */}
-      <ModalEliminarMatricula
-        isOpen={showDeleteModal}
-        onClose={() => {
-          setShowDeleteModal(false);
-          setSelectedStudent(null);
-        }}
-        estudiante={selectedStudent}
       />
     </div>
   );

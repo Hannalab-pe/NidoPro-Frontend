@@ -1,24 +1,18 @@
 // src/hooks/useStudents.js
-import { useState, useEffect, useCallback } from 'react';
-import { toast } from 'sonner';
-import { studentService } from '../services/studentService';
-import { uploadStudentImage } from '../services/cloudinaryService';
+import { useState, useCallback } from 'react';
+import {
+  useEstudiantes,
+  useCreateEstudiante,
+  useUpdateEstudiante,
+  useDeleteEstudiante,
+  useToggleEstudianteStatus
+} from './queries/useEstudiantesQueries';
 
 /**
- * Hook personalizado para gestionar estudiantes
+ * Hook personalizado para gestionar estudiantes usando TanStack Query
  * Proporciona todas las funcionalidades CRUD y gestión de estado
  */
 export const useStudents = () => {
-  // Estados principales
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Estados para operaciones específicas
-  const [creating, setCreating] = useState(false);
-  const [updating, setUpdating] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [uploading, setUploading] = useState(false);
-
   // Estado para filtros y búsqueda
   const [filters, setFilters] = useState({
     grade: '',
@@ -26,339 +20,61 @@ export const useStudents = () => {
     search: ''
   });
 
-  /**
-   * Manejar errores de forma consistente con toast
-   */
-  const handleError = useCallback((error, operation = '') => {
-    const errorMessage = error.message || `Error en ${operation}`;
-    toast.error(errorMessage, {
-      description: operation ? `Operación: ${operation}` : undefined,
-      duration: 5000,
-    });
-    console.error(`❌ ${operation}:`, error);
-  }, []);
+  // TanStack Query hooks
+  const { data: students = [], isLoading: loading, refetch: fetchStudents } = useEstudiantes(filters);
+  const createMutation = useCreateEstudiante();
+  const updateMutation = useUpdateEstudiante();
+  const deleteMutation = useDeleteEstudiante();
+  const toggleStatusMutation = useToggleEstudianteStatus();
+
+  // Estados de operaciones
+  const creating = createMutation.isPending;
+  const updating = updateMutation.isPending;
+  const deleting = deleteMutation.isPending;
+  const uploading = creating || updating; // Se maneja internamente en las mutaciones
 
   /**
-   * Manejar mensajes de éxito con toast
-   */
-  const handleSuccess = useCallback((message, description = '') => {
-    toast.success(message, {
-      description: description || undefined,
-      duration: 3000,
-    });
-    console.log(`✅ ${message}`);
-  }, []);
-
-  /**
-   * Obtener todos los estudiantes
-   */
-  const fetchStudents = useCallback(async (customFilters = {}) => {
-    setLoading(true);
-    
-    try {
-      const appliedFilters = { ...filters, ...customFilters };
-      const data = await studentService.getAllStudents(appliedFilters);
-      setStudents(data);
-      console.log('📚 Estudiantes cargados:', data.length);
-    } catch (error) {
-      handleError(error, 'cargar estudiantes');
-    } finally {
-      setLoading(false);
-    }
-  }, [filters, handleError]);
-
-  /**
-   * Crear un nuevo estudiante con upload de imagen
+   * Crear un nuevo estudiante
    */
   const createStudent = useCallback(async (studentData) => {
-    setCreating(true);
-    
-    // Toast de carga
-    const loadingToast = toast.loading('Creando estudiante...', {
-      description: 'Subiendo imagen y guardando datos...'
-    });
-    
-    try {
-      console.log('🔄 Iniciando creación de estudiante...');
-      
-      // Si hay una imagen, subirla primero a Cloudinary
-      let photoData = null;
-      if (studentData.photoFile) {
-        console.log('📷 Subiendo imagen a Cloudinary...');
-        setUploading(true);
-        
-        // Actualizar toast de carga
-        toast.loading('Subiendo imagen...', { 
-          id: loadingToast,
-          description: 'Procesando imagen del estudiante...'
-        });
-        
-        try {
-          const uploadResult = await uploadStudentImage(studentData.photoFile);
-          photoData = {
-            url: uploadResult.url,
-            publicId: uploadResult.publicId,
-            thumbnailUrl: uploadResult.thumbnailUrl,
-            detailUrl: uploadResult.detailUrl
-          };
-          console.log('✅ Imagen subida exitosamente:', photoData);
-        } catch (uploadError) {
-          console.error('❌ Error al subir imagen:', uploadError);
-          toast.error('Error al subir la imagen', { 
-            id: loadingToast,
-            description: 'Intenta con una imagen más pequeña'
-          });
-          throw new Error('Error al subir la imagen del estudiante');
-        } finally {
-          setUploading(false);
-        }
-      }
-
-      // Actualizar toast de carga
-      toast.loading('Guardando estudiante...', { 
-        id: loadingToast,
-        description: 'Creando registro en la base de datos...'
-      });
-
-      // Preparar datos del estudiante
-      const finalStudentData = {
-        ...studentData,
-        photo: photoData || studentData.photo || null
-      };
-
-      // Remover el archivo de la imagen ya que ya fue procesado
-      delete finalStudentData.photoFile;
-
-      // Crear estudiante en el backend
-      console.log('💾 Guardando estudiante en el backend...');
-      const newStudent = await studentService.createStudent(finalStudentData);
-      
-      // Actualizar lista local
-      setStudents(prevStudents => [newStudent, ...prevStudents]);
-      
-      // Toast de éxito
-      toast.success('¡Estudiante creado exitosamente!', {
-        id: loadingToast,
-        description: `${newStudent.name} ha sido agregado al sistema`
-      });
-      
-      return newStudent;
-      
-    } catch (error) {
-      toast.error('Error al crear estudiante', {
-        id: loadingToast,
-        description: error.message
-      });
-      handleError(error, 'crear estudiante');
-      throw error;
-    } finally {
-      setCreating(false);
-      setUploading(false);
-    }
-  }, [handleError, handleSuccess]);
+    return createMutation.mutateAsync(studentData);
+  }, [createMutation]);
 
   /**
    * Actualizar un estudiante existente
    */
   const updateStudent = useCallback(async (id, studentData) => {
-    setUpdating(true);
-    
-    const loadingToast = toast.loading('Actualizando estudiante...', {
-      description: 'Guardando cambios...'
-    });
-    
-    try {
-      console.log('🔄 Actualizando estudiante:', id);
-      
-      // Si hay una nueva imagen, subirla primero
-      let photoData = studentData.photo;
-      if (studentData.photoFile) {
-        console.log('📷 Subiendo nueva imagen...');
-        setUploading(true);
-        
-        toast.loading('Subiendo nueva imagen...', {
-          id: loadingToast,
-          description: 'Procesando imagen actualizada...'
-        });
-        
-        try {
-          const uploadResult = await uploadStudentImage(studentData.photoFile);
-          photoData = {
-            url: uploadResult.url,
-            publicId: uploadResult.publicId,
-            thumbnailUrl: uploadResult.thumbnailUrl,
-            detailUrl: uploadResult.detailUrl
-          };
-        } catch (uploadError) {
-          console.error('❌ Error al subir nueva imagen:', uploadError);
-          toast.error('Error al subir nueva imagen', {
-            id: loadingToast,
-            description: uploadError.message
-          });
-          throw new Error('Error al subir la nueva imagen');
-        } finally {
-          setUploading(false);
-        }
-      }
-
-      // Preparar datos actualizados
-      const finalStudentData = {
-        ...studentData,
-        photo: photoData
-      };
-      delete finalStudentData.photoFile;
-
-      // Actualizar en el backend
-      const updatedStudent = await studentService.updateStudent(id, finalStudentData);
-      
-      // Actualizar lista local
-      setStudents(prevStudents => 
-        prevStudents.map(student => 
-          student.id === id ? updatedStudent : student
-        )
-      );
-      
-      toast.success('Estudiante actualizado exitosamente', {
-        id: loadingToast,
-        description: `Los datos de ${updatedStudent.name} han sido actualizados`
-      });
-      
-      return updatedStudent;
-      
-    } catch (error) {
-      toast.error('Error al actualizar estudiante', {
-        id: loadingToast,
-        description: error.message
-      });
-      handleError(error, 'actualizar estudiante');
-      throw error;
-    } finally {
-      setUpdating(false);
-      setUploading(false);
-    }
-  }, [handleError, handleSuccess]);
+    return updateMutation.mutateAsync({ id, ...studentData });
+  }, [updateMutation]);
 
   /**
    * Eliminar un estudiante
    */
   const deleteStudent = useCallback(async (id) => {
-    setDeleting(true);
-    
-    const loadingToast = toast.loading('Eliminando estudiante...', {
-      description: 'Procesando eliminación...'
-    });
-    
-    try {
-      console.log('🗑️ Eliminando estudiante:', id);
-      await studentService.deleteStudent(id);
-      
-      // Remover de la lista local
-      setStudents(prevStudents => 
-        prevStudents.filter(student => student.id !== id)
-      );
-      
-      toast.success('Estudiante eliminado exitosamente', {
-        id: loadingToast,
-        description: 'El registro ha sido eliminado del sistema'
-      });
-      
-    } catch (error) {
-      toast.error('Error al eliminar estudiante', {
-        id: loadingToast,
-        description: error.message
-      });
-      handleError(error, 'eliminar estudiante');
-      throw error;
-    } finally {
-      setDeleting(false);
-    }
-  }, [handleError, handleSuccess]);
+    return deleteMutation.mutateAsync(id);
+  }, [deleteMutation]);
 
   /**
    * Cambiar estado de un estudiante
    */
   const changeStudentStatus = useCallback(async (id, status) => {
-    const loadingToast = toast.loading('Cambiando estado...', {
-      description: `${status === 'active' ? 'Activando' : 'Desactivando'} estudiante...`
-    });
-    
-    try {
-      console.log('🔄 Cambiando estado del estudiante:', id, status);
-      const updatedStudent = await studentService.changeStudentStatus(id, status);
-      
-      // Actualizar lista local
-      setStudents(prevStudents => 
-        prevStudents.map(student => 
-          student.id === id ? updatedStudent : student
-        )
-      );
-      
-      const statusText = status === 'active' ? 'activado' : 'desactivado';
-      toast.success(`Estudiante ${statusText} exitosamente`, {
-        id: loadingToast,
-        description: `${updatedStudent.name} ha sido ${statusText}`
-      });
-      
-      return updatedStudent;
-      
-    } catch (error) {
-      toast.error('Error al cambiar estado', {
-        id: loadingToast,
-        description: error.message
-      });
-      handleError(error, 'cambiar estado del estudiante');
-      throw error;
-    }
-  }, [handleError, handleSuccess]);
+    // Para compatibilidad, convertir el status al toggle
+    return toggleStatusMutation.mutateAsync(id);
+  }, [toggleStatusMutation]);
 
   /**
-   * Buscar estudiantes
+   * Buscar estudiantes (actualizar filtros)
    */
   const searchStudents = useCallback(async (query) => {
-    setLoading(true);
-    
-    try {
-      const results = await studentService.searchStudents(query);
-      setStudents(results);
-      console.log('🔍 Resultados de búsqueda:', results.length);
-      
-      if (results.length === 0) {
-        toast.info('No se encontraron estudiantes', {
-          description: `No hay resultados para "${query}"`
-        });
-      }
-    } catch (error) {
-      handleError(error, 'buscar estudiantes');
-    } finally {
-      setLoading(false);
-    }
-  }, [handleError]);
+    setFilters(prev => ({ ...prev, search: query }));
+  }, []);
 
   /**
    * Filtrar estudiantes por grado
    */
   const filterByGrade = useCallback(async (grade) => {
-    setLoading(true);
-    
-    try {
-      if (grade) {
-        const results = await studentService.getStudentsByGrade(grade);
-        setStudents(results);
-        toast.success(`Filtrado por ${grade}`, {
-          description: `${results.length} estudiantes encontrados`
-        });
-      } else {
-        await fetchStudents();
-        toast.info('Filtros eliminados', {
-          description: 'Mostrando todos los estudiantes'
-        });
-      }
-    } catch (error) {
-      handleError(error, 'filtrar estudiantes por grado');
-    } finally {
-      setLoading(false);
-    }
-  }, [fetchStudents, handleError]);
+    setFilters(prev => ({ ...prev, grade }));
+  }, []);
 
   /**
    * Actualizar filtros
@@ -386,21 +102,13 @@ export const useStudents = () => {
   }, [fetchStudents]);
 
   /**
-   * Obtener un estudiante por ID
+   * Obtener un estudiante por ID (se puede implementar con useEstudiante)
    */
   const getStudentById = useCallback(async (id) => {
-    try {
-      return await studentService.getStudentById(id);
-    } catch (error) {
-      handleError(error, 'obtener estudiante');
-      throw error;
-    }
-  }, [handleError]);
-
-  // Cargar estudiantes al montar el componente
-  useEffect(() => {
-    fetchStudents();
-  }, [fetchStudents]);
+    // Esta función puede usar el hook useEstudiante cuando sea necesario
+    const student = students.find(s => s.id === id || s.idEstudiante === id);
+    return student;
+  }, [students]);
 
   // Objeto de retorno del hook
   return {
@@ -431,14 +139,15 @@ export const useStudents = () => {
     getStudentById,
 
     // Funciones derivadas
-    getActiveStudents: () => students.filter(s => s.status === 'active'),
-    getInactiveStudents: () => students.filter(s => s.status === 'inactive'),
-    getStudentsByGrade: (grade) => students.filter(s => s.grade === grade),
+    getActiveStudents: () => students.filter(s => s.estaActivo === true),
+    getInactiveStudents: () => students.filter(s => s.estaActivo === false),
+    getStudentsByGrade: (grade) => students.filter(s => s.grado === grade),
     getTotalStudents: () => students.length,
     
     // Estados computados
     hasStudents: students.length > 0,
     isOperating: creating || updating || deleting || uploading,
+    isCached: true, // TanStack Query maneja el cache automáticamente
   };
 };
 

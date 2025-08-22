@@ -123,6 +123,14 @@ const uploadTeacherImage = (file, options = {}) => uploadUserImage(file, 'profes
 const uploadParentImage = (file, options = {}) => uploadUserImage(file, 'padres', options);
 
 /**
+ * Sube voucher de pago a Cloudinary
+ * @param {File} file - Archivo de voucher a subir
+ * @param {Object} options - Opciones adicionales
+ * @returns {Promise<Object>} Resultado del upload
+ */
+const uploadVoucherImage = (file, options = {}) => uploadUserImage(file, 'vouchers', options);
+
+/**
  * Elimina una imagen de Cloudinary
  * @param {string} publicId - ID público de la imagen en Cloudinary
  * @returns {Promise<Object>} Resultado de la eliminación
@@ -173,6 +181,7 @@ export {
   uploadStudentImage,
   uploadTeacherImage,
   uploadParentImage,
+  uploadVoucherImage,
   deleteStudentImage,
   getImageUrls,
   CLOUDINARY_CONFIG

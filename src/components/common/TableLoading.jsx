@@ -29,7 +29,7 @@ const TableLoading = ({
       <div className="p-4 lg:p-6 border-b">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Icon className="w-6 h-6 text-blue-600" />
+            {Icon && <Icon className="w-6 h-6 text-blue-600" />}
             <h2 className="text-lg lg:text-xl font-semibold text-gray-900">
               {title}
             </h2>

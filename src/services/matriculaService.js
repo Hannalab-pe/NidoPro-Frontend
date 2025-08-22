@@ -48,24 +48,30 @@ api.interceptors.response.use(
 export const matriculaService = {
   /**
    * Obtener todos los estudiantes matriculados
-   * @param {Object} filters - Filtros opcionales (status, grade, search, etc.)
-   * @returns {Promise<Array>} Lista de estudiantes
+   * @param {Object} params - Parámetros de filtrado y paginación
+   * @returns {Promise<Object>} Lista de estudiantes
    */
-  async getAllStudents(filters = {}) {
+  async getStudents(params = {}) {
     try {
-      const params = new URLSearchParams();
+      console.log('📚 Obteniendo estudiantes matriculados...');
       
-      // Agregar filtros a los parámetros
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          params.append(key, value);
-        }
-      });
+      // Construir query string
+      const queryParams = new URLSearchParams();
       
-      const response = await api.get(`/estudiante?${params.toString()}`);
+      if (params.page) queryParams.append('page', params.page);
+      if (params.limit) queryParams.append('limit', params.limit);
+      if (params.search) queryParams.append('search', params.search);
+      if (params.grade) queryParams.append('grade', params.grade);
+      if (params.status) queryParams.append('status', params.status);
+      
+      const queryString = queryParams.toString();
+      const url = queryString ? `/estudiante?${queryString}` : '/estudiante';
+      
+      const response = await api.get(url);
+      console.log('✅ Estudiantes obtenidos exitosamente:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error al obtener estudiantes:', error);
+      console.error('❌ Error al obtener estudiantes:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener estudiantes');
     }
   },
@@ -90,36 +96,41 @@ export const matriculaService = {
    * @param {Object} studentData - Datos del estudiante
    * @returns {Promise<Object>} Estudiante matriculado
    */
-  async createStudent(studentData) {
+  async createStudent(matriculaData) {
     try {
-      console.log('📤 Enviando datos del estudiante al backend:', studentData);
+      console.log('📤 Enviando datos de matrícula al backend:', matriculaData);
       
-      // Validar datos requeridos según el backend
-      const requiredFields = ['nombre', 'apellido', 'contactoEmergencia', 'nroEmergencia', 'tipoDocumento', 'nroDocumento'];
-      const missingFields = requiredFields.filter(field => !studentData[field]);
-      
-      if (missingFields.length > 0) {
-        throw new Error(`Campos requeridos faltantes: ${missingFields.join(', ')}`);
+      // Validar estructura de datos requerida
+      if (!matriculaData.apoderadoData || !matriculaData.estudianteData) {
+        throw new Error('Faltan datos del apoderado o estudiante');
       }
 
-      // Preparar datos para el backend según la estructura esperada
-      const payload = {
-        nombre: studentData.nombre.trim(),
-        apellido: studentData.apellido.trim(),
-        contactoEmergencia: studentData.contactoEmergencia.trim(),
-        nroEmergencia: studentData.nroEmergencia.trim(),
-        tipoDocumento: studentData.tipoDocumento || 'DNI',
-        nroDocumento: studentData.nroDocumento.trim(),
-        observaciones: studentData.observaciones?.trim() || 'Sin observaciones',
-        idRol: '6f915b56-56c4-42bd-8403-54a76981adfb' // ID estático por ahora
-      };
+      // Validar campos obligatorios
+      const requiredMatriculaFields = ['costoMatricula', 'fechaIngreso', 'idGrado'];
+      const requiredApoderadoFields = ['nombre', 'apellido', 'tipoDocumentoIdentidad', 'documentoIdentidad'];
+      const requiredEstudianteFields = ['nombre', 'apellido', 'nroDocumento', 'idRol'];
 
-      const response = await api.post('/estudiante', payload);
-      console.log('✅ Estudiante matriculado exitosamente:', response.data);
+      const missingMatriculaFields = requiredMatriculaFields.filter(field => !matriculaData[field]);
+      const missingApoderadoFields = requiredApoderadoFields.filter(field => !matriculaData.apoderadoData[field]);
+      const missingEstudianteFields = requiredEstudianteFields.filter(field => !matriculaData.estudianteData[field]);
+
+      const allMissingFields = [
+        ...missingMatriculaFields.map(f => `matrícula.${f}`),
+        ...missingApoderadoFields.map(f => `apoderado.${f}`),
+        ...missingEstudianteFields.map(f => `estudiante.${f}`)
+      ];
+
+      if (allMissingFields.length > 0) {
+        throw new Error(`Campos requeridos faltantes: ${allMissingFields.join(', ')}`);
+      }
+
+      // Enviar datos estructurados al backend
+      const response = await api.post('/matricula', matriculaData);
+      console.log('✅ Matrícula creada exitosamente:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ Error al matricular estudiante:', error);
-      throw new Error(error.response?.data?.message || 'Error al matricular estudiante');
+      console.error('❌ Error al crear matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al crear matrícula');
     }
   },
 

@@ -58,11 +58,16 @@ export const useMatricula = () => {
     
     try {
       const appliedFilters = { ...filters, ...customFilters };
-      const data = await matriculaService.getAllStudents(appliedFilters);
-      setStudents(data || []);
-      console.log('👨‍🎓 Estudiantes cargados:', data?.length || 0);
+      const response = await matriculaService.getStudents(appliedFilters);
+      
+      // Extraer datos según la estructura de respuesta del backend
+      const estudiantesData = response.info?.data || [];
+      setStudents(Array.isArray(estudiantesData) ? estudiantesData : []);
+      
+      console.log('👨‍🎓 Estudiantes cargados:', estudiantesData.length);
     } catch (error) {
       handleError(error, 'cargar estudiantes');
+      setStudents([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -71,7 +76,7 @@ export const useMatricula = () => {
   /**
    * Matricular un nuevo estudiante con upload de imagen
    */
-  const createStudent = useCallback(async (studentData) => {
+  const createStudent = useCallback(async (data) => {
     setCreating(true);
     
     // Toast de carga
@@ -84,7 +89,7 @@ export const useMatricula = () => {
       
       // Si hay una imagen, subirla primero a Cloudinary
       let photoData = null;
-      if (studentData.photoFile) {
+      if (data.photoFile) {
         console.log('📷 Subiendo imagen a Cloudinary...');
         setUploading(true);
         
@@ -95,7 +100,7 @@ export const useMatricula = () => {
         });
         
         try {
-          const uploadResult = await uploadStudentImage(studentData.photoFile);
+          const uploadResult = await uploadStudentImage(data.photoFile);
           photoData = {
             url: uploadResult.url,
             publicId: uploadResult.publicId,
@@ -104,16 +109,23 @@ export const useMatricula = () => {
           };
           console.log('✅ Imagen subida exitosamente:', photoData);
         } catch (uploadError) {
-          console.error('❌ Error al subir imagen:', uploadError);
-          toast.error('Error al subir la imagen', { 
+          console.error('❌ Error subiendo imagen:', uploadError);
+          toast.error('Error al subir imagen', {
             id: loadingToast,
-            description: 'Intenta con una imagen más pequeña'
+            description: uploadError.message
           });
-          throw new Error('Error al subir la imagen del estudiante');
+          throw uploadError;
         } finally {
           setUploading(false);
         }
       }
+
+      // Preparar datos finales - remover campos que no debe tener
+      const finalStudentData = { ...data };
+      
+      // Remover campos que el backend no acepta
+      delete finalStudentData.photo;
+      delete finalStudentData.photoFile;
 
       // Actualizar toast de carga
       toast.loading('Guardando estudiante...', { 
@@ -121,26 +133,21 @@ export const useMatricula = () => {
         description: 'Creando registro en la base de datos...'
       });
 
-      // Preparar datos del estudiante
-      const finalStudentData = {
-        ...studentData,
-        photo: photoData || studentData.photo || null
-      };
-
-      // Remover el archivo de la imagen ya que ya fue procesado
-      delete finalStudentData.photoFile;
-
       // Crear estudiante en el backend
       console.log('💾 Guardando estudiante en el backend...');
       const newStudent = await matriculaService.createStudent(finalStudentData);
       
-      // Actualizar lista local
-      setStudents(prevStudents => [newStudent, ...prevStudents]);
+      // Actualizar lista local - verificar que prevStudents sea un array
+      setStudents(prevStudents => {
+        const currentStudents = Array.isArray(prevStudents) ? prevStudents : [];
+        return [newStudent.estudiante || newStudent, ...currentStudents];
+      });
       
       // Toast de éxito
+      const studentData = newStudent.estudiante || newStudent;
       toast.success('¡Estudiante matriculado exitosamente!', {
         id: loadingToast,
-        description: `${newStudent.name} ${newStudent.lastName} ha sido matriculado en ${newStudent.grade}`
+        description: `${studentData.nombre} ${studentData.apellido} ha sido matriculado correctamente`
       });
       
       return newStudent;
@@ -159,7 +166,7 @@ export const useMatricula = () => {
   /**
    * Actualizar información de un estudiante matriculado
    */
-  const updateStudent = useCallback(async (studentId, studentData) => {
+  const updateStudent = useCallback(async (studentId, data) => {
     setUpdating(true);
     
     // Toast de carga
@@ -171,8 +178,8 @@ export const useMatricula = () => {
       console.log('🔄 Actualizando estudiante:', studentId);
       
       // Si hay una nueva imagen, subirla primero
-      let photoData = studentData.photo;
-      if (studentData.photoFile) {
+      let photoData = data.photo;
+      if (data.photoFile) {
         console.log('📷 Subiendo nueva imagen...');
         setUploading(true);
         
@@ -182,7 +189,7 @@ export const useMatricula = () => {
         });
         
         try {
-          const uploadResult = await uploadStudentImage(studentData.photoFile);
+          const uploadResult = await uploadStudentImage(data.photoFile);
           photoData = {
             url: uploadResult.url,
             publicId: uploadResult.publicId,
@@ -203,7 +210,7 @@ export const useMatricula = () => {
 
       // Preparar datos actualizados
       const finalStudentData = {
-        ...studentData,
+        ...data,
         photo: photoData
       };
 
