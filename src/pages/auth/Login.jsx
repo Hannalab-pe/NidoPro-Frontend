@@ -187,14 +187,7 @@ const Login = () => {
             </div>
           )}
           
-          {/* Usuarios de prueba para desarrollo */}
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium mb-2">Usuarios de prueba:</p>
-            <div className="text-xs text-blue-700 space-y-1">
-              <p><strong>Admin:</strong> 66666666 / 66666666</p>
-              <p><strong>Trabajador:</strong> 76655432 / 76655432</p>
-            </div>
-          </div>
+   
 
           {/* Options */}
           <div className="flex items-center justify-between">

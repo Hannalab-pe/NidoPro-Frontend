@@ -135,7 +135,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
           tipoDocumento: data.estudianteTipoDoc || "DNI",
           nroDocumento: data.estudianteDocumento,
           observaciones: data.observaciones || "",
-          idRol: "6f915b56-56c4-42bd-8403-54a76981adfb"
+          idRol: "35225955-5aeb-4df0-8014-1cdfbce9b41e" // ID del rol ESTUDIANTE
         }
       };
 
