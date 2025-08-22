@@ -179,25 +179,37 @@ const useAuthStore = create(
               throw new Error('Token inválido');
             }
           } catch (error) {
-            // Si falla la validación del backend, mantener token para desarrollo
-            console.log('Backend no disponible, manteniendo sesión local');
+            // Si falla la validación del backend, mantener el estado persistido
+            console.log('Backend no disponible, manteniendo sesión persistida');
             
-            // Mantener el token y establecer usuario básico para desarrollo
-            set({ 
-              user: {
-                id: 'dev-user',
-                email: 'usuario@nidopro.com',
-                nombre: 'Usuario',
-                apellido: 'Desarrollo',
-                role: { id: '1', nombre: 'admin' }
-              },
-              token, 
-              isAuthenticated: true, 
-              role: { id: '1', nombre: 'admin' },
-              permissions: ['all'],
-              loading: false,
-              error: null
-            });
+            // Obtener el estado persistido del localStorage
+            const persistedState = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+            
+            if (persistedState.state && persistedState.state.user && persistedState.state.role) {
+              // Restaurar el estado persistido completo
+              set({ 
+                user: persistedState.state.user,
+                token, 
+                isAuthenticated: true, 
+                role: persistedState.state.role,
+                permissions: persistedState.state.permissions || [],
+                loading: false,
+                error: null
+              });
+            } else {
+              // Si no hay estado persistido, limpiar todo
+              localStorage.removeItem('token');
+              localStorage.removeItem('auth-storage');
+              set({ 
+                user: null,
+                token: null,
+                role: null,
+                permissions: [],
+                isAuthenticated: false,
+                loading: false,
+                error: null
+              });
+            }
           }
         } else {
           // Si no hay token, establecer loading como false
