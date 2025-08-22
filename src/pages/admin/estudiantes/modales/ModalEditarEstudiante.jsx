@@ -18,26 +18,27 @@ import { useStudents } from '../../../../hooks/useStudents';
 
 // Esquema de validación con Yup (igual que crear)
 const validationSchema = yup.object({
-  name: yup.string().required('El nombre es requerido').trim(),
-  age: yup.number()
+  nombre: yup.string().required('El nombre es requerido').trim(),
+  apellido: yup.string().required('El apellido es requerido').trim(),
+  edad: yup.number()
     .required('La edad es requerida')
     .min(5, 'La edad mínima es 5 años')
     .max(18, 'La edad máxima es 18 años'),
-  grade: yup.string().required('El grado es requerido'),
-  parent: yup.string().required('El nombre del padre/madre es requerido').trim(),
-  phone: yup.string().required('El teléfono es requerido').trim(),
-  email: yup.string()
+  grado: yup.string().required('El grado es requerido'),
+  nombrePadre: yup.string().required('El nombre del padre/madre es requerido').trim(),
+  telefonoPadre: yup.string().required('El teléfono es requerido').trim(),
+  emailPadre: yup.string()
     .email('El email no es válido')
     .required('El email es requerido'),
-  address: yup.string().required('La dirección es requerida').trim(),
+  direccion: yup.string().required('La dirección es requerida').trim(),
   // Para editar, la foto no es requerida si ya existe
-  photo: yup.object().nullable(),
-  birthDate: yup.string(),
-  dni: yup.string(),
-  emergencyContact: yup.string(),
-  emergencyPhone: yup.string(),
-  allergies: yup.string(),
-  medicalNotes: yup.string()
+  foto: yup.object().nullable(),
+  fechaNacimiento: yup.string(),
+  nroDocumento: yup.string(),
+  contactoEmergencia: yup.string(),
+  telefonoEmergencia: yup.string(),
+  alergias: yup.string(),
+  notasMedicas: yup.string()
 });
 
 // Componente FormField reutilizable
@@ -78,20 +79,21 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
   } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      name: '',
-      age: '',
-      grade: '',
-      parent: '',
-      phone: '',
-      email: '',
-      address: '',
-      birthDate: '',
-      dni: '',
-      emergencyContact: '',
-      emergencyPhone: '',
-      allergies: '',
-      medicalNotes: '',
-      photo: null,
+      nombre: '',
+      apellido: '',
+      edad: '',
+      grado: '',
+      nombrePadre: '',
+      telefonoPadre: '',
+      emailPadre: '',
+      direccion: '',
+      fechaNacimiento: '',
+      nroDocumento: '',
+      contactoEmergencia: '',
+      telefonoEmergencia: '',
+      alergias: '',
+      notasMedicas: '',
+      foto: null,
       photoFile: null
     }
   });
@@ -105,22 +107,23 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
       
       // Resetear y cargar datos
       reset({
-        name: estudiante.name || '',
-        age: estudiante.age || '',
-        grade: estudiante.grade || '',
-        parent: estudiante.parent || '',
-        phone: estudiante.phone || '',
-        email: estudiante.email || '',
-        address: estudiante.address || '',
-        birthDate: estudiante.birthDate || '',
-        dni: estudiante.dni || '',
-        emergencyContact: estudiante.emergencyContact || '',
-        emergencyPhone: estudiante.emergencyPhone || '',
-        allergies: estudiante.allergies || '',
-        medicalNotes: estudiante.medicalNotes || '',
-        photo: estudiante.photo ? {
-          url: estudiante.photo.url || estudiante.photo,
-          publicId: estudiante.photo.publicId || estudiante.photoPublicId
+        nombre: estudiante.nombre || '',
+        apellido: estudiante.apellido || '',
+        edad: estudiante.edad || '',
+        grado: estudiante.grado || '',
+        nombrePadre: estudiante.nombrePadre || '',
+        telefonoPadre: estudiante.telefonoPadre || '',
+        emailPadre: estudiante.emailPadre || '',
+        direccion: estudiante.direccion || '',
+        fechaNacimiento: estudiante.fechaNacimiento || '',
+        nroDocumento: estudiante.nroDocumento || '',
+        contactoEmergencia: estudiante.contactoEmergencia || '',
+        telefonoEmergencia: estudiante.telefonoEmergencia || '',
+        alergias: estudiante.alergias || '',
+        notasMedicas: estudiante.notasMedicas || '',
+        foto: estudiante.foto ? {
+          url: estudiante.foto.url || estudiante.foto,
+          publicId: estudiante.foto.publicId || estudiante.fotoPublicId
         } : null,
         photoFile: null
       });
@@ -227,7 +230,7 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
                         <Edit3 className="w-6 h-6 text-blue-600" />
                         Editar Estudiante
                       </Dialog.Title>
-                      <p className="text-blue-600 font-medium">{estudiante.name}</p>
+                      <p className="text-blue-600 font-medium">{`${estudiante.nombre} ${estudiante.apellido}`}</p>
                     </div>
                   </div>
                   <button
@@ -259,30 +262,39 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
                     </FormField>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Nombre Completo" required error={errors.name?.message}>
+                      <FormField label="Nombre" required error={errors.nombre?.message}>
                         <input
-                          {...register('name')}
-                          className={inputClassName(errors.name)}
-                          placeholder="Ej: Ana García Rodríguez"
+                          {...register('nombre')}
+                          className={inputClassName(errors.nombre)}
+                          placeholder="Ej: Ana"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="DNI" error={errors.dni?.message}>
+                      <FormField label="Apellido" required error={errors.apellido?.message}>
                         <input
-                          {...register('dni')}
-                          className={inputClassName(errors.dni)}
+                          {...register('apellido')}
+                          className={inputClassName(errors.apellido)}
+                          placeholder="Ej: García Rodríguez"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="DNI" error={errors.nroDocumento?.message}>
+                        <input
+                          {...register('nroDocumento')}
+                          className={inputClassName(errors.nroDocumento)}
                           placeholder="Ej: 12345678"
                           maxLength="8"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Edad" required error={errors.age?.message}>
+                      <FormField label="Edad" required error={errors.edad?.message}>
                         <input
                           type="number"
-                          {...register('age')}
-                          className={inputClassName(errors.age)}
+                          {...register('edad')}
+                          className={inputClassName(errors.edad)}
                           placeholder="Ej: 10"
                           min="5"
                           max="18"
@@ -290,11 +302,11 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
                         />
                       </FormField>
 
-                      <FormField label="Fecha de Nacimiento" error={errors.birthDate?.message}>
+                      <FormField label="Fecha de Nacimiento" error={errors.fechaNacimiento?.message}>
                         <input
                           type="date"
-                          {...register('birthDate')}
-                          className={inputClassName(errors.birthDate)}
+                          {...register('fechaNacimiento')}
+                          className={inputClassName(errors.fechaNacimiento)}
                           disabled={isLoading}
                         />
                       </FormField>
@@ -303,10 +315,10 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
 
                   {/* Información Académica */}
                   <FormSection title="Información Académica" icon={GraduationCap} iconColor="text-green-600">
-                    <FormField label="Grado" required error={errors.grade?.message}>
+                    <FormField label="Grado" required error={errors.grado?.message}>
                       <select
-                        {...register('grade')}
-                        className={inputClassName(errors.grade)}
+                        {...register('grado')}
+                        className={inputClassName(errors.grado)}
                         disabled={isLoading}
                       >
                         <option value="">Seleccionar grado</option>
@@ -320,39 +332,39 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
                   {/* Información del Padre/Madre */}
                   <FormSection title="Información del Padre/Madre" icon={User} iconColor="text-purple-600">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Nombre del Padre/Madre" required error={errors.parent?.message}>
+                      <FormField label="Nombre del Padre/Madre" required error={errors.nombrePadre?.message}>
                         <input
-                          {...register('parent')}
-                          className={inputClassName(errors.parent)}
+                          {...register('nombrePadre')}
+                          className={inputClassName(errors.nombrePadre)}
                           placeholder="Ej: María Rodríguez"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Teléfono" required error={errors.phone?.message}>
+                      <FormField label="Teléfono" required error={errors.telefonoPadre?.message}>
                         <input
                           type="tel"
-                          {...register('phone')}
-                          className={inputClassName(errors.phone)}
+                          {...register('telefonoPadre')}
+                          className={inputClassName(errors.telefonoPadre)}
                           placeholder="Ej: +51 987 654 321"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Email" required error={errors.email?.message}>
+                      <FormField label="Email" required error={errors.emailPadre?.message}>
                         <input
                           type="email"
-                          {...register('email')}
-                          className={inputClassName(errors.email)}
+                          {...register('emailPadre')}
+                          className={inputClassName(errors.emailPadre)}
                           placeholder="Ej: maria.rodriguez@email.com"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Dirección" required error={errors.address?.message}>
+                      <FormField label="Dirección" required error={errors.direccion?.message}>
                         <input
-                          {...register('address')}
-                          className={inputClassName(errors.address)}
+                          {...register('direccion')}
+                          className={inputClassName(errors.direccion)}
                           placeholder="Ej: Av. Universitaria 123, Lima"
                           disabled={isLoading}
                         />
@@ -363,20 +375,20 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
                   {/* Contacto de Emergencia */}
                   <FormSection title="Contacto de Emergencia" icon={Phone} iconColor="text-red-600">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Nombre del Contacto" error={errors.emergencyContact?.message}>
+                      <FormField label="Nombre del Contacto" error={errors.contactoEmergencia?.message}>
                         <input
-                          {...register('emergencyContact')}
-                          className={inputClassName(errors.emergencyContact)}
+                          {...register('contactoEmergencia')}
+                          className={inputClassName(errors.contactoEmergencia)}
                           placeholder="Ej: Carlos García"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Teléfono de Emergencia" error={errors.emergencyPhone?.message}>
+                      <FormField label="Teléfono de Emergencia" error={errors.telefonoEmergencia?.message}>
                         <input
                           type="tel"
-                          {...register('emergencyPhone')}
-                          className={inputClassName(errors.emergencyPhone)}
+                          {...register('telefonoEmergencia')}
+                          className={inputClassName(errors.telefonoEmergencia)}
                           placeholder="Ej: +51 987 654 322"
                           disabled={isLoading}
                         />
@@ -387,20 +399,20 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
                   {/* Información Médica */}
                   <FormSection title="Información Médica (Opcional)" icon={Calendar} iconColor="text-yellow-600">
                     <div className="space-y-4">
-                      <FormField label="Alergias" error={errors.allergies?.message}>
+                      <FormField label="Alergias" error={errors.alergias?.message}>
                         <textarea
-                          {...register('allergies')}
-                          className={inputClassName(errors.allergies)}
+                          {...register('alergias')}
+                          className={inputClassName(errors.alergias)}
                           rows="2"
                           placeholder="Ej: Alérgico a los mariscos, polen..."
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Notas Médicas" error={errors.medicalNotes?.message}>
+                      <FormField label="Notas Médicas" error={errors.notasMedicas?.message}>
                         <textarea
-                          {...register('medicalNotes')}
-                          className={inputClassName(errors.medicalNotes)}
+                          {...register('notasMedicas')}
+                          className={inputClassName(errors.notasMedicas)}
                           rows="2"
                           placeholder="Medicamentos, condiciones especiales, etc."
                           disabled={isLoading}

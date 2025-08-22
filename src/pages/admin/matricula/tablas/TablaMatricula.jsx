@@ -1,49 +1,65 @@
 import React from 'react';
-import { UserPlus } from 'lucide-react';
-import { DataTable, studentsColumns, studentsFilters } from '../../../../components/common/DataTable';
+import { DataTable, matriculaColumns, matriculaFilters } from '../../../../components/common/DataTable';
+import { Eye, Edit, Trash2 } from 'lucide-react';
 
 /**
- * Tabla de matrícula refactorizada usando el componente DataTable unificado
+ * Tabla de matrícula usando el componente DataTable unificado
  */
 const TablaMatricula = ({ 
-  estudiantes = [], 
+  matriculas = [], 
   loading = false,
   onAdd, 
   onEdit, 
   onDelete, 
-  onView,
-  onImport,
-  onExport
+  onView
 }) => {
+  // Configurar acciones para cada fila
+  const actions = [
+    {
+      icon: Eye,
+      label: 'Ver detalles',
+      onClick: onView,
+      className: 'text-blue-600 hover:text-blue-900'
+    },
+    {
+      icon: Edit,
+      label: 'Editar',
+      onClick: onEdit,
+      className: 'text-yellow-600 hover:text-yellow-900'
+    },
+    {
+      icon: Trash2,
+      label: 'Eliminar',
+      onClick: onDelete,
+      className: 'text-red-600 hover:text-red-900'
+    }
+  ];
+
   return (
     <DataTable
-      data={estudiantes}
-      columns={studentsColumns}
+      data={matriculas}
+      columns={matriculaColumns}
       loading={loading}
       title="Gestión de Matrícula"
-      icon={UserPlus}
-      onAdd={onAdd}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onView={onView}
-      onImport={onImport}
-      onExport={onExport}
+      searchPlaceholder="Buscar por nombre de estudiante..."
+      filters={matriculaFilters}
       actions={{
         add: true,
         edit: true,
         delete: true,
         view: true,
-        import: true,
-        export: true
+        import: false,
+        export: false
       }}
-      filters={studentsFilters}
-      addButtonText="Matricular Estudiante"
-      loadingMessage="Cargando matrículas..."
-      emptyMessage="No hay estudiantes matriculados"
-      itemsPerPage={10}
-      enablePagination={true}
-      enableSearch={true}
-      enableSort={true}
+      onAdd={onAdd}
+      onEdit={onEdit}
+      onDelete={onDelete}
+      onView={onView}
+      emptyStateConfig={{
+        title: 'No hay matrículas registradas',
+        description: 'Comienza agregando tu primera matrícula'
+      }}
+      addButtonText="Nueva Matrícula"
     />
   );
 };

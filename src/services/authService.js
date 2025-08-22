@@ -30,7 +30,19 @@ export const authService = {
       
       console.log('✅ Login exitoso:', data);
       
-      // Estructura del backend real
+      // Estructura del backend real con mapeo de roles
+      const getRoleMappingForUser = (backendRole) => {
+        if (backendRole === 'DIRECTORA' || backendRole === 'Admin') {
+          return { id: '1', nombre: 'admin', permissions: ['all'] };
+        } else if (backendRole === 'ESTUDIANTE') {
+          return { id: '3', nombre: 'padre', permissions: ['read_own_data', 'view_grades'] };
+        } else {
+          return { id: '2', nombre: 'trabajador', permissions: ['read_students', 'write_students'] };
+        }
+      };
+
+      const roleMapping = getRoleMappingForUser(data.usuario.rol);
+
       return {
         token: data.access_token,
         user: {
@@ -39,16 +51,16 @@ export const authService = {
           nombre: data.usuario.usuario,
           apellido: '',
           role: { 
-            id: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? '1' : '2', 
-            nombre: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? 'admin' : 'trabajador'
+            id: roleMapping.id, 
+            nombre: roleMapping.nombre
           },
-          permissions: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? ['all'] : ['read_students', 'write_students']
+          permissions: roleMapping.permissions
         },
         role: { 
-          id: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? '1' : '2', 
-          nombre: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? 'admin' : 'trabajador'
+          id: roleMapping.id, 
+          nombre: roleMapping.nombre
         },
-        permissions: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? ['all'] : ['read_students', 'write_students']
+        permissions: roleMapping.permissions
       };
     } catch (error) {
       console.error('❌ Error en login:', error);

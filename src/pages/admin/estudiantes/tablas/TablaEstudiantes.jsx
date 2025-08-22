@@ -29,11 +29,11 @@ const TablaEstudiantes = ({
       onImport={onImport}
       onExport={onExport}
       actions={{
-        add: true,
+        add: false, // Los estudiantes se agregan solo a través de matrícula
         edit: true,
         delete: true,
         view: true,
-        import: true,
+        import: false, // Import manejado por matrícula
         export: true
       }}
       filters={studentsFilters}

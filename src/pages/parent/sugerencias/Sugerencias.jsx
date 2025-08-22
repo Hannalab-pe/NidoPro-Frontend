@@ -165,11 +165,11 @@ const Sugerencias = () => {
     return suggestion.category === selectedCategory;
   });
 
-  const Sugerenciastats = {
-    total: suggestions.length,
+  const sugerenciaStats = {
+    total: sugerencias.length,
     high: sugerencias.filter(s => s.priority === 'high').length,
-    implemented: Math.floor(suggestions.length * 0.4), // Simulado
-    inProgress: Math.floor(suggestions.length * 0.3) // Simulado
+    implemented: Math.floor(sugerencias.length * 0.4), // Simulado
+    inProgress: Math.floor(sugerencias.length * 0.3) // Simulado
   };
 
   return (
@@ -196,7 +196,7 @@ const Sugerencias = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-purple-600">Total</p>
-                <p className="text-2xl font-bold text-purple-700">{suggestionStats.total}</p>
+                <p className="text-2xl font-bold text-purple-700">{sugerenciaStats.total}</p>
               </div>
               <span className="text-2xl">💡</span>
             </div>
@@ -206,7 +206,7 @@ const Sugerencias = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-red-600">Prioridad Alta</p>
-                <p className="text-2xl font-bold text-red-700">{suggestionStats.high}</p>
+                <p className="text-2xl font-bold text-red-700">{sugerenciaStats.high}</p>
               </div>
               <span className="text-2xl">🔥</span>
             </div>
@@ -216,7 +216,7 @@ const Sugerencias = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-blue-600">En Progreso</p>
-                <p className="text-2xl font-bold text-blue-700">{suggestionStats.inProgress}</p>
+                <p className="text-2xl font-bold text-blue-700">{sugerenciaStats.inProgress}</p>
               </div>
               <span className="text-2xl">⏳</span>
             </div>
@@ -226,7 +226,7 @@ const Sugerencias = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-green-600">Implementadas</p>
-                <p className="text-2xl font-bold text-green-700">{suggestionStats.implemented}</p>
+                <p className="text-2xl font-bold text-green-700">{sugerenciaStats.implemented}</p>
               </div>
               <span className="text-2xl">✅</span>
             </div>

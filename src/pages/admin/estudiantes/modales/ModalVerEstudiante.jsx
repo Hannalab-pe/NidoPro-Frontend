@@ -95,17 +95,12 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-blue-50">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={getStudentPhoto()}
-                      alt={estudiante.name}
-                      className="w-16 h-16 rounded-full object-cover border-2 border-blue-200"
-                    />
                     <div>
                       <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                         <Eye className="w-6 h-6 text-blue-600" />
-                        {estudiante.name}
+                        {`${estudiante.nombre} ${estudiante.apellido}`}
                       </Dialog.Title>
-                      <p className="text-blue-600 font-medium">{estudiante.grade}</p>
+                      <p className="text-blue-600 font-medium">{estudiante.grado}</p>
                     </div>
                   </div>
                   <button
@@ -123,8 +118,8 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                     <div className="bg-gray-50 p-4 rounded-lg text-center">
                       <UserCheck className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-1">Estado</p>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(estudiante.status)}`}>
-                        {getStatusText(estudiante.status)}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(estudiante.estaActivo ? 'active' : 'inactive')}`}>
+                        {getStatusText(estudiante.estaActivo ? 'active' : 'inactive')}
                       </span>
                     </div>
                     
@@ -158,14 +153,14 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                           <label className="block text-sm font-medium text-gray-600 mb-1">
                             Nombre Completo
                           </label>
-                          <p className="text-gray-900 font-medium">{estudiante.name}</p>
+                          <p className="text-gray-900 font-medium">{`${estudiante.nombre} ${estudiante.apellido}`}</p>
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-600 mb-1">
                             Edad
                           </label>
-                          <p className="text-gray-900">{estudiante.age} años</p>
+                          <p className="text-gray-900">{estudiante.edad || 'No especificada'} años</p>
                         </div>
                         
                         <div>
@@ -174,7 +169,7 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <GraduationCap className="w-4 h-4 text-blue-600" />
-                            <span className="text-gray-900 font-medium">{estudiante.grade}</span>
+                            <span className="text-gray-900 font-medium">{estudiante.grado}</span>
                           </div>
                         </div>
                       </div>
@@ -184,14 +179,14 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                           <label className="block text-sm font-medium text-gray-600 mb-1">
                             DNI
                           </label>
-                          <p className="text-gray-900">{estudiante.dni || 'No registrado'}</p>
+                          <p className="text-gray-900">{estudiante.nroDocumento || 'No registrado'}</p>
                         </div>
                         
                         <div>
                           <label className="block text-sm font-medium text-gray-600 mb-1">
                             Fecha de Nacimiento
                           </label>
-                          <p className="text-gray-900">{estudiante.birthDate || 'No registrada'}</p>
+                          <p className="text-gray-900">{estudiante.fechaNacimiento || 'No registrada'}</p>
                         </div>
                         
                         <div>
@@ -200,7 +195,7 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                           </label>
                           <div className="flex items-start gap-2">
                             <MapPin className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-900">{estudiante.address}</span>
+                            <span className="text-gray-900">{estudiante.direccion || 'No registrada'}</span>
                           </div>
                         </div>
                       </div>
@@ -220,7 +215,7 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                           <label className="block text-sm font-medium text-gray-600 mb-1">
                             Nombre
                           </label>
-                          <p className="text-gray-900 font-medium">{estudiante.parent}</p>
+                          <p className="text-gray-900 font-medium">{estudiante.nombrePadre || 'No registrado'}</p>
                         </div>
                         
                         <div>
@@ -229,7 +224,7 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-green-600" />
-                            <span className="text-gray-900">{estudiante.phone}</span>
+                            <span className="text-gray-900">{estudiante.telefonoPadre || 'No registrado'}</span>
                           </div>
                         </div>
                       </div>
@@ -241,7 +236,7 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4 text-blue-600" />
-                            <span className="text-gray-900">{estudiante.email}</span>
+                            <span className="text-gray-900">{estudiante.emailPadre || 'No registrado'}</span>
                           </div>
                         </div>
                       </div>

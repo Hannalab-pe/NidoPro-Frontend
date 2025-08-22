@@ -47,13 +47,13 @@ api.interceptors.response.use(
  */
 export const matriculaService = {
   /**
-   * Obtener todos los estudiantes matriculados
+   * Obtener todas las matrículas
    * @param {Object} params - Parámetros de filtrado y paginación
-   * @returns {Promise<Object>} Lista de estudiantes
+   * @returns {Promise<Object>} Lista de matrículas
    */
-  async getStudents(params = {}) {
+  async getMatriculas(params = {}) {
     try {
-      console.log('📚 Obteniendo estudiantes matriculados...');
+      console.log('📚 Obteniendo matrículas...');
       
       // Construir query string
       const queryParams = new URLSearchParams();
@@ -65,14 +65,14 @@ export const matriculaService = {
       if (params.status) queryParams.append('status', params.status);
       
       const queryString = queryParams.toString();
-      const url = queryString ? `/estudiante?${queryString}` : '/estudiante';
+      const url = queryString ? `/matricula?${queryString}` : '/matricula';
       
       const response = await api.get(url);
-      console.log('✅ Estudiantes obtenidos exitosamente:', response.data);
+      console.log('✅ Matrículas obtenidas exitosamente:', response.data);
       return response.data;
     } catch (error) {
-      console.error('❌ Error al obtener estudiantes:', error);
-      throw new Error(error.response?.data?.message || 'Error al obtener estudiantes');
+      console.error('❌ Error al obtener matrículas:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener matrículas');
     }
   },
 

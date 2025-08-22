@@ -19,18 +19,18 @@ import {
   Briefcase
 } from 'lucide-react';
 
-const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
-  if (!profesor) return null;
+const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
+  if (!trabajador) return null;
 
   // Obtener URL de imagen segura
   const getTeacherPhoto = () => {
-    if (profesor.photo) {
+    if (trabajador.foto) {
       // Si es un objeto con URL
-      if (typeof profesor.photo === 'object' && profesor.photo.url) {
-        return profesor.photo.url;
+      if (typeof trabajador.foto === 'object' && trabajador.foto.url) {
+        return trabajador.foto.url;
       }
       // Si es una string directa
-      return profesor.photo;
+      return trabajador.foto;
     }
     return '/default-avatar.png';
   };
@@ -152,19 +152,14 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b bg-blue-50">
                   <div className="flex items-center gap-3">
-                    <img
-                      src={getTeacherPhoto()}
-                      alt={profesor.name}
-                      className="w-16 h-16 rounded-full object-cover border-2 border-blue-200"
-                    />
                     <div>
                       <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                         <Eye className="w-6 h-6 text-blue-600" />
-                        {profesor.name}
+                        {`${trabajador.nombre} ${trabajador.apellido}`}
                       </Dialog.Title>
                       <p className="text-blue-600 font-medium flex items-center gap-1">
                         <BookOpen className="w-4 h-4" />
-                        {profesor.subject}
+                        {trabajador.cargo || 'Sin cargo'}
                       </p>
                     </div>
                   </div>
@@ -183,34 +178,34 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                     <div className="bg-gray-50 p-4 rounded-lg text-center">
                       <UserCheck className="w-8 h-8 text-blue-600 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-1">Estado</p>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(profesor.status)}`}>
-                        {getStatusText(profesor.status)}
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(trabajador.estaActivo ? 'active' : 'inactive')}`}>
+                        {getStatusText(trabajador.estaActivo ? 'active' : 'inactive')}
                       </span>
                     </div>
                     
                     <div className="bg-gray-50 p-4 rounded-lg text-center">
                       <Award className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-1">Experiencia</p>
-                      <p className={`text-2xl font-bold ${getExperienceColor(profesor.experience)}`}>
-                        {profesor.experience || 0} años
+                      <p className={`text-2xl font-bold ${getExperienceColor(trabajador.experiencia)}`}>
+                        {trabajador.experiencia || 0} años
                       </p>
-                      <p className="text-xs text-gray-500">{getExperienceLabel(profesor.experience)}</p>
+                      <p className="text-xs text-gray-500">{getExperienceLabel(trabajador.experiencia)}</p>
                     </div>
                     
                     <div className="bg-gray-50 p-4 rounded-lg text-center">
                       <Star className="w-8 h-8 text-purple-600 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-1">Calificación</p>
                       <div className="flex justify-center">
-                        {renderRating(profesor.rating)}
+                        {renderRating(trabajador.calificacion)}
                       </div>
-                      <p className="text-xs text-gray-500">{getRatingLabel(profesor.rating)}</p>
+                      <p className="text-xs text-gray-500">{getRatingLabel(trabajador.calificacion)}</p>
                     </div>
 
                     <div className="bg-gray-50 p-4 rounded-lg text-center">
                       <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
                       <p className="text-sm text-gray-600 mb-1">Estudiantes</p>
                       <p className="text-2xl font-bold text-green-600">
-                        {profesor.students || 0}
+                        {trabajador.estudiantes || 0}
                       </p>
                     </div>
                   </div>
@@ -228,7 +223,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           <label className="block text-sm font-medium text-gray-600 mb-1">
                             Nombre Completo
                           </label>
-                          <p className="text-gray-900 font-medium">{profesor.name}</p>
+                          <p className="text-gray-900 font-medium">{`${trabajador.nombre} ${trabajador.apellido}`}</p>
                         </div>
                         
                         <div>
@@ -237,7 +232,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4 text-blue-600" />
-                            <span className="text-gray-900">{profesor.email}</span>
+                            <span className="text-gray-900">{trabajador.email || 'No registrado'}</span>
                           </div>
                         </div>
                         
@@ -247,7 +242,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <Phone className="w-4 h-4 text-green-600" />
-                            <span className="text-gray-900">{profesor.phone}</span>
+                            <span className="text-gray-900">{trabajador.telefono || 'No registrado'}</span>
                           </div>
                         </div>
                       </div>
@@ -259,7 +254,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           </label>
                           <div className="flex items-start gap-2">
                             <MapPin className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-900">{profesor.address}</span>
+                            <span className="text-gray-900">{trabajador.direccion || 'No registrada'}</span>
                           </div>
                         </div>
 
@@ -270,7 +265,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           <div className="flex items-center gap-2">
                             <Clock className="w-4 h-4 text-purple-600" />
                             <span className="text-gray-900">
-                              {getScheduleIcon(profesor.schedule)} {profesor.schedule}
+                              {getScheduleIcon(trabajador.horario)} {trabajador.horario || 'No especificado'}
                             </span>
                           </div>
                         </div>
@@ -293,7 +288,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <BookOpen className="w-4 h-4 text-blue-600" />
-                            <span className="text-gray-900 font-medium">{profesor.subject}</span>
+                            <span className="text-gray-900 font-medium">{trabajador.materia || 'Sin materia'}</span>
                           </div>
                         </div>
                         
@@ -303,7 +298,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <GraduationCap className="w-4 h-4 text-purple-600" />
-                            <span className="text-gray-900">{profesor.degree}</span>
+                            <span className="text-gray-900">{trabajador.titulo || 'Sin título'}</span>
                           </div>
                         </div>
                       </div>
@@ -315,11 +310,11 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <Award className="w-4 h-4 text-yellow-600" />
-                            <span className={`font-semibold ${getExperienceColor(profesor.experience)}`}>
-                              {profesor.experience || 0} años
+                            <span className={`font-semibold ${getExperienceColor(trabajador.experiencia)}`}>
+                              {trabajador.experiencia || 0} años
                             </span>
                             <span className="text-sm text-gray-500">
-                              ({getExperienceLabel(profesor.experience)})
+                              ({getExperienceLabel(trabajador.experiencia)})
                             </span>
                           </div>
                         </div>
@@ -329,9 +324,9 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                             Calificación Promedio
                           </label>
                           <div className="flex items-center gap-2">
-                            {renderRating(profesor.rating)}
+                            {renderRating(trabajador.calificacion)}
                             <span className="text-sm text-gray-500">
-                              ({getRatingLabel(profesor.rating)})
+                              ({getRatingLabel(trabajador.calificacion)})
                             </span>
                           </div>
                         </div>
@@ -340,14 +335,14 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                   </div>
 
                   {/* Especializaciones */}
-                  {profesor.specializations && profesor.specializations.length > 0 && (
+                  {trabajador.especializaciones && trabajador.especializaciones.length > 0 && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Briefcase className="w-5 h-5 text-orange-600" />
                         Especializaciones
                       </h3>
                       <div className="flex flex-wrap gap-2">
-                        {profesor.specializations.map((spec, index) => (
+                        {trabajador.especializaciones.map((spec, index) => (
                           <span
                             key={index}
                             className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
@@ -360,7 +355,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                   )}
 
                   {/* Clases Asignadas */}
-                  {profesor.classes && profesor.classes.length > 0 && (
+                  {trabajador.clases && trabajador.clases.length > 0 && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Users className="w-5 h-5 text-green-600" />
@@ -368,7 +363,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                       </h3>
                       <div className="bg-green-50 p-4 rounded-lg">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                          {profesor.classes.map((clase, index) => (
+                          {trabajador.clases.map((clase, index) => (
                             <div key={index} className="text-sm text-green-800 font-medium">
                               • {clase}
                             </div>
@@ -379,14 +374,14 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                   )}
 
                   {/* Notas Adicionales */}
-                  {profesor.notes && (
+                  {trabajador.notas && (
                     <div>
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Calendar className="w-5 h-5 text-purple-600" />
                         Notas Adicionales
                       </h3>
                       <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-400">
-                        <p className="text-gray-900">{profesor.notes}</p>
+                        <p className="text-gray-900">{trabajador.notas}</p>
                       </div>
                     </div>
                   )}
@@ -406,7 +401,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                             <span className="font-medium text-gray-700">Estudiantes</span>
                           </div>
                           <p className="text-2xl font-bold text-green-600">
-                            {profesor.students || 0}
+                            {trabajador.estudiantes || 0}
                           </p>
                           <p className="text-sm text-gray-600">A cargo</p>
                         </div>
@@ -416,8 +411,8 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                             <Award className="w-5 h-5 text-yellow-600" />
                             <span className="font-medium text-gray-700">Experiencia</span>
                           </div>
-                          <p className={`text-2xl font-bold ${getExperienceColor(profesor.experience)}`}>
-                            {profesor.experience || 0}
+                          <p className={`text-2xl font-bold ${getExperienceColor(trabajador.experiencia)}`}>
+                            {trabajador.experiencia || 0}
                           </p>
                           <p className="text-sm text-gray-600">Años</p>
                         </div>
@@ -427,8 +422,8 @@ const ModalVerTrabajador = ({ isOpen, onClose, profesor }) => {
                             <Star className="w-5 h-5 text-purple-600" />
                             <span className="font-medium text-gray-700">Calificación</span>
                           </div>
-                          <p className={`text-2xl font-bold ${getRatingColor(profesor.rating)}`}>
-                            {Number(profesor.rating || 0).toFixed(1)}
+                          <p className={`text-2xl font-bold ${getRatingColor(trabajador.calificacion)}`}>
+                            {Number(trabajador.calificacion || 0).toFixed(1)}
                           </p>
                           <p className="text-sm text-gray-600">de 5.0</p>
                         </div>

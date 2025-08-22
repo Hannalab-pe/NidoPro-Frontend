@@ -26,7 +26,7 @@ const Reportes = () => {
     ]
   };
 
-  const AsistenciaData = {
+  const attendanceData = {
     percentage: 95,
     present: 18,
     absent: 1,

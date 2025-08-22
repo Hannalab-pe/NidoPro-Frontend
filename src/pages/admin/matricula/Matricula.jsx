@@ -1,58 +1,155 @@
 import React, { useState } from 'react';
-import { UserPlus } from 'lucide-react';
+import { UserPlus, Users, GraduationCap, TrendingUp, Calendar } from 'lucide-react';
+import TablaMatricula from './tablas/TablaMatricula';
 import ModalAgregarMatricula from './modales/ModalAgregarMatricula';
+import ModalVerMatricula from './modales/ModalVerMatricula';
+import ModalEditarMatricula from './modales/ModalEditarMatricula';
+import ModalEliminarMatricula from './modales/ModalEliminarMatricula';
+import { useMatricula } from '../../../hooks/useMatricula';
 
 const Matricula = () => {
-  // Estado simple para el modal de registro
-  const [showModal, setShowModal] = useState(false);
+  // Usar hook con TanStack Query
+  const { 
+    students: matriculas, 
+    loading, 
+    statistics: stats,
+    loadMatriculas 
+  } = useMatricula();
+  
+  const [selectedMatricula, setSelectedMatricula] = useState(null);
+  
+  // Estados para modales
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  // Handlers para modales
+  const handleAdd = () => setShowAddModal(true);
+  
+  const handleView = (matricula) => {
+    setSelectedMatricula(matricula);
+    setShowViewModal(true);
+  };
 
-  const handleAdd = () => {
-    setShowModal(true);
+  const handleEdit = (matricula) => {
+    setSelectedMatricula(matricula);
+    setShowEditModal(true);
+  };
+
+  const handleDelete = (matricula) => {
+    setSelectedMatricula(matricula);
+    setShowDeleteModal(true);
+  };
+
+  const handleCloseModals = () => {
+    setShowAddModal(false);
+    setShowViewModal(false);
+    setShowEditModal(false);
+    setShowDeleteModal(false);
+    setSelectedMatricula(null);
+  };
+
+  const handleSaveSuccess = () => {
+    handleCloseModals();
+    // No necesitamos llamar loadMatriculas() - TanStack Query se encarga automáticamente
+  };
+
+  const handleDeleteSuccess = () => {
+    handleCloseModals();
+    // No necesitamos llamar loadMatriculas() - TanStack Query se encarga automáticamente
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center justify-between">
+      {/* Header con estadísticas */}
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Matrícula de Estudiantes</h1>
-            <p className="text-gray-600 mt-1">Registra nuevos estudiantes en el sistema</p>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Matrícula</h1>
+            <p className="text-gray-600 mt-1">Administra las matrículas de estudiantes</p>
           </div>
-          <button
-            onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
-          >
-            <UserPlus className="w-5 h-5" />
-            <span>Nueva Matrícula</span>
-          </button>
         </div>
-      </div>
 
-      {/* Información temporal */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Users className="w-8 h-8 text-blue-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-blue-600">Total Matrículas</p>
+                <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
+              </div>
+            </div>
           </div>
-          <div className="ml-3">
-            <h3 className="text-sm font-medium text-yellow-800">
-              Módulo en desarrollo
-            </h3>
-            <div className="mt-2 text-sm text-yellow-700">
-              <p>La tabla de estudiantes está temporalmente deshabilitada. Solo está disponible el registro de nuevas matrículas.</p>
+          
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <UserPlus className="w-8 h-8 text-green-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-600">Estudiantes Activos</p>
+                <p className="text-2xl font-bold text-green-900">{stats.active}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <GraduationCap className="w-8 h-8 text-purple-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-purple-600">Grados</p>
+                <p className="text-2xl font-bold text-purple-900">{Object.keys(stats.byGrade || {}).length}</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Calendar className="w-8 h-8 text-orange-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-orange-600">Recientes</p>
+                <p className="text-2xl font-bold text-orange-900">{stats.recentEnrollments}</p>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Modal para agregar matrícula */}
+      {/* Tabla de matrículas */}
+      <TablaMatricula
+        matriculas={matriculas}
+        loading={loading}
+        onAdd={handleAdd}
+        onView={handleView}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+
+      {/* Modales */}
       <ModalAgregarMatricula
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
+        isOpen={showAddModal}
+        onClose={handleCloseModals}
+        onSave={handleSaveSuccess}
+      />
+
+      <ModalVerMatricula
+        isOpen={showViewModal}
+        onClose={handleCloseModals}
+        matricula={selectedMatricula}
+      />
+
+      <ModalEditarMatricula
+        isOpen={showEditModal}
+        onClose={handleCloseModals}
+        onSave={handleSaveSuccess}
+        matricula={selectedMatricula}
+      />
+
+      <ModalEliminarMatricula
+        isOpen={showDeleteModal}
+        onClose={handleCloseModals}
+        onDelete={handleDeleteSuccess}
+        matricula={selectedMatricula}
       />
     </div>
   );
