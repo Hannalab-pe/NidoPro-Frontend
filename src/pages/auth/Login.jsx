@@ -1,15 +1,23 @@
 import React, { useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { toast } from "sonner";
 import AuthLayout from "../../components/layout/AuthLayout";
-import Button from "../../components/common/Button";
-import Input from "../../components/common/Input";
-import { useAuth } from "../../hooks/useAuth";
-import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import { useAuthStore } from "../../store";
+import { authService } from "../../services/authService";
+import { User, Lock, Eye, EyeOff } from "lucide-react";
 
 const Login = () => {
-  const [formData, setFormData] = useState({ email: "", password: "" });
+  const [formData, setFormData] = useState({ usuario: "", password: "" });
   const [formErrors, setFormErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoading, error } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, setLoading, setError, clearError } = useAuthStore();
+  
+  // Ruta a la que redirigir después del login
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -25,15 +33,23 @@ const Login = () => {
         [name]: ''
       }));
     }
+    
+    // Mapear email a usuario para compatibilidad
+    if (name === 'usuario') {
+      setFormData(prev => ({
+        ...prev,
+        email: value // Mantener compatibilidad con authService
+      }));
+    }
   };
 
   const validateForm = () => {
     const errors = {};
     
-    if (!formData.email) {
-      errors.email = 'El correo electrónico es requerido';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      errors.email = 'El correo electrónico no es válido';
+    if (!formData.usuario) {
+      errors.usuario = 'El DNI es requerido';
+    } else if (formData.usuario.length < 8) {
+      errors.usuario = 'El DNI debe tener al menos 8 dígitos';
     }
     
     if (!formData.password) {
@@ -54,7 +70,38 @@ const Login = () => {
       return;
     }
 
-    await login(formData);
+    setIsLoading(true);
+    clearError();
+    
+    try {
+      // Intentar login con backend
+      let userData;
+      try {
+        userData = await authService.login(formData);
+        toast.success('¡Bienvenido a NidoPro!');
+      } catch (backendError) {
+        console.warn('Backend no disponible, usando modo desarrollo:', backendError.message);
+        // Fallback a modo desarrollo
+        userData = await authService.loginDev(formData);
+        toast.success('¡Bienvenido a NidoPro! (Modo desarrollo)');
+      }
+      
+      // Actualizar store de Zustand
+      login(userData);
+      
+      // Guardar token en localStorage
+      localStorage.setItem('token', userData.token);
+      
+      // Redirigir
+      navigate(from, { replace: true });
+      
+    } catch (error) {
+      console.error('Error en login:', error);
+      toast.error(error.message || 'Error al iniciar sesión');
+      setFormErrors({ general: error.message });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -72,30 +119,30 @@ const Login = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Email Field */}
+          {/* DNI Field */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              Correo electrónico
+            <label htmlFor="usuario" className="block text-sm font-medium text-gray-700 mb-2">
+              DNI / Documento
             </label>
             <div className="relative">
-              <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
-                id="email"
-                type="email"
-                name="email"
-                value={formData.email}
+                id="usuario"
+                type="text"
+                name="usuario"
+                value={formData.usuario}
                 onChange={handleInputChange}
-                placeholder="ejemplo@colegio.com"
+                placeholder="12345678"
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 transition-colors ${
-                  formErrors.email 
+                  formErrors.usuario 
                     ? 'border-red-300 focus:ring-red-500 focus:border-red-500' 
                     : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                 }`}
                 required
               />
             </div>
-            {formErrors.email && (
-              <p className="mt-2 text-sm text-red-600">{formErrors.email}</p>
+            {formErrors.usuario && (
+              <p className="mt-2 text-sm text-red-600">{formErrors.usuario}</p>
             )}
           </div>
 
@@ -134,11 +181,20 @@ const Login = () => {
           </div>
 
           {/* Global Error */}
-          {error && (
+          {formErrors.general && (
             <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{error}</p>
+              <p className="text-sm text-red-600">{formErrors.general}</p>
             </div>
           )}
+          
+          {/* Usuarios de prueba para desarrollo */}
+          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800 font-medium mb-2">Usuarios de prueba:</p>
+            <div className="text-xs text-blue-700 space-y-1">
+              <p><strong>Admin:</strong> 66666666 / 66666666</p>
+              <p><strong>Trabajador:</strong> 76655432 / 76655432</p>
+            </div>
+          </div>
 
           {/* Options */}
           <div className="flex items-center justify-between">

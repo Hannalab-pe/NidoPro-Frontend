@@ -11,6 +11,7 @@ import {
 
 const ImageUploader = ({ 
   onUpload, // Función personalizada de upload
+  onImageUpload, // Alias para compatibilidad
   currentImage = null, 
   className = '',
   disabled = false,
@@ -22,6 +23,7 @@ const ImageUploader = ({
   const [error, setError] = useState('');
   const [preview, setPreview] = useState(currentImage);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [isUploading, setIsUploading] = useState(uploading);
   const fileInputRef = useRef(null);
 
   // Actualizar preview cuando cambia currentImage
@@ -40,6 +42,15 @@ const ImageUploader = ({
     setError('');
     setUploadSuccess(false);
     
+    // Usar onUpload si está disponible, sino fallar
+    const uploadFunction = onUpload;
+    
+    // Validar que tengamos una función de upload
+    if (!uploadFunction || typeof uploadFunction !== 'function') {
+      setError('Error: función de upload no configurada');
+      return;
+    }
+    
     // Validar archivo localmente primero
     if (!file || !file.type.startsWith('image/')) {
       setError('Archivo no válido. Solo se permiten imágenes');
@@ -51,7 +62,7 @@ const ImageUploader = ({
       return;
     }
 
-    setUploading(true);
+    setIsUploading(true);
 
     try {
       // Crear URL local para preview inmediato
@@ -59,10 +70,15 @@ const ImageUploader = ({
       setPreview(previewUrl);
 
       // Subir usando la función personalizada
-      const result = await onUpload(file);
+      const result = await uploadFunction(file);
       
       if (result && (result.success !== false)) {
         setUploadSuccess(true);
+        
+        // Llamar al callback si está disponible
+        if (onImageUpload && typeof onImageUpload === 'function') {
+          onImageUpload(result);
+        }
         
         // Usar thumbnailUrl si existe, sino usar url
         const imageUrl = result.thumbnailUrl || result.url;
@@ -78,6 +94,7 @@ const ImageUploader = ({
       setError(err.message || 'Error al subir la imagen');
       setPreview(null);
     } finally {
+      setIsUploading(false);
       // Limpiar input file
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -126,7 +143,7 @@ const ImageUploader = ({
                   <button
                     type="button"
                     onClick={triggerFileInput}
-                    disabled={disabled || uploading}
+                    disabled={disabled || isUploading}
                     className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full transition-colors"
                     title="Cambiar imagen"
                   >
@@ -135,7 +152,7 @@ const ImageUploader = ({
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    disabled={disabled || uploading}
+                    disabled={disabled || isUploading}
                     className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full transition-colors"
                     title="Eliminar imagen"
                   >
@@ -145,7 +162,7 @@ const ImageUploader = ({
               </div>
 
               {/* Indicador de carga */}
-              {uploading && (
+              {isUploading && (
                 <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
                   <Loader className="animate-spin text-blue-500" size={24} />
                 </div>
@@ -161,7 +178,7 @@ const ImageUploader = ({
           ) : (
             /* Área de drop/upload */
             <div className="py-8">
-              {uploading ? (
+              {isUploading ? (
                 <div className="flex flex-col items-center space-y-3">
                   <Loader className="animate-spin text-blue-500" size={32} />
                   <p className="text-gray-600">Subiendo imagen...</p>
