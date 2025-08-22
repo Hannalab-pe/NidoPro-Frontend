@@ -30,6 +30,7 @@ const Dashboard = () => {
     case 'Docente':
       return <TeacherDashboard />;
     case 'padre':
+    case 'ESTUDIANTE':
       return <ParentDashboard />;
     case 'especialista':
       return <SpecialistDashboard />;

@@ -108,7 +108,7 @@ const AdminDashboard = () => {
         <div className="flex items-center justify-between p-6 border-b border-gray-200 lg:justify-start">
           <div className="flex items-center space-x-3">
             <School className="w-8 h-8 text-blue-600" />
-            <span className="text-xl font-bold text-gray-900">NidoPro</span>
+            <span className="text-xl font-bold text-gray-900">Prototipo Bea</span>
           </div>
           <button
             className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
@@ -203,7 +203,7 @@ const AdminDashboard = () => {
                 {stats.map((stat, index) => {
                   const IconComponent = stat.icon;
                   return (
-                    <div key={index} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border border-black hover:shadow-md transition-shadow">
+                    <div key={index} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-4">
                         <div 
                           className="p-3 rounded-lg"

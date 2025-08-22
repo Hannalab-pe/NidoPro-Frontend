@@ -30,11 +30,11 @@ const TablaPadres = ({
         onImport={onImport}
         onExport={onExport}
         actions={{
-          add: true,
+          add: false, // Los padres se agregan solo a través de matrícula
           edit: true,
           delete: true,
           view: true,
-          import: true,
+          import: false, // Import manejado por matrícula
           export: true
         }}
         filters={parentsFilters}

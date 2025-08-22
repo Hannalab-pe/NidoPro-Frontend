@@ -17,7 +17,8 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
   
   if (!estudiante) return null;
 
-  const isConfirmDisabled = confirmName.trim().toLowerCase() !== estudiante.name.toLowerCase();
+  const studentFullName = `${estudiante.nombre} ${estudiante.apellido}`;
+  const isConfirmDisabled = confirmName.trim().toLowerCase() !== studentFullName.toLowerCase();
 
   const handleConfirm = async () => {
     if (isConfirmDisabled) return;
@@ -95,13 +96,13 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                     <div className="flex items-center gap-3">
                       <img
                         src={estudiante.photo?.url || estudiante.photo || '/default-avatar.png'}
-                        alt={estudiante.name}
+                        alt={`${estudiante.nombre} ${estudiante.apellido}`}
                         className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
                       />
                       <div>
-                        <h3 className="font-semibold text-gray-900">{estudiante.name}</h3>
-                        <p className="text-sm text-gray-600">{estudiante.grade}</p>
-                        <p className="text-sm text-gray-500">Padre/Madre: {estudiante.parent}</p>
+                        <h3 className="font-semibold text-gray-900">{`${estudiante.nombre} ${estudiante.apellido}`}</h3>
+                        <p className="text-sm text-gray-600">{estudiante.grado}</p>
+                        <p className="text-sm text-gray-500">Padre/Madre: {estudiante.nombrePadre || 'No registrado'}</p>
                       </div>
                     </div>
                   </div>
@@ -112,7 +113,7 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                       <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <h4 className="font-medium text-red-800 mb-2">
-                          ¿Estás seguro de eliminar a "{estudiante.name}"?
+                          ¿Estás seguro de eliminar a "{`${estudiante.nombre} ${estudiante.apellido}`}"?
                         </h4>
                         <ul className="text-sm text-red-700 space-y-1">
                           <li>• Se eliminará toda la información del estudiante</li>
@@ -127,7 +128,7 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                   {/* Confirmation Input */}
                   <div className="mb-6">
                     <p className="text-sm text-gray-700 mb-3">
-                      Para confirmar la eliminación, escribe <strong>"{estudiante.name}"</strong> en el campo de abajo:
+                      Para confirmar la eliminación, escribe <strong>"{`${estudiante.nombre} ${estudiante.apellido}`}"</strong> en el campo de abajo:
                     </p>
                     <input
                       type="text"
@@ -135,7 +136,7 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
                       value={confirmName}
                       onChange={(e) => setConfirmName(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      placeholder={`Escribe "${estudiante.name}" para confirmar`}
+                      placeholder={`Escribe "${estudiante.nombre} ${estudiante.apellido}" para confirmar`}
                       disabled={deleting}
                     />
                   </div>
