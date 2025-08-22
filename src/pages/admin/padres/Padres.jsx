@@ -3,178 +3,127 @@ import {
   UserCheck, 
   Users,
   Heart,
-  Calendar
+  Calendar,
+  TrendingUp,
+  Phone
 } from 'lucide-react';
+import { usePadres } from '../../../hooks/usePadres';
 import TablaPadres from './tablas/TablaPadres';
 import ModalAgregarPadre from './modales/ModalAgregarPadre';
+import ModalVerPadre from './modales/ModalVerPadre';
+import ModalEditarPadre from './modales/ModalEditarPadre';
+import ModalEliminarPadre from './modales/ModalEliminarPadre';
 
 const Padres = () => {
-  const [showModal, setShowModal] = useState(false);
-  const [padres, setPadres] = useState([
-    {
-      id: 1,
-      name: 'María Rodríguez García',
-      email: 'maria.rodriguez@email.com',
-      phone: '+51 987 654 321',
-      relation: 'Madre',
-      status: 'active',
-      address: 'Av. Universitaria 123, San Miguel, Lima',
-      occupation: 'Enfermera',
-      children: [
-        { name: 'Ana García Rodríguez', grade: '5to Grado', age: 10 }
-      ],
-      emergencyContact: {
-        name: 'Carlos García',
-        phone: '+51 987 654 322',
-        relation: 'Padre'
-      },
-      registrationDate: '2023-03-15',
-      photo: 'https://via.placeholder.com/40',
-      participationLevel: 'high',
-      lastVisit: '2024-08-10'
-    },
-    {
-      id: 2,
-      name: 'Juan Carlos Mendoza',
-      email: 'juan.mendoza@email.com',
-      phone: '+51 987 654 323',
-      relation: 'Padre',
-      status: 'active',
-      address: 'Jr. Los Olivos 456, Independencia, Lima',
-      occupation: 'Ingeniero',
-      children: [
-        { name: 'Carlos Mendoza Silva', grade: '4to Grado', age: 9 },
-        { name: 'Sofia Mendoza Silva', grade: '2do Grado', age: 7 }
-      ],
-      emergencyContact: {
-        name: 'Rosa Silva',
-        phone: '+51 987 654 324',
-        relation: 'Madre'
-      },
-      registrationDate: '2022-02-20',
-      photo: 'https://via.placeholder.com/40',
-      participationLevel: 'medium',
-      lastVisit: '2024-08-05'
-    },
-    {
-      id: 3,
-      name: 'Carmen Torres López',
-      email: 'carmen.torres@email.com',
-      phone: '+51 987 654 325',
-      relation: 'Madre',
-      status: 'active',
-      address: 'Av. Arequipa 789, Lince, Lima',
-      occupation: 'Profesora',
-      children: [
-        { name: 'Sofia López Torres', grade: '6to Grado', age: 11 }
-      ],
-      emergencyContact: {
-        name: 'Miguel Torres',
-        phone: '+51 987 654 326',
-        relation: 'Abuelo'
-      },
-      registrationDate: '2021-01-10',
-      photo: 'https://via.placeholder.com/40',
-      participationLevel: 'high',
-      lastVisit: '2024-08-12'
-    },
-    {
-      id: 4,
-      name: 'Luis Alberto Ramirez',
-      email: 'luis.ramirez@email.com',
-      phone: '+51 987 654 327',
-      relation: 'Padre',
-      status: 'inactive',
-      address: 'Calle Lima 321, Breña, Lima',
-      occupation: 'Comerciante',
-      children: [
-        { name: 'Diego Ramirez Vega', grade: '3ro Grado', age: 8 }
-      ],
-      emergencyContact: {
-        name: 'Ana Vega',
-        phone: '+51 987 654 328',
-        relation: 'Madre'
-      },
-      registrationDate: '2023-08-01',
-      photo: 'https://via.placeholder.com/40',
-      participationLevel: 'low',
-      lastVisit: '2024-07-15'
-    },
-    {
-      id: 5,
-      name: 'Rosa Elena Morales',
-      email: 'rosa.morales@email.com',
-      phone: '+51 987 654 329',
-      relation: 'Madre',
-      status: 'active',
-      address: 'Av. Brasil 654, Magdalena, Lima',
-      occupation: 'Contadora',
-      children: [
-        { name: 'Isabella Cruz Morales', grade: '5to Grado', age: 10 },
-        { name: 'Sebastian Cruz Morales', grade: '1ro Grado', age: 6 }
-      ],
-      emergencyContact: {
-        name: 'Pedro Cruz',
-        phone: '+51 987 654 330',
-        relation: 'Padre'
-      },
-      registrationDate: '2022-11-05',
-      photo: 'https://via.placeholder.com/40',
-      participationLevel: 'high',
-      lastVisit: '2024-08-14'
-    }
-  ]);
+  // Hook personalizado para gestión de padres
+  const { 
+    parents, 
+    loading,
+    getActiveParents,
+    getTotalParents,
+    getHighParticipationParents,
+    getMediumParticipationParents,
+    getLowParticipationParents
+  } = usePadres();
 
+  // Estados locales solo para UI
+  const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedParent, setSelectedParent] = useState(null);
+
+  // Función para calcular promedio de hijos por familia
+  const getAverageChildren = () => {
+    if (parents.length === 0) return 0;
+    const totalChildren = parents.reduce((sum, parent) => {
+      return sum + (parent.children?.length || 0);
+    }, 0);
+    return Math.round((totalChildren / parents.length) * 10) / 10;
+  };
+
+  // Función para calcular padres con contactos completos
+  const getCompleteContactsCount = () => {
+    return parents.filter(parent => 
+      parent.correo && parent.numero && parent.correo.trim() && parent.numero.trim()
+    ).length;
+  };
+
+  // Función para calcular reuniones este mes (simulado)
+  const getMeetingsThisMonth = () => {
+    // Esta función podría conectarse a un sistema de reuniones real
+    // Por ahora retornamos un cálculo basado en padres activos con alta participación
+    const highParticipation = getHighParticipationParents().length;
+    return Math.round(highParticipation * 1.5); // Simulación: 1.5 reuniones por padre activo
+  };
+
+  // Estadísticas dinámicas basadas en datos reales
   const stats = [
-    { title: 'Total Padres', value: '156', icon: UserCheck, color: 'bg-blue-500' },
-    { title: 'Padres Activos', value: '142', icon: Users, color: 'bg-green-500' },
-    { title: 'Participación Alta', value: '89', icon: Heart, color: 'bg-red-500' },
-    { title: 'Reuniones Este Mes', value: '24', icon: Calendar, color: 'bg-purple-500' }
+    { 
+      title: 'Total Padres', 
+      value: getTotalParents().toString(), 
+      icon: UserCheck, 
+      color: 'bg-blue-500' 
+    },
+    { 
+      title: 'Padres Activos', 
+      value: getActiveParents().length.toString(), 
+      icon: Users, 
+      color: 'bg-green-500' 
+    },
+    { 
+      title: 'Participación Alta', 
+      value: getHighParticipationParents().length.toString(), 
+      icon: Heart, 
+      color: 'bg-red-500' 
+    },
+    { 
+      title: 'Reuniones Este Mes', 
+      value: getMeetingsThisMonth().toString(),
+      icon: Calendar, 
+      color: 'bg-purple-500' 
+    }
   ];
 
   // Funciones para manejar las acciones de la tabla
   const handleAdd = () => {
-    console.log('Agregar nuevo padre');
     setShowModal(true);
   };
 
   const handleEdit = (padre) => {
-    console.log('Editar padre:', padre);
-    setShowModal(true);
+    setSelectedParent(padre);
+    setShowEditModal(true);
   };
 
   const handleDelete = (padre) => {
-    console.log('Eliminar padre:', padre);
-    if (window.confirm(`¿Estás seguro de que deseas eliminar a ${padre.name}?`)) {
-      // Aquí iría la lógica para eliminar
-    }
+    setSelectedParent(padre);
+    setShowDeleteModal(true);
   };
 
   const handleView = (padre) => {
-    console.log('Ver detalles del padre:', padre);
+    setSelectedParent(padre);
+    setShowViewModal(true);
   };
 
   const handleImport = () => {
     console.log('Importar padres');
+    // TODO: Implementar funcionalidad de importación
   };
 
   const handleExport = () => {
     console.log('Exportar padres');
-  };
-
-  const handleSavePadre = (nuevoPadre) => {
-    setPadres(prev => [...prev, nuevoPadre]);
-    console.log('Padre agregado:', nuevoPadre);
+    // TODO: Implementar funcionalidad de exportación
   };
 
   return (
     <div className="space-y-6">
       {/* Header */}
+      {/* TODO: Agregar header si es necesario */}
 
-      {/* Stats Cards */}
+      {/* Stats Cards Principales */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border">
+          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
@@ -188,9 +137,13 @@ const Padres = () => {
         ))}
       </div>
 
+
+
+
       {/* Componente de Tabla de Padres */}
       <TablaPadres
-        padres={padres}
+        padres={parents}
+        loading={loading}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -199,11 +152,40 @@ const Padres = () => {
         onExport={handleExport}
       />
 
-      {/* Modal Agregar Padre */}
+      {/* Modal para agregar padre */}
       <ModalAgregarPadre
         isOpen={showModal}
         onClose={() => setShowModal(false)}
-        onSave={handleSavePadre}
+      />
+
+      {/* Modal para ver padre */}
+      <ModalVerPadre
+        isOpen={showViewModal}
+        onClose={() => {
+          setShowViewModal(false);
+          setSelectedParent(null);
+        }}
+        padre={selectedParent}
+      />
+
+      {/* Modal para editar padre */}
+      <ModalEditarPadre
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedParent(null);
+        }}
+        padre={selectedParent}
+      />
+
+      {/* Modal para eliminar padre */}
+      <ModalEliminarPadre
+        isOpen={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedParent(null);
+        }}
+        padre={selectedParent}
       />
     </div>
   );

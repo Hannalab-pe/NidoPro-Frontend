@@ -1,4 +1,8 @@
-import React, { useState } from 'react';
+import React, { Fragment } from 'react';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+import { Dialog, Transition } from '@headlessui/react';
 import { 
   X, 
   User, 
@@ -8,117 +12,73 @@ import {
   Calendar,
   GraduationCap,
   Save,
-  UserPlus
+  UserPlus,
+  Loader2
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
+import { useStudents } from '../../../../hooks/useStudents';
 
-const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
-  const [formData, setFormData] = useState({
-    name: '',
-    age: '',
-    grade: '',
-    parent: '',
-    phone: '',
-    email: '',
-    address: '',
-    birthDate: '',
-    dni: '',
-    emergencyContact: '',
-    emergencyPhone: '',
-    allergies: '',
-    medicalNotes: '',
-    photo: null // Agregar campo para la foto
-  });
+// Esquema de validación con Yup
+const validationSchema = yup.object({
+  name: yup.string().required('El nombre es requerido').trim(),
+  age: yup.number()
+    .required('La edad es requerida')
+    .min(5, 'La edad mínima es 5 años')
+    .max(18, 'La edad máxima es 18 años'),
+  grade: yup.string().required('El grado es requerido'),
+  parent: yup.string().required('El nombre del padre/madre es requerido').trim(),
+  phone: yup.string().required('El teléfono es requerido').trim(),
+  email: yup.string()
+    .email('El email no es válido')
+    .required('El email es requerido'),
+  address: yup.string().required('La dirección es requerida').trim(),
+  photo: yup.object().nullable().required('La foto del estudiante es requerida'),
+  birthDate: yup.string(),
+  dni: yup.string(),
+  emergencyContact: yup.string(),
+  emergencyPhone: yup.string(),
+  allergies: yup.string(),
+  medicalNotes: yup.string()
+});
 
-  const [errors, setErrors] = useState({});
-  const [uploading, setUploading] = useState(false);
+// Componente FormField reutilizable
+const FormField = ({ label, error, required, children, className = "" }) => (
+  <div className={className}>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    {children}
+    {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
+  </div>
+);
 
-  const grades = ['1ro Grado', '2do Grado', '3ro Grado', '4to Grado', '5to Grado', '6to Grado'];
+// Componente FormSection reutilizable
+const FormSection = ({ title, icon: Icon, iconColor, children }) => (
+  <div>
+    <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+      <Icon className={`w-5 h-5 ${iconColor}`} />
+      {title}
+    </h3>
+    {children}
+  </div>
+);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Limpiar error del campo al modificarlo
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
+const grades = ['1ro Grado', '2do Grado', '3ro Grado', '4to Grado', '5to Grado', '6to Grado'];
 
-  // Manejar upload de imagen
-  const handleImageUpload = (imageResult) => {
-    if (imageResult) {
-      setFormData(prev => ({
-        ...prev,
-        photo: {
-          url: imageResult.url,
-          publicId: imageResult.publicId,
-          thumbnailUrl: imageResult.thumbnailUrl,
-          detailUrl: imageResult.detailUrl
-        }
-      }));
-      
-      // Limpiar error de foto si existe
-      if (errors.photo) {
-        setErrors(prev => ({
-          ...prev,
-          photo: ''
-        }));
-      }
-    } else {
-      setFormData(prev => ({
-        ...prev,
-        photo: null
-      }));
-    }
-  };
+const ModalAgregarEstudiante = ({ isOpen, onClose }) => {
+  // Hook personalizado para gestión de estudiantes
+  const { createStudent, creating, uploading } = useStudents();
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!formData.name.trim()) newErrors.name = 'El nombre es requerido';
-    if (!formData.age.trim()) newErrors.age = 'La edad es requerida';
-    if (!formData.grade) newErrors.grade = 'El grado es requerido';
-    if (!formData.parent.trim()) newErrors.parent = 'El nombre del padre/madre es requerido';
-    if (!formData.phone.trim()) newErrors.phone = 'El teléfono es requerido';
-    if (!formData.email.trim()) {
-      newErrors.email = 'El email es requerido';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'El email no es válido';
-    }
-    if (!formData.address.trim()) newErrors.address = 'La dirección es requerida';
-    if (!formData.photo) newErrors.photo = 'La foto del estudiante es requerida';
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    if (validateForm()) {
-      const newStudent = {
-        ...formData,
-        id: Date.now(), // ID temporal
-        status: 'active',
-        attendance: 100,
-        average: 0,
-        photo: formData.photo?.url || '/default-avatar.png'
-      };
-      
-      onSave(newStudent);
-      handleClose();
-    }
-  };
-
-  const handleClose = () => {
-    setFormData({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset
+  } = useForm({
+    resolver: yupResolver(validationSchema),
+    defaultValues: {
       name: '',
       age: '',
       grade: '',
@@ -132,324 +92,315 @@ const ModalAgregarEstudiante = ({ isOpen, onClose, onSave }) => {
       emergencyPhone: '',
       allergies: '',
       medicalNotes: '',
-      photo: null
-    });
-    setErrors({});
-    setUploading(false);
+      photo: null,
+      photoFile: null
+    }
+  });
+
+  const photoValue = watch('photo');
+  const photoFileValue = watch('photoFile');
+
+  // Función para subir imagen (ahora maneja solo el archivo local)
+  const handleUploadImage = async (file) => {
+    console.log('🔄 handleUploadImage called with file:', file);
+    // Solo retornamos el archivo, el hook se encarga del upload
+    return { file };
+  };
+
+  // Manejar upload de imagen
+  const handleImageUpload = (result) => {
+    console.log('📷 handleImageUpload called with result:', result);
+    if (result && result.file) {
+      // Guardamos el archivo para el upload posterior
+      setValue('photoFile', result.file);
+      
+      // Creamos una URL local para preview
+      const previewUrl = URL.createObjectURL(result.file);
+      setValue('photo', { url: previewUrl });
+    } else {
+      setValue('photoFile', null);
+      setValue('photo', null);
+    }
+  };
+
+  const onSubmit = async (data) => {
+    console.log('📋 Form submission - data:', data);
+    
+    try {
+      // El hook se encarga de todo el proceso (upload + save)
+      await createStudent(data);
+      
+      // Cerrar modal después del éxito
+      handleClose();
+    } catch (error) {
+      console.error('❌ Error al crear estudiante:', error);
+      // El error ya está siendo manejado por el hook con toast
+    }
+  };
+
+  const handleClose = () => {
+    reset();
     onClose();
   };
 
-  if (!isOpen) return null;
+  const inputClassName = (fieldError) => 
+    `w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
+      fieldError ? 'border-red-500' : 'border-gray-300'
+    }`;
+
+  // Estado de carga general
+  const isLoading = creating || uploading;
 
   return (
-    <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center gap-2">
-            <UserPlus className="w-6 h-6 text-blue-600" />
-            <h2 className="text-xl font-semibold text-gray-900">Agregar Nuevo Estudiante</h2>
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/20 bg-opacity-25" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
+                {/* Header */}
+                <div className="flex items-center justify-between p-6 border-b">
+                  <div className="flex items-center gap-2">
+                    <UserPlus className="w-6 h-6 text-blue-600" />
+                    <Dialog.Title className="text-xl font-semibold text-gray-900">
+                      Agregar Nuevo Estudiante
+                    </Dialog.Title>
+                  </div>
+                  <button
+                    onClick={handleClose}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    disabled={isLoading}
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+                  {/* Información Personal */}
+                  <FormSection title="Información Personal" icon={User} iconColor="text-blue-600">
+                    {/* Foto del Estudiante */}
+                    <FormField 
+                      label="Foto del Estudiante" 
+                      required 
+                      error={errors.photo?.message}
+                      className="mb-6"
+                    >
+                      <ImageUploader
+                        onUpload={handleUploadImage}
+                        onImageUpload={handleImageUpload}
+                        currentImage={photoValue?.url}
+                        required={true}
+                        disabled={isLoading}
+                      />
+                    </FormField>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Nombre Completo" required error={errors.name?.message}>
+                        <input
+                          {...register('name')}
+                          className={inputClassName(errors.name)}
+                          placeholder="Ej: Ana García Rodríguez"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="DNI" error={errors.dni?.message}>
+                        <input
+                          {...register('dni')}
+                          className={inputClassName(errors.dni)}
+                          placeholder="Ej: 12345678"
+                          maxLength="8"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Edad" required error={errors.age?.message}>
+                        <input
+                          type="number"
+                          {...register('age')}
+                          className={inputClassName(errors.age)}
+                          placeholder="Ej: 10"
+                          min="5"
+                          max="18"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Fecha de Nacimiento" error={errors.birthDate?.message}>
+                        <input
+                          type="date"
+                          {...register('birthDate')}
+                          className={inputClassName(errors.birthDate)}
+                          disabled={isLoading}
+                        />
+                      </FormField>
+                    </div>
+                  </FormSection>
+
+                  {/* Información Académica */}
+                  <FormSection title="Información Académica" icon={GraduationCap} iconColor="text-green-600">
+                    <FormField label="Grado" required error={errors.grade?.message}>
+                      <select
+                        {...register('grade')}
+                        className={inputClassName(errors.grade)}
+                        disabled={isLoading}
+                      >
+                        <option value="">Seleccionar grado</option>
+                        {grades.map(grade => (
+                          <option key={grade} value={grade}>{grade}</option>
+                        ))}
+                      </select>
+                    </FormField>
+                  </FormSection>
+
+                  {/* Información del Padre/Madre */}
+                  <FormSection title="Información del Padre/Madre" icon={User} iconColor="text-purple-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Nombre del Padre/Madre" required error={errors.parent?.message}>
+                        <input
+                          {...register('parent')}
+                          className={inputClassName(errors.parent)}
+                          placeholder="Ej: María Rodríguez"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Teléfono" required error={errors.phone?.message}>
+                        <input
+                          type="tel"
+                          {...register('phone')}
+                          className={inputClassName(errors.phone)}
+                          placeholder="Ej: +51 987 654 321"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Email" required error={errors.email?.message}>
+                        <input
+                          type="email"
+                          {...register('email')}
+                          className={inputClassName(errors.email)}
+                          placeholder="Ej: maria.rodriguez@email.com"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Dirección" required error={errors.address?.message}>
+                        <input
+                          {...register('address')}
+                          className={inputClassName(errors.address)}
+                          placeholder="Ej: Av. Universitaria 123, Lima"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+                    </div>
+                  </FormSection>
+
+                  {/* Contacto de Emergencia */}
+                  <FormSection title="Contacto de Emergencia" icon={Phone} iconColor="text-red-600">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField label="Nombre del Contacto" error={errors.emergencyContact?.message}>
+                        <input
+                          {...register('emergencyContact')}
+                          className={inputClassName(errors.emergencyContact)}
+                          placeholder="Ej: Carlos García"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Teléfono de Emergencia" error={errors.emergencyPhone?.message}>
+                        <input
+                          type="tel"
+                          {...register('emergencyPhone')}
+                          className={inputClassName(errors.emergencyPhone)}
+                          placeholder="Ej: +51 987 654 322"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+                    </div>
+                  </FormSection>
+
+                  {/* Información Médica */}
+                  <FormSection title="Información Médica (Opcional)" icon={Calendar} iconColor="text-yellow-600">
+                    <div className="space-y-4">
+                      <FormField label="Alergias" error={errors.allergies?.message}>
+                        <textarea
+                          {...register('allergies')}
+                          className={inputClassName(errors.allergies)}
+                          rows="2"
+                          placeholder="Ej: Alérgico a los mariscos, polen..."
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Notas Médicas" error={errors.medicalNotes?.message}>
+                        <textarea
+                          {...register('medicalNotes')}
+                          className={inputClassName(errors.medicalNotes)}
+                          rows="2"
+                          placeholder="Medicamentos, condiciones especiales, etc."
+                          disabled={isLoading}
+                        />
+                      </FormField>
+                    </div>
+                  </FormSection>
+                </form>
+
+                {/* Footer Buttons */}
+                <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    disabled={isLoading}
+                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleSubmit(onSubmit)}
+                    disabled={isLoading}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-w-[140px]"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        {uploading ? 'Subiendo...' : 'Guardando...'}
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        Guardar
+                      </>
+                    )}
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-          <button
-            onClick={handleClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
-            <X className="w-6 h-6" />
-          </button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Información Personal */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-blue-600" />
-              Información Personal
-            </h3>
-            
-            {/* Foto del Estudiante */}
-            <div className="mb-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">
-                Foto del Estudiante *
-              </label>
-              <ImageUploader
-                onImageUpload={handleImageUpload}
-                currentImage={formData.photo?.thumbnailUrl || formData.photo?.url}
-                disabled={uploading}
-                required={true}
-              />
-              {errors.photo && <p className="text-red-500 text-sm mt-2">{errors.photo}</p>}
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre Completo *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.name ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Ej: Ana García Rodríguez"
-                />
-                {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  DNI
-                </label>
-                <input
-                  type="text"
-                  name="dni"
-                  value={formData.dni}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: 12345678"
-                  maxLength="8"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Edad *
-                </label>
-                <input
-                  type="number"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.age ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Ej: 10"
-                  min="5"
-                  max="18"
-                />
-                {errors.age && <p className="text-red-500 text-sm mt-1">{errors.age}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Fecha de Nacimiento
-                </label>
-                <input
-                  type="date"
-                  name="birthDate"
-                  value={formData.birthDate}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Información Académica */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-green-600" />
-              Información Académica
-            </h3>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Grado *
-              </label>
-              <select
-                name="grade"
-                value={formData.grade}
-                onChange={handleChange}
-                className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.grade ? 'border-red-500' : 'border-gray-300'
-                }`}
-              >
-                <option value="">Seleccionar grado</option>
-                {grades.map(grade => (
-                  <option key={grade} value={grade}>{grade}</option>
-                ))}
-              </select>
-              {errors.grade && <p className="text-red-500 text-sm mt-1">{errors.grade}</p>}
-            </div>
-          </div>
-
-          {/* Información del Padre/Madre */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-              <User className="w-5 h-5 text-purple-600" />
-              Información del Padre/Madre
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre del Padre/Madre *
-                </label>
-                <input
-                  type="text"
-                  name="parent"
-                  value={formData.parent}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.parent ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Ej: María Rodríguez"
-                />
-                {errors.parent && <p className="text-red-500 text-sm mt-1">{errors.parent}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono *
-                </label>
-                <input
-                  type="tel"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.phone ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Ej: +51 987 654 321"
-                />
-                {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email *
-                </label>
-                <input
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Ej: maria.rodriguez@email.com"
-                />
-                {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Dirección *
-                </label>
-                <input
-                  type="text"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                    errors.address ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                  placeholder="Ej: Av. Universitaria 123, Lima"
-                />
-                {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* Información de Emergencia */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-              <Phone className="w-5 h-5 text-red-600" />
-              Contacto de Emergencia
-            </h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre del Contacto
-                </label>
-                <input
-                  type="text"
-                  name="emergencyContact"
-                  value={formData.emergencyContact}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: Carlos García"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Teléfono de Emergencia
-                </label>
-                <input
-                  type="tel"
-                  name="emergencyPhone"
-                  value={formData.emergencyPhone}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Ej: +51 987 654 322"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Información Médica */}
-          <div>
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
-              <Calendar className="w-5 h-5 text-yellow-600" />
-              Información Médica (Opcional)
-            </h3>
-            
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Alergias
-                </label>
-                <textarea
-                  name="allergies"
-                  value={formData.allergies}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="2"
-                  placeholder="Ej: Alérgico a los mariscos, polen..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Notas Médicas
-                </label>
-                <textarea
-                  name="medicalNotes"
-                  value={formData.medicalNotes}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="2"
-                  placeholder="Medicamentos, condiciones especiales, etc."
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
-            <button
-              type="button"
-              onClick={handleClose}
-              className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-            >
-              <Save className="w-4 h-4" />
-              Guardar Estudiante
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </Dialog>
+    </Transition>
   );
 };
 
