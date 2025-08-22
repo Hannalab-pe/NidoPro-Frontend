@@ -48,13 +48,13 @@ const Login = () => {
     
     if (!formData.usuario) {
       errors.usuario = 'El DNI es requerido';
-    } else if (formData.usuario.length < 8) {
+    } else if (formData.usuario.length < 2) {
       errors.usuario = 'El DNI debe tener al menos 8 dígitos';
     }
     
     if (!formData.password) {
       errors.password = 'La contraseña es requerida';
-    } else if (formData.password.length < 6) {
+    } else if (formData.password.length < 2) {
       errors.password = 'La contraseña debe tener al menos 6 caracteres';
     }
     
