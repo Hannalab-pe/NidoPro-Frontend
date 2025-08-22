@@ -51,7 +51,7 @@ const ParentDashboard = () => {
   const studentData = {
     name: "Ana María García",
     grade: "5to Grado A",
-    photo: "/api/placeholder/80/80",
+    photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1755701581/estudiantes/zoslqzw97fnfnuxfhcmj.gif",
     age: 10,
     teacher: "Prof. Carmen López"
   };
@@ -146,15 +146,15 @@ const ParentDashboard = () => {
   const renderOverview = () => (
     <div className="space-y-6">
       {/* Información del hijo */}
-      <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
+      <div className="bg-gradient-to-r from-blue-200 to-blue-100 rounded-xl p-6">
         <div className="flex items-center space-x-6">
           <div className="relative">
             <img 
               src={studentData.photo} 
               alt={studentData.name}
-              className="w-20 h-20 rounded-full object-cover border-4 border-purple-200"
+              className="w-20 h-20 rounded-full object-cover border-4 border-blue-200"
             />
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
               <span className="text-xs">✓</span>
             </div>
           </div>
@@ -270,7 +270,7 @@ const ParentDashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-blue-50">
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div 
