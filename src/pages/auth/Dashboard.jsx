@@ -23,6 +23,7 @@ const Dashboard = () => {
   switch (roleName) {
     case 'admin':
     case 'administrador':
+    case 'DIRECTORA':
       return <AdminDashboard />;
     case 'trabajador':
     case 'docente':

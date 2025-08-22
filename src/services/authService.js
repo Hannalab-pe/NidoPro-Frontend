@@ -17,10 +17,14 @@ export const authService = {
     try {
       console.log('🔐 Iniciando login con:', { usuario: credentials.email });
       
-      const response = await authApi.post('/auth/login', {
+      const payload = {
         usuario: credentials.email,
         contrasena: credentials.password
-      });
+      };
+      
+      console.log('📤 Enviando al backend:', payload);
+      
+      const response = await authApi.post('/auth/login', payload);
 
       const { data } = response;
       
@@ -35,16 +39,16 @@ export const authService = {
           nombre: data.usuario.usuario,
           apellido: '',
           role: { 
-            id: data.usuario.rol === 'Admin' ? '1' : '2', 
-            nombre: data.usuario.rol === 'Admin' ? 'admin' : 'trabajador'
+            id: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? '1' : '2', 
+            nombre: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? 'admin' : 'trabajador'
           },
-          permissions: data.usuario.rol === 'Admin' ? ['all'] : ['read_students', 'write_students']
+          permissions: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? ['all'] : ['read_students', 'write_students']
         },
         role: { 
-          id: data.usuario.rol === 'Admin' ? '1' : '2', 
-          nombre: data.usuario.rol === 'Admin' ? 'admin' : 'trabajador'
+          id: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? '1' : '2', 
+          nombre: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? 'admin' : 'trabajador'
         },
-        permissions: data.usuario.rol === 'Admin' ? ['all'] : ['read_students', 'write_students']
+        permissions: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? ['all'] : ['read_students', 'write_students']
       };
     } catch (error) {
       console.error('❌ Error en login:', error);
@@ -177,16 +181,16 @@ export const authService = {
           nombre: data.usuario.usuario,
           apellido: '',
           role: { 
-            id: data.usuario.rol === 'Admin' ? '1' : '2', 
-            nombre: data.usuario.rol === 'Admin' ? 'admin' : 'trabajador'
+            id: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? '1' : '2', 
+            nombre: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? 'admin' : 'trabajador'
           },
-          permissions: data.usuario.rol === 'Admin' ? ['all'] : ['read_students', 'write_students']
+          permissions: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? ['all'] : ['read_students', 'write_students']
         },
         role: { 
-          id: data.usuario.rol === 'Admin' ? '1' : '2', 
-          nombre: data.usuario.rol === 'Admin' ? 'admin' : 'trabajador'
+          id: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? '1' : '2', 
+          nombre: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? 'admin' : 'trabajador'
         },
-        permissions: data.usuario.rol === 'Admin' ? ['all'] : ['read_students', 'write_students']
+        permissions: (data.usuario.rol === 'DIRECTORA' || data.usuario.rol === 'Admin') ? ['all'] : ['read_students', 'write_students']
       };
     } catch (error) {
       console.error('Token inválido:', error);
