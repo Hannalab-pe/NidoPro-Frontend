@@ -486,3 +486,115 @@ export const usersFilters = {
     ]
   }
 };
+
+// Configuración de columnas para matrícula
+export const matriculaColumns = [
+  {
+    Header: 'Estudiante',
+    accessor: 'idEstudiante',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <span className="text-sm font-medium text-blue-600">
+            {value?.nombre?.charAt(0)?.toUpperCase()}{value?.apellido?.charAt(0)?.toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">{`${value?.nombre || ''} ${value?.apellido || ''}`}</div>
+          <div className="text-sm text-gray-500">{value?.nroDocumento || 'Sin documento'}</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Apoderado',
+    accessor: 'idApoderado',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div>
+        <div className="font-medium text-gray-900">{`${value?.nombre || ''} ${value?.apellido || ''}`}</div>
+        <div className="text-sm text-gray-500">{value?.correo || 'Sin correo'}</div>
+        <div className="text-sm text-gray-500">{value?.numero || 'Sin teléfono'}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Grado',
+    accessor: 'idGrado',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div>
+        <div className="font-medium text-gray-900">{value?.grado || 'Sin grado'}</div>
+        <div className="text-sm text-gray-500">{value?.descripcion || ''}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Matrícula',
+    accessor: 'costoMatricula',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="font-medium text-gray-900">S/ {value || '0.00'}</div>
+        <div className="text-sm text-gray-500">{row.metodoPago || 'Sin método'}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Fecha Ingreso',
+    accessor: 'fechaIngreso',
+    type: 'date',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-900">
+        {value ? new Date(value).toLocaleDateString('es-PE') : 'Sin fecha'}
+      </div>
+    )
+  },
+  {
+    Header: 'Voucher',
+    accessor: 'voucherImg',
+    sortable: false,
+    Cell: ({ value }) => (
+      <div>
+        {value ? (
+          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+            Con voucher
+          </span>
+        ) : (
+          <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-800">
+            Sin voucher
+          </span>
+        )}
+      </div>
+    )
+  }
+];
+
+// Filtros para matrícula
+export const matriculaFilters = {
+  grado: {
+    label: 'Grado',
+    placeholder: 'Todos los grados',
+    options: [
+      { value: 'PreNatal', label: 'PreNatal' },
+      { value: 'Inicial', label: 'Inicial' },
+      { value: '1°', label: '1° Primaria' },
+      { value: '2°', label: '2° Primaria' },
+      { value: '3°', label: '3° Primaria' },
+      { value: '4°', label: '4° Primaria' },
+      { value: '5°', label: '5° Primaria' },
+      { value: '6°', label: '6° Primaria' }
+    ]
+  },
+  metodoPago: {
+    label: 'Método de Pago',
+    placeholder: 'Todos los métodos',
+    options: [
+      { value: 'Efectivo', label: 'Efectivo' },
+      { value: 'Transferencia', label: 'Transferencia' },
+      { value: 'Tarjeta', label: 'Tarjeta' }
+    ]
+  }
+};

@@ -133,8 +133,8 @@ const Tareas = () => {
     return task.status === selectedFilter;
   });
 
-  const Tareastats = {
-    total: tasks.length,
+  const taskStats = {
+    total: tareas.length,
     completed: tareas.filter(t => t.status === 'completed').length,
     pending: tareas.filter(t => t.status === 'pending').length,
     overdue: tareas.filter(t => t.status === 'overdue').length

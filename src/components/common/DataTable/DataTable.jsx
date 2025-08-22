@@ -39,6 +39,7 @@ const DataTable = ({
   enablePagination = true,
   enableSearch = true,
   enableSort = true,
+  searchPlaceholder,
   addButtonText = "Agregar",
   loadingMessage = "Cargando datos...",
   emptyMessage = "No hay datos disponibles",
@@ -49,6 +50,11 @@ const DataTable = ({
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [customFilters, setCustomFilters] = useState({});
+
+  // Función para obtener valores anidados
+  const getNestedValue = (obj, path) => {
+    return path.split('.').reduce((current, key) => current?.[key], obj);
+  };
 
   // Datos filtrados y ordenados
   const processedData = useMemo(() => {
@@ -61,6 +67,17 @@ const DataTable = ({
       filtered = filtered.filter(item => {
         return columns.some(column => {
           const value = getNestedValue(item, column.accessor);
+          
+          // Si es un objeto (como idEstudiante), buscar en sus propiedades
+          if (value && typeof value === 'object') {
+            const searchableText = Object.values(value)
+              .filter(v => v && typeof v === 'string')
+              .join(' ')
+              .toLowerCase();
+            return searchableText.includes(globalFilter.toLowerCase());
+          }
+          
+          // Búsqueda normal para strings y otros tipos
           return value?.toString().toLowerCase().includes(globalFilter.toLowerCase());
         });
       });
@@ -118,11 +135,6 @@ const DataTable = ({
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentData = enablePagination ? processedData.slice(startIndex, endIndex) : processedData;
-
-  // Función para obtener valores anidados
-  const getNestedValue = (obj, path) => {
-    return path.split('.').reduce((current, key) => current?.[key], obj);
-  };
 
   // Función de ordenamiento
   const handleSort = (key) => {
@@ -292,7 +304,7 @@ const DataTable = ({
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="text"
-                  placeholder="Buscar..."
+                  placeholder={searchPlaceholder}
                   value={globalFilter}
                   onChange={(e) => setGlobalFilter(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

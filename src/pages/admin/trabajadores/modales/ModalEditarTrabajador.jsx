@@ -23,23 +23,24 @@ import { useTrabajadores } from '../../../../hooks/useTrabajadores';
 
 // Esquema de validación con Yup (igual que crear)
 const validationSchema = yup.object({
-  name: yup.string().required('El nombre es requerido').trim(),
+  nombre: yup.string().required('El nombre es requerido').trim(),
+  apellido: yup.string().required('El apellido es requerido').trim(),
   email: yup.string()
     .email('El email no es válido')
     .required('El email es requerido'),
-  phone: yup.string().required('El teléfono es requerido').trim(),
-  subject: yup.string().required('La materia es requerida'),
-  experience: yup.number()
+  telefono: yup.string().required('El teléfono es requerido').trim(),
+  materia: yup.string().required('La materia es requerida'),
+  experiencia: yup.number()
     .required('La experiencia es requerida')
     .min(0, 'La experiencia debe ser positiva')
     .max(50, 'La experiencia no puede ser mayor a 50 años'),
-  degree: yup.string().required('El título es requerido').trim(),
-  address: yup.string().required('La dirección es requerida').trim(),
-  schedule: yup.string().required('El horario es requerido'),
+  titulo: yup.string().required('El título es requerido').trim(),
+  direccion: yup.string().required('La dirección es requerida').trim(),
+  horario: yup.string().required('El horario es requerido'),
   // Para editar, la foto no es requerida si ya existe
-  photo: yup.object().nullable(),
-  specializations: yup.array().of(yup.string()),
-  notes: yup.string()
+  foto: yup.object().nullable(),
+  especializaciones: yup.array().of(yup.string()),
+  notas: yup.string()
 });
 
 // Componente FormField reutilizable
@@ -72,7 +73,7 @@ const subjects = [
 
 const schedules = ['Mañana', 'Tarde', 'Completo'];
 
-const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
+const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
   // Hook personalizado para gestión de profesores
   const { updateTeacher, updating, uploading } = useTrabajadores();
 
@@ -86,48 +87,50 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
   } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      name: '',
+      nombre: '',
+      apellido: '',
       email: '',
-      phone: '',
-      subject: '',
-      experience: '',
-      degree: '',
-      address: '',
-      schedule: '',
-      photo: null,
+      telefono: '',
+      materia: '',
+      experiencia: '',
+      titulo: '',
+      direccion: '',
+      horario: '',
+      foto: null,
       photoFile: null,
-      specializations: [],
-      notes: ''
+      especializaciones: [],
+      notas: ''
     }
   });
 
-  const photoValue = watch('photo');
+  const photoValue = watch('foto');
 
-  // Cargar datos del profesor cuando se abre el modal
+  // Cargar datos del trabajador cuando se abre el modal
   useEffect(() => {
-    if (profesor && isOpen) {
-      console.log('📝 Cargando datos del profesor para editar:', profesor);
+    if (trabajador && isOpen) {
+      console.log('📝 Cargando datos del trabajador para editar:', trabajador);
       
       // Resetear y cargar datos
       reset({
-        name: profesor.name || '',
-        email: profesor.email || '',
-        phone: profesor.phone || '',
-        subject: profesor.subject || '',
-        experience: profesor.experience || '',
-        degree: profesor.degree || '',
-        address: profesor.address || '',
-        schedule: profesor.schedule || '',
-        specializations: profesor.specializations || [],
-        notes: profesor.notes || '',
-        photo: profesor.photo ? {
-          url: profesor.photo.url || profesor.photo,
-          publicId: profesor.photo.publicId || profesor.photoPublicId
+        nombre: trabajador.nombre || '',
+        apellido: trabajador.apellido || '',
+        email: trabajador.email || '',
+        telefono: trabajador.telefono || '',
+        materia: trabajador.materia || '',
+        experiencia: trabajador.experiencia || '',
+        titulo: trabajador.titulo || '',
+        direccion: trabajador.direccion || '',
+        horario: trabajador.horario || '',
+        especializaciones: trabajador.especializaciones || [],
+        notas: trabajador.notas || '',
+        foto: trabajador.foto ? {
+          url: trabajador.foto.url || trabajador.foto,
+          publicId: trabajador.foto.publicId || trabajador.fotoPublicId
         } : null,
         photoFile: null
       });
     }
-  }, [profesor, isOpen, reset]);
+  }, [trabajador, isOpen, reset]);
 
   // Función para subir imagen (maneja solo el archivo local)
   const handleUploadImage = async (file) => {
@@ -144,17 +147,17 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
       
       // Creamos una URL local para preview
       const previewUrl = URL.createObjectURL(result.file);
-      setValue('photo', { url: previewUrl });
+      setValue('foto', { url: previewUrl });
     } else {
       setValue('photoFile', null);
       // Mantener la foto original si no se sube una nueva
-      if (profesor?.photo) {
-        setValue('photo', {
-          url: profesor.photo.url || profesor.photo,
-          publicId: profesor.photo.publicId || profesor.photoPublicId
+      if (trabajador?.foto) {
+        setValue('foto', {
+          url: trabajador.foto.url || trabajador.foto,
+          publicId: trabajador.foto.publicId || trabajador.fotoPublicId
         });
       } else {
-        setValue('photo', null);
+        setValue('foto', null);
       }
     }
   };
@@ -164,7 +167,7 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
     
     try {
       // El hook se encarga de todo el proceso (upload + save)
-      await updateTeacher(profesor.id, data);
+      await updateTeacher(trabajador.id, data);
       
       // Cerrar modal después del éxito
       handleClose();
@@ -187,7 +190,7 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
   // Estado de carga general
   const isLoading = updating || uploading;
 
-  if (!profesor) return null;
+  if (!trabajador) return null;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -220,16 +223,16 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                 <div className="flex items-center justify-between p-6 border-b bg-blue-50">
                   <div className="flex items-center gap-3">
                     <img
-                      src={photoValue?.url || profesor.photo?.url || profesor.photo || '/default-avatar.png'}
-                      alt="Profesor"
+                      src={photoValue?.url || trabajador.foto?.url || trabajador.foto || '/default-avatar.png'}
+                      alt="Trabajador"
                       className="w-12 h-12 rounded-full object-cover border-2 border-blue-200"
                     />
                     <div>
                       <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
                         <Edit3 className="w-6 h-6 text-blue-600" />
-                        Editar Profesor
+                        Editar Trabajador
                       </Dialog.Title>
-                      <p className="text-blue-600 font-medium">{profesor.name}</p>
+                      <p className="text-blue-600 font-medium">{`${trabajador.nombre} ${trabajador.apellido}`}</p>
                     </div>
                   </div>
                   <button
@@ -247,8 +250,8 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                   <FormSection title="Información Personal" icon={User} iconColor="text-blue-600">
                     {/* Foto del Profesor */}
                     <FormField 
-                      label="Foto del Profesor" 
-                      error={errors.photo?.message}
+                      label="Foto del Trabajador" 
+                      error={errors.foto?.message}
                       className="mb-6"
                     >
                       <ImageUploader
@@ -261,11 +264,20 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                     </FormField>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Nombre Completo" required error={errors.name?.message}>
+                      <FormField label="Nombre" required error={errors.nombre?.message}>
                         <input
-                          {...register('name')}
-                          className={inputClassName(errors.name)}
-                          placeholder="Ej: María Elena Vásquez"
+                          {...register('nombre')}
+                          className={inputClassName(errors.nombre)}
+                          placeholder="Ej: María Elena"
+                          disabled={isLoading}
+                        />
+                      </FormField>
+
+                      <FormField label="Apellido" required error={errors.apellido?.message}>
+                        <input
+                          {...register('apellido')}
+                          className={inputClassName(errors.apellido)}
+                          placeholder="Ej: Vásquez García"
                           disabled={isLoading}
                         />
                       </FormField>
@@ -280,20 +292,20 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                         />
                       </FormField>
 
-                      <FormField label="Teléfono" required error={errors.phone?.message}>
+                      <FormField label="Teléfono" required error={errors.telefono?.message}>
                         <input
                           type="tel"
-                          {...register('phone')}
-                          className={inputClassName(errors.phone)}
+                          {...register('telefono')}
+                          className={inputClassName(errors.telefono)}
                           placeholder="Ej: +51 987 123 456"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Dirección" required error={errors.address?.message}>
+                      <FormField label="Dirección" required error={errors.direccion?.message}>
                         <input
-                          {...register('address')}
-                          className={inputClassName(errors.address)}
+                          {...register('direccion')}
+                          className={inputClassName(errors.direccion)}
                           placeholder="Ej: San Isidro, Lima"
                           disabled={isLoading}
                         />
@@ -304,10 +316,10 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                   {/* Información Académica */}
                   <FormSection title="Información Académica" icon={GraduationCap} iconColor="text-green-600">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Materia Principal" required error={errors.subject?.message}>
+                      <FormField label="Materia Principal" required error={errors.materia?.message}>
                         <select
-                          {...register('subject')}
-                          className={inputClassName(errors.subject)}
+                          {...register('materia')}
+                          className={inputClassName(errors.materia)}
                           disabled={isLoading}
                         >
                           <option value="">Seleccionar materia</option>
@@ -317,11 +329,11 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                         </select>
                       </FormField>
 
-                      <FormField label="Años de Experiencia" required error={errors.experience?.message}>
+                      <FormField label="Años de Experiencia" required error={errors.experiencia?.message}>
                         <input
                           type="number"
-                          {...register('experience')}
-                          className={inputClassName(errors.experience)}
+                          {...register('experiencia')}
+                          className={inputClassName(errors.experiencia)}
                           placeholder="Ej: 8"
                           min="0"
                           max="50"
@@ -329,19 +341,19 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                         />
                       </FormField>
 
-                      <FormField label="Título/Grado Académico" required error={errors.degree?.message}>
+                      <FormField label="Título/Grado Académico" required error={errors.titulo?.message}>
                         <input
-                          {...register('degree')}
-                          className={inputClassName(errors.degree)}
+                          {...register('titulo')}
+                          className={inputClassName(errors.titulo)}
                           placeholder="Ej: Licenciada en Educación Matemática"
                           disabled={isLoading}
                         />
                       </FormField>
 
-                      <FormField label="Horario de Trabajo" required error={errors.schedule?.message}>
+                      <FormField label="Horario de Trabajo" required error={errors.horario?.message}>
                         <select
-                          {...register('schedule')}
-                          className={inputClassName(errors.schedule)}
+                          {...register('horario')}
+                          className={inputClassName(errors.horario)}
                           disabled={isLoading}
                         >
                           <option value="">Seleccionar horario</option>
@@ -355,17 +367,17 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
 
                   {/* Información Adicional */}
                   <FormSection title="Información Adicional (Opcional)" icon={Star} iconColor="text-purple-600">
-                    <FormField label="Especializaciones" error={errors.specializations?.message} className="mb-4">
+                    <FormField label="Especializaciones" error={errors.especializaciones?.message} className="mb-4">
                       <input
-                        {...register('specializations')}
-                        className={inputClassName(errors.specializations)}
+                        {...register('especializaciones')}
+                        className={inputClassName(errors.especializaciones)}
                         placeholder="Ej: Álgebra, Geometría, Cálculo (separados por comas)"
                         disabled={isLoading}
-                        defaultValue={profesor.specializations?.join(', ') || ''}
+                        defaultValue={trabajador.especializaciones?.join(', ') || ''}
                         onChange={(e) => {
                           const value = e.target.value;
-                          const specializations = value ? value.split(',').map(s => s.trim()).filter(s => s) : [];
-                          setValue('specializations', specializations);
+                          const especializaciones = value ? value.split(',').map(s => s.trim()).filter(s => s) : [];
+                          setValue('especializaciones', especializaciones);
                         }}
                       />
                       <p className="text-xs text-gray-500 mt-1">
@@ -373,12 +385,12 @@ const ModalEditarTrabajador = ({ isOpen, onClose, profesor }) => {
                       </p>
                     </FormField>
 
-                    <FormField label="Notas" error={errors.notes?.message}>
+                    <FormField label="Notas" error={errors.notas?.message}>
                       <textarea
-                        {...register('notes')}
-                        className={inputClassName(errors.notes)}
+                        {...register('notas')}
+                        className={inputClassName(errors.notas)}
                         rows="3"
-                        placeholder="Información adicional sobre el profesor, metodología, logros, etc."
+                        placeholder="Información adicional sobre el trabajador, metodología, logros, etc."
                         disabled={isLoading}
                       />
                     </FormField>

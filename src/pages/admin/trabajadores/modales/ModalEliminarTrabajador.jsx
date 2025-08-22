@@ -53,13 +53,13 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
     onClose();
   };
 
-  // Obtener imagen del profesor
-  const getTeacherPhoto = () => {
-    if (profesor.photo) {
-      if (typeof profesor.photo === 'object' && profesor.photo.url) {
-        return profesor.photo.url;
+  // Obtener imagen del trabajador
+  const getTrabajadorPhoto = () => {
+    if (trabajador.foto) {
+      if (typeof trabajador.foto === 'object' && trabajador.foto.url) {
+        return trabajador.foto.url;
       }
-      return profesor.photo;
+      return trabajador.foto;
     }
     return '/default-avatar.png';
   };
@@ -172,7 +172,7 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
                         <h3 className="text-lg font-semibold text-gray-900">{trabajadorName}</h3>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                           <Users className="w-4 h-4" />
-                          <span className="font-medium">{trabajador.correo}</span>
+                          <span className="font-medium">{trabajador.email}</span>
                           <span>•</span>
                           <span>{trabajador.telefono}</span>
                         </div>

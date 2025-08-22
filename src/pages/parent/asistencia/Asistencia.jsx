@@ -16,7 +16,7 @@ const Asistencia = () => {
   const [selectedView, setSelectedView] = useState("calendar");
 
   // Datos de asistencia simulados
-  const AsistenciaData = {
+  const attendanceData = {
     marzo: {
       stats: {
         total: 20,
