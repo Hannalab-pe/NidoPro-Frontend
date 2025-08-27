@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react'; // <-- Agregué useEffect
 import { 
-  GraduationCap, 
   Users,
-  Award,
-  Star
+  UserPlus
 } from 'lucide-react';
 import { useTrabajadores } from '../../../hooks/useTrabajadores';
 import TablaTrabajadores from './tablas/TablaTrabajadores';
@@ -17,9 +15,9 @@ const Trabajadores = () => {
   const { 
     trabajadores, 
     loading,
-    getActiveTrabajadores,
-    getTotalTrabajadores,
-    refreshTrabajadores
+    refreshTrabajadores,
+    statistics,
+    error // <-- Agregué 'error' para la depuración
   } = useTrabajadores();
 
   // Estados locales solo para UI
@@ -29,21 +27,21 @@ const Trabajadores = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedTrabajador, setSelectedTrabajador] = useState(null);
 
-  // Estadísticas dinámicas basadas en datos reales
-  const stats = [
-    { 
-      title: 'Total Trabajadores', 
-      value: getTotalTrabajadores()?.toString() || '0', 
-      icon: GraduationCap, 
-      color: 'bg-blue-500' 
-    },
-    { 
-      title: 'Trabajadores Activos', 
-      value: getActiveTrabajadores()?.length?.toString() || '0', 
-      icon: Users, 
-      color: 'bg-green-500' 
-    }
-  ];
+  // --- Console.log para depuración ---
+  console.log('--- Renderizando Componente Trabajadores ---');
+  console.log('Estado de carga (loading):', loading);
+  console.log('Datos recibidos (trabajadores):', trabajadores);
+  console.log('Estadísticas calculadas:', statistics);
+  if (error) {
+    console.error('Error del hook useTrabajadores:', error);
+  }
+  
+  // Puedes usar useEffect para ver los cambios en los datos y el estado
+  useEffect(() => {
+    console.log('El hook useTrabajadores ha actualizado sus datos.');
+    console.log('Datos actuales:', trabajadores);
+    console.log('Estadísticas actuales:', statistics);
+  }, [trabajadores, statistics]);
 
   // Funciones para manejar las acciones de la tabla
   const handleAdd = () => {
@@ -67,34 +65,44 @@ const Trabajadores = () => {
 
   const handleImport = () => {
     console.log('Importar trabajadores');
-    // TODO: Implementar funcionalidad de importación
   };
 
   const handleExport = () => {
     console.log('Exportar trabajadores');
-    // TODO: Implementar funcionalidad de exportación
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      {/* TODO: Agregar header si es necesario */}
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Trabajadores</h1>
+            <p className="text-gray-600 mt-1">Administra los trabajadores</p>
+          </div>
+        </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-full ${stat.color} text-white`}>
-                <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Users className="w-8 h-8 text-blue-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-blue-600">Total Trabajadores</p>
+                <p className="text-2xl font-bold text-blue-900">{statistics.total}</p>
               </div>
             </div>
           </div>
-        ))}
+          
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <UserPlus className="w-8 h-8 text-green-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-600">Trabajadores Activos</p>
+                <p className="text-2xl font-bold text-green-900">{statistics.active}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Componente de Tabla de Trabajadores */}
@@ -109,18 +117,15 @@ const Trabajadores = () => {
         onExport={handleExport}
       />
 
-      {/* Modal para agregar trabajador */}
+      {/* Modales */}
       <ModalAgregarTrabajador
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSuccess={() => {
           setShowModal(false);
-          // Forzar recarga inmediata de la tabla
           refreshTrabajadores();
         }}
       />
-
-      {/* Modal para ver trabajador */}
       <ModalVerTrabajador
         isOpen={showViewModal}
         onClose={() => {
@@ -129,8 +134,6 @@ const Trabajadores = () => {
         }}
         trabajador={selectedTrabajador}
       />
-
-      {/* Modal para editar trabajador */}
       <ModalEditarTrabajador
         isOpen={showEditModal}
         onClose={() => {
@@ -139,8 +142,6 @@ const Trabajadores = () => {
         }}
         trabajador={selectedTrabajador}
       />
-
-      {/* Modal para cambiar estado del trabajador */}
       <ModalEliminarTrabajador
         isOpen={showDeleteModal}
         onClose={() => {
@@ -150,12 +151,10 @@ const Trabajadores = () => {
         onSuccess={() => {
           setShowDeleteModal(false);
           setSelectedTrabajador(null);
-          // Forzar recarga inmediata de la tabla
           refreshTrabajadores();
         }}
         trabajador={selectedTrabajador}
       />
-
     </div>
   );
 };

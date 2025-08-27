@@ -95,7 +95,6 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const handleClose = () => {
-    reset();
     onClose();
   };
 
@@ -135,7 +134,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b">
+                <div className="flex items-center justify-between p-6">
                   <div className="flex items-center gap-2">
                     <UserPlus className="w-6 h-6 text-blue-600" />
                     <Dialog.Title className="text-xl font-semibold text-gray-900">
@@ -241,7 +240,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                 </form>
 
                 {/* Footer Buttons */}
-                <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
+                <div className="flex justify-end gap-3 p-6 bg-gray-50">
                   <button
                     type="button"
                     onClick={handleClose}

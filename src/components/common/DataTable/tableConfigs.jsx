@@ -109,6 +109,88 @@ export const studentsFilters = {
   }
 };
 
+// Configuración de columnas para pensiones
+export const pensionesColumns = [
+  {
+    Header: 'Estudiante',
+    accessor: 'estudiante',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div>
+        <div className="font-medium text-gray-900">{`${value?.nombre || ''} ${value?.apellido || ''}`}</div>
+        <div className="text-sm text-gray-500">{value?.nroDocumento || 'Sin documento'}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Monto',
+    accessor: 'monto',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className="font-mono text-sm">S/ {value || '0.00'}</span>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estado',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span
+        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+          value === 'Pagado'
+            ? 'bg-green-100 text-green-800'
+            : 'bg-red-100 text-red-800'
+        }`}
+      >
+        {value || 'Pendiente'}
+      </span>
+    )
+  },
+  {
+    Header: 'Fecha de Pago',
+    accessor: 'fechaPago',
+    type: 'date',
+    sortable: true,
+    Cell: ({ value }) =>
+      value ? (
+        <span className="text-sm">
+          {new Date(value).toLocaleDateString('es-PE')}
+        </span>
+      ) : (
+        <span className="text-gray-500">Sin fecha</span>
+      )
+  },
+  {
+    Header: 'Método de Pago',
+    accessor: 'metodoPago',
+    sortable: true,
+    Cell: ({ value }) => <span>{value || 'No registrado'}</span>
+  }
+];
+
+// Filtros para pensiones
+export const pensionesFilters = {
+  estado: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'Pagado', label: 'Pagado' },
+      { value: 'Pendiente', label: 'Pendiente' }
+    ]
+  },
+  metodoPago: {
+    label: 'Método de Pago',
+    placeholder: 'Todos los métodos',
+    options: [
+      { value: 'Efectivo', label: 'Efectivo' },
+      { value: 'Transferencia', label: 'Transferencia' },
+      { value: 'Tarjeta', label: 'Tarjeta' }
+    ]
+  }
+};
+
+
+
 // Configuración de columnas para trabajadores
 export const trabajadoresColumns = [
   {
@@ -595,6 +677,97 @@ export const matriculaFilters = {
       { value: 'Efectivo', label: 'Efectivo' },
       { value: 'Transferencia', label: 'Transferencia' },
       { value: 'Tarjeta', label: 'Tarjeta' }
+    ]
+  }
+};
+
+// Configuración de columnas para aulas
+export const aulasColumns = [
+  {
+    Header: 'Aula',
+    accessor: 'seccion',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+          <span className="text-sm font-medium text-indigo-600">
+            {value?.charAt(0)?.toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">Sección {value}</div>
+          <div className="text-sm text-gray-500">{row.descripcion || 'Sin descripción'}</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Capacidad',
+    accessor: 'cantidadEstudiantes',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="font-medium text-gray-900">{value || 0} estudiantes</div>
+        <div className="text-sm text-gray-500">
+          Máx: {row.capacidadMaxima || 'No definida'}
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Ubicación',
+    accessor: 'ubicacion',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className="text-sm text-gray-900">
+        {value || 'Sin ubicación'}
+      </span>
+    )
+  },
+  {
+    Header: 'Equipamiento',
+    accessor: 'equipamiento',
+    sortable: false,
+    Cell: ({ value }) => (
+      <span className="text-sm text-gray-600">
+        {value ? (value.length > 30 ? `${value.substring(0, 30)}...` : value) : 'Sin equipamiento'}
+      </span>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estado',
+    type: 'status',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+        value === 'activa' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      }`}>
+        {value === 'activa' ? 'Activa' : 'Inactiva'}
+      </span>
+    )
+  }
+];
+
+// Filtros para aulas
+export const aulasFilters = {
+  seccion: {
+    label: 'Sección',
+    placeholder: 'Todas las secciones',
+    options: [
+      { value: 'A', label: 'Sección A' },
+      { value: 'B', label: 'Sección B' },
+      { value: 'C', label: 'Sección C' },
+      { value: 'D', label: 'Sección D' },
+      { value: 'E', label: 'Sección E' }
+    ]
+  },
+  estado: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'activa', label: 'Activa' },
+      { value: 'inactiva', label: 'Inactiva' }
     ]
   }
 };

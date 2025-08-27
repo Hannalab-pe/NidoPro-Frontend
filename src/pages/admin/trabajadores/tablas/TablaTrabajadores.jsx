@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataTable, trabajadoresColumns, trabajadoresFilters } from '../../../../components/common/DataTable';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, Contact } from 'lucide-react';
 
 const TablaTrabajadores = ({ 
   trabajadores = [], 
@@ -37,7 +37,8 @@ const TablaTrabajadores = ({
       data={trabajadores}
       columns={trabajadoresColumns}
       loading={loading}
-      title="Gestión de Trabajadores"
+      title="Tabla de Trabajadores"
+      icon={Contact}
       searchPlaceholder="Buscar trabajadores..."
       filters={trabajadoresFilters}
       actions={{
