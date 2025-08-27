@@ -16,52 +16,98 @@ import {
 const Juegos = () => {
   const [juegoActivo, setJuegoActivo] = useState(null);
 
-  // Componente de Juego de Sumas
-  const JuegoSumas = () => {
-    const [num1, setNum1] = useState(0);
-    const [num2, setNum2] = useState(0);
+  // Componente de Juego de Conteo
+  const JuegoConteo = () => {
+    const [objetos, setObjetos] = useState([]);
     const [respuesta, setRespuesta] = useState('');
     const [puntos, setPuntos] = useState(0);
     const [mensaje, setMensaje] = useState('');
     const [correcto, setCorrecto] = useState(false);
+    const [respuestaCorrecta, setRespuestaCorrecta] = useState(0);
 
-    const generarNuevaSuma = () => {
-      setNum1(Math.floor(Math.random() * 10) + 1);
-      setNum2(Math.floor(Math.random() * 10) + 1);
+    const tiposObjetos = [
+      { emoji: '🍎', nombre: 'manzanas' },
+      { emoji: '🍌', nombre: 'plátanos' },
+      { emoji: '🍊', nombre: 'naranjas' },
+      { emoji: '⭐', nombre: 'estrellas' },
+      { emoji: '🌸', nombre: 'flores' },
+      { emoji: '🎈', nombre: 'globos' },
+      { emoji: '🐱', nombre: 'gatos' },
+      { emoji: '🌈', nombre: 'arcoíris' }
+    ];
+
+    const generarNuevoConteo = () => {
+      const tipoSeleccionado = tiposObjetos[Math.floor(Math.random() * tiposObjetos.length)];
+      const cantidad = Math.floor(Math.random() * 8) + 3; // Entre 3 y 10 objetos
+      
+      // Crear array con los objetos a contar
+      const objetosArray = Array(cantidad).fill(tipoSeleccionado);
+      
+      // Agregar algunos Tung Tung Sahur escondidos ocasionalmente
+      const objetosConSorpresas = [...objetosArray];
+      if (Math.random() < 0.3) { // 30% de probabilidad
+        const cantidadSorpresas = Math.floor(Math.random() * 2) + 1;
+        for (let i = 0; i < cantidadSorpresas; i++) {
+          objetosConSorpresas.push({ emoji: '🎭', nombre: 'Tung Tung', esEspecial: true });
+        }
+      }
+      
+      // Mezclar los objetos
+      const objetosMezclados = objetosConSorpresas.sort(() => Math.random() - 0.5);
+      
+      setObjetos(objetosMezclados);
+      setRespuestaCorrecta(cantidad);
       setRespuesta('');
       setMensaje('');
       setCorrecto(false);
     };
 
     const verificarRespuesta = () => {
-      const respuestaCorrecta = num1 + num2;
       if (parseInt(respuesta) === respuestaCorrecta) {
         setPuntos(puntos + 1);
-        setMensaje('¡Excelente! 🎉');
+        setMensaje('¡Excelente! 🎉 ¡Contaste correctamente!');
         setCorrecto(true);
         setTimeout(() => {
-          generarNuevaSuma();
-        }, 1500);
+          generarNuevoConteo();
+        }, 2000);
       } else {
-        setMensaje(`Inténtalo de nuevo. La respuesta correcta es ${respuestaCorrecta}`);
+        setMensaje(`Inténtalo de nuevo. Cuenta bien los ${objetos[0]?.nombre || 'objetos'}`);
         setCorrecto(false);
       }
     };
 
     useEffect(() => {
-      generarNuevaSuma();
+      generarNuevoConteo();
     }, []);
 
     return (
-      <div className="bg-white p-8 rounded-xl shadow-lg max-w-md mx-auto">
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
         <div className="text-center mb-6">
-          <h3 className="text-2xl font-bold text-blue-600 mb-2">🧮 Juego de Sumas</h3>
+          <h3 className="text-2xl font-bold text-blue-600 mb-2">🔢 Juego de Conteo</h3>
           <p className="text-lg text-gray-600">Puntos: <span className="font-bold text-green-600">{puntos}</span></p>
         </div>
         
         <div className="text-center mb-6">
-          <div className="text-4xl font-bold text-gray-800 mb-4">
-            {num1} + {num2} = ?
+          <p className="text-xl font-semibold text-gray-700 mb-4">
+            ¿Cuántos {objetos.length > 0 && objetos[0].nombre} ves?
+          </p>
+          
+          <div className="bg-blue-50 p-6 rounded-lg mb-6 flex flex-wrap justify-center gap-3 min-h-[200px] items-center">
+            {objetos.map((objeto, index) => (
+              <div key={index} className="relative">
+                {objeto.esEspecial ? (
+                  <img 
+                    src="https://res.cloudinary.com/dhdpp8eq2/image/upload/v1756327657/Tung-Tung-Tung-Sahur-PNG-Photos_ybnh2k.png"
+                    alt="Tung Tung Sahur"
+                    className="w-16 h-16 object-contain opacity-80 hover:opacity-100 transition-opacity hover:scale-110"
+                  />
+                ) : (
+                  <span className="text-4xl hover:scale-110 transition-transform cursor-pointer">
+                    {objeto.emoji}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
           
           <input
@@ -70,6 +116,8 @@ const Juegos = () => {
             onChange={(e) => setRespuesta(e.target.value)}
             className="w-24 h-16 text-3xl text-center border-2 border-blue-300 rounded-lg focus:border-blue-500 focus:outline-none"
             placeholder="?"
+            min="0"
+            max="20"
           />
         </div>
 
@@ -91,30 +139,31 @@ const Juegos = () => {
 
         <div className="text-center mt-6">
           <button
-            onClick={generarNuevaSuma}
+            onClick={generarNuevoConteo}
             className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg"
           >
-            Nueva Suma
+            Nuevos Objetos
           </button>
         </div>
       </div>
     );
   };
 
-  // Componente de Juego de Memoria de Colores
+  // Componente de Juego de Memoria de Colores (MEJORADO)
   const JuegoMemoriaColores = () => {
     const [secuencia, setSecuencia] = useState([]);
     const [secuenciaUsuario, setSecuenciaUsuario] = useState([]);
     const [mostrandoSecuencia, setMostrandoSecuencia] = useState(false);
+    const [colorActivo, setColorActivo] = useState(null);
     const [nivel, setNivel] = useState(1);
     const [mensaje, setMensaje] = useState('¡Presiona INICIAR para comenzar!');
     const [juegoIniciado, setJuegoIniciado] = useState(false);
 
     const colores = [
-      { id: 'rojo', color: 'bg-red-500', nombre: 'Rojo' },
-      { id: 'azul', color: 'bg-blue-500', nombre: 'Azul' },
-      { id: 'verde', color: 'bg-green-500', nombre: 'Verde' },
-      { id: 'amarillo', color: 'bg-yellow-500', nombre: 'Amarillo' }
+      { id: 'rojo', color: 'bg-red-500', colorActivo: 'bg-red-300', nombre: 'Rojo' },
+      { id: 'azul', color: 'bg-blue-500', colorActivo: 'bg-blue-300', nombre: 'Azul' },
+      { id: 'verde', color: 'bg-green-500', colorActivo: 'bg-green-300', nombre: 'Verde' },
+      { id: 'amarillo', color: 'bg-yellow-500', colorActivo: 'bg-yellow-300', nombre: 'Amarillo' }
     ];
 
     const iniciarJuego = () => {
@@ -130,20 +179,28 @@ const Juegos = () => {
       setMostrandoSecuencia(true);
       setMensaje('Observa la secuencia...');
       
-      seq.forEach((color, index) => {
+      seq.forEach((colorId, index) => {
         setTimeout(() => {
-          if (index === seq.length - 1) {
-            setTimeout(() => {
-              setMostrandoSecuencia(false);
-              setMensaje('¡Tu turno! Repite la secuencia');
-            }, 600);
-          }
-        }, (index + 1) * 800);
+          setColorActivo(colorId);
+          setTimeout(() => {
+            setColorActivo(null);
+            if (index === seq.length - 1) {
+              setTimeout(() => {
+                setMostrandoSecuencia(false);
+                setMensaje('¡Tu turno! Repite la secuencia');
+              }, 500);
+            }
+          }, 600);
+        }, index * 1000);
       });
     };
 
     const clickColor = (colorId) => {
       if (mostrandoSecuencia) return;
+      
+      // Efecto visual del click
+      setColorActivo(colorId);
+      setTimeout(() => setColorActivo(null), 200);
       
       const nuevaSecuenciaUsuario = [...secuenciaUsuario, colorId];
       setSecuenciaUsuario(nuevaSecuenciaUsuario);
@@ -182,16 +239,30 @@ const Juegos = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-6">
-          {colores.map((color) => (
-            <button
-              key={color.id}
-              onClick={() => clickColor(color.id)}
-              disabled={mostrandoSecuencia}
-              className={`${color.color} h-20 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:cursor-not-allowed`}
-            >
-              <span className="text-white font-bold">{color.nombre}</span>
-            </button>
-          ))}
+          {colores.map((color) => {
+            const esActivo = colorActivo === color.id;
+            return (
+              <button
+                key={color.id}
+                onClick={() => clickColor(color.id)}
+                disabled={mostrandoSecuencia && colorActivo !== color.id}
+                className={`h-20 rounded-lg shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 disabled:cursor-not-allowed ${
+                  esActivo ? color.colorActivo + ' scale-110 ring-4 ring-white' : color.color
+                }`}
+              >
+                <span className="text-white font-bold">{color.nombre}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tung Tung Sahur escondido */}
+        <div className="flex justify-center mb-4">
+          <img 
+            src="https://res.cloudinary.com/dhdpp8eq2/image/upload/v1756327657/Tung-Tung-Tung-Sahur-PNG-Photos_ybnh2k.png"
+            alt="Tung Tung Sahur"
+            className="w-12 h-12 opacity-40 hover:opacity-80 transition-opacity cursor-pointer hover:scale-110"
+          />
         </div>
 
         <div className="text-center">
@@ -206,31 +277,40 @@ const Juegos = () => {
     );
   };
 
-  // Componente de Juego de Encuentra las Parejas
+  // Componente de Juego de Encuentra las Parejas (CON TUNG TUNG)
   const JuegoEncontrarParejas = () => {
     const [cartas, setCartas] = useState([]);
     const [cartasVolteadas, setCartasVolteadas] = useState([]);
     const [parejasEncontradas, setParejasEncontradas] = useState([]);
     const [puntos, setPuntos] = useState(0);
     const [juegoCompleto, setJuegoCompleto] = useState(false);
+    const [tungTungEncontrado, setTungTungEncontrado] = useState(false);
 
-    const emojis = ['🐱', '🐶', '🐰', '🦊', '🐸', '🐻', '🐨', '🐼'];
+    const emojis = ['🐱', '🐶', '🐰', '🦊', '🐸', '🐻'];
 
     const inicializarJuego = () => {
-      const parejasCartas = [...emojis, ...emojis]
+      // Crear parejas normales
+      let parejasCartas = [...emojis, ...emojis];
+      
+      // Agregar un par especial de Tung Tung Sahur
+      parejasCartas.push('tungTung', 'tungTung');
+      
+      const cartasJuego = parejasCartas
         .sort(() => Math.random() - 0.5)
-        .map((emoji, index) => ({
+        .map((item, index) => ({
           id: index,
-          emoji,
+          emoji: item === 'tungTung' ? '🎭' : item,
+          esTungTung: item === 'tungTung',
           volteada: false,
           encontrada: false
         }));
       
-      setCartas(parejasCartas);
+      setCartas(cartasJuego);
       setCartasVolteadas([]);
       setParejasEncontradas([]);
       setPuntos(0);
       setJuegoCompleto(false);
+      setTungTungEncontrado(false);
     };
 
     const voltearCarta = (id) => {
@@ -246,7 +326,13 @@ const Juegos = () => {
         const carta2 = cartas.find(c => c.id === nuevasVolteadas[1]);
 
         if (carta1.emoji === carta2.emoji) {
-          setPuntos(puntos + 10);
+          const puntosGanados = carta1.esTungTung ? 20 : 10;
+          setPuntos(puntos + puntosGanados);
+          
+          if (carta1.esTungTung) {
+            setTungTungEncontrado(true);
+          }
+          
           const nuevasEncontradas = [...parejasEncontradas, carta1, carta2];
           setParejasEncontradas(nuevasEncontradas);
           
@@ -269,12 +355,18 @@ const Juegos = () => {
       <div className="bg-white p-8 rounded-xl shadow-lg max-w-lg mx-auto">
         <div className="text-center mb-6">
           <h3 className="text-2xl font-bold text-green-600 mb-2">🧩 Encuentra las Parejas</h3>
-          <p className="text-lg text-gray-600">Puntos: <span className="font-bold text-green-600">{puntos}</span></p>
+          <p className="text-lg text-gray-600">
+            Puntos: <span className="font-bold text-green-600">{puntos}</span>
+            {tungTungEncontrado && <span className="ml-4 text-purple-600">¡Tung Tung encontrado! 🎭</span>}
+          </p>
         </div>
 
         {juegoCompleto && (
           <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-center">
-            ¡Felicitaciones! ¡Completaste el juego! 🎉
+            {tungTungEncontrado ? 
+              '¡Felicitaciones! ¡Completaste el juego y encontraste a Tung Tung Sahur! 🎉🎭' :
+              '¡Felicitaciones! ¡Completaste el juego! 🎉'
+            }
           </div>
         )}
 
@@ -287,13 +379,25 @@ const Juegos = () => {
               <button
                 key={carta.id}
                 onClick={() => voltearCarta(carta.id)}
-                className={`h-16 w-16 rounded-lg text-2xl font-bold transition-all duration-300 ${
+                className={`h-16 w-16 rounded-lg text-2xl font-bold transition-all duration-300 flex items-center justify-center ${
                   volteada || encontrada
-                    ? 'bg-green-200 border-2 border-green-400'
+                    ? carta.esTungTung 
+                      ? 'bg-purple-200 border-2 border-purple-400' 
+                      : 'bg-green-200 border-2 border-green-400'
                     : 'bg-gray-300 hover:bg-gray-400'
                 }`}
               >
-                {volteada || encontrada ? carta.emoji : '?'}
+                {volteada || encontrada ? (
+                  carta.esTungTung ? (
+                    <img 
+                      src="https://res.cloudinary.com/dhdpp8eq2/image/upload/v1756327657/Tung-Tung-Tung-Sahur-PNG-Photos_ybnh2k.png"
+                      alt="Tung Tung Sahur"
+                      className="w-12 h-12 object-contain"
+                    />
+                  ) : (
+                    carta.emoji
+                  )
+                ) : '?'}
               </button>
             );
           })}
@@ -314,12 +418,12 @@ const Juegos = () => {
   // Lista de juegos disponibles
   const juegosDisponibles = [
     {
-      id: 'sumas',
-      titulo: 'Juego de Sumas',
-      descripcion: 'Practica matemáticas básicas',
+      id: 'conteo',
+      titulo: 'Juego de Conteo',
+      descripcion: 'Cuenta objetos y aprende números',
       icono: <Calculator className="w-8 h-8" />,
       color: 'bg-blue-500',
-      componente: <JuegoSumas />
+      componente: <JuegoConteo />
     },
     {
       id: 'memoria',
@@ -423,6 +527,16 @@ const Juegos = () => {
               <p className="text-gray-600 text-sm">El aprendizaje es más efectivo cuando es divertido</p>
             </div>
           </div>
+        </div>
+
+        {/* Easter Egg - Tung Tung Sahur escondido en el footer */}
+        <div className="mt-8 text-center">
+          <img 
+            src="https://res.cloudinary.com/dhdpp8eq2/image/upload/v1756327657/Tung-Tung-Tung-Sahur-PNG-Photos_ybnh2k.png"
+            alt="Tung Tung Sahur"
+            className="w-10 h-10 mx-auto opacity-20 hover:opacity-70 transition-opacity cursor-pointer hover:scale-125"
+            onClick={() => alert('¡Encontraste a Tung Tung Sahur! 🎭')}
+          />
         </div>
       </div>
     </div>

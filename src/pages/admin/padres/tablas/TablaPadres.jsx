@@ -22,6 +22,7 @@ const TablaPadres = ({
         columns={parentsColumns}
         loading={loading}
         title="Gestión de Padres de Familia"
+        searchPlaceholder="Buscar padres..."
         icon={UserCheck}
         onAdd={onAdd}
         onEdit={onEdit}

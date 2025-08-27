@@ -15,7 +15,9 @@ import {
   MoreVertical,
   RefreshCw,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  Maximize,
+  Minimize
 } from 'lucide-react';
 import openaiService from '../../../services/openaiService';
 
@@ -41,6 +43,7 @@ const AIChat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [apiStatus, setApiStatus] = useState('checking'); // 'checking', 'connected', 'error'
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const messagesEndRef = useRef(null);
 
   // Verificar estado de la API al cargar
@@ -182,8 +185,12 @@ const AIChat = () => {
     });
   };
 
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
+
   return (
-    <div className="h-full flex flex-col">
+    <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-full'}`}>
       {/* Header */}
       <div className="bg-white border-b border-gray-200 p-4">
         <div className="flex items-center justify-between">
@@ -217,6 +224,13 @@ const AIChat = () => {
           </div>
           
           <div className="flex items-center space-x-2">
+            <button 
+              onClick={toggleFullscreen}
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+            >
+              {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+            </button>
             <button 
               onClick={clearConversation}
               className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"

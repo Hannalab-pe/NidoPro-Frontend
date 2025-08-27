@@ -1,5 +1,5 @@
 import React from 'react';
-import { GraduationCap } from 'lucide-react';
+import { Users } from 'lucide-react';
 import { DataTable, studentsColumns, studentsFilters } from '../../../../components/common/DataTable';
 
 /**
@@ -20,8 +20,9 @@ const TablaEstudiantes = ({
       data={estudiantes}
       columns={studentsColumns}
       loading={loading}
-      title="Gestión de Estudiantes"
-      icon={GraduationCap}
+      title="Tabla de Estudiantes"
+      icon={Users}
+      searchPlaceholder="Buscar estudiantes..."
       onAdd={onAdd}
       onEdit={onEdit}
       onDelete={onDelete}

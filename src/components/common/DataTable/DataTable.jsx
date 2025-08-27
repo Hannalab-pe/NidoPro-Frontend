@@ -257,9 +257,6 @@ const DataTable = ({
             <h2 className="text-lg lg:text-xl font-semibold text-gray-900">
               {title}
             </h2>
-            <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded-full">
-              {processedData.length}
-            </span>
           </div>
           
           <div className="flex flex-col sm:flex-row gap-2">
