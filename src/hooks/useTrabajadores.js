@@ -1,145 +1,189 @@
 // src/hooks/useTrabajadores.js
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react'; // <-- Agregar useMemo
 import { 
-  useTrabajadores as useTrabajadoresQuery,
-  useCreateTrabajador,
-  useUpdateTrabajador,
-  useDeleteTrabajador,
-  useToggleTrabajadorStatus,
-  useInvalidateTrabajadores
+  useTrabajadores as useTrabajadoresQuery,
+  useCreateTrabajador,
+  useUpdateTrabajador,
+  useDeleteTrabajador,
+  useToggleTrabajadorStatus,
+  useInvalidateTrabajadores
 } from './queries/useTrabajadoresQueries';
 
 /**
- * Hook personalizado para gestionar trabajadores con TanStack Query
- * Proporciona todas las funcionalidades CRUD y gestión de estado optimizada
- */
+ * Hook personalizado para gestionar trabajadores con TanStack Query
+ * Proporciona todas las funcionalidades CRUD, gestión de estado y estadísticas
+ */
 export const useTrabajadores = (initialFilters = {}) => {
-  // Estado para filtros y búsqueda
-  const [filters, setFilters] = useState({
-    tipoDocumento: '',
-    estaActivo: '',
-    search: '',
-    ...initialFilters
-  });
+  // Estado para filtros y búsqueda
+  const [filters, setFilters] = useState({
+    tipoDocumento: '',
+    estaActivo: '',
+    search: '',
+    ...initialFilters
+  });
 
-  // Queries y mutations de TanStack Query
-  const { 
-    data: trabajadores = [], 
-    isLoading: loading, 
-    error,
-    refetch: refetchTrabajadores 
-  } = useTrabajadoresQuery(filters);
-  
-  const createMutation = useCreateTrabajador();
-  const updateMutation = useUpdateTrabajador();
-  const deleteMutation = useDeleteTrabajador();
-  const toggleStatusMutation = useToggleTrabajadorStatus();
-  const { invalidateAll, invalidateLists } = useInvalidateTrabajadores();
+  // Queries y mutations de TanStack Query
+  const { 
+    data: trabajadores = [], 
+    isLoading: loading, 
+    error,
+    refetch: refetchTrabajadores 
+  } = useTrabajadoresQuery(filters);
+  
+  const createMutation = useCreateTrabajador();
+  const updateMutation = useUpdateTrabajador();
+  const deleteMutation = useDeleteTrabajador();
+  const toggleStatusMutation = useToggleTrabajadorStatus();
+  const { invalidateAll, invalidateLists } = useInvalidateTrabajadores();
 
-  // Funciones CRUD usando mutations
-  const createTrabajador = useCallback(async (trabajadorData) => {
-    return createMutation.mutateAsync(trabajadorData);
-  }, [createMutation]);
+  // --- Sección de Estadísticas ---
+  /**
+   * Calcular y memorizar estadísticas de los trabajadores
+   */
+  const statistics = useMemo(() => {
+    if (!trabajadores || trabajadores.length === 0) {
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        byPosition: {},
+        recentHires: 0
+      };
+    }
 
-  const updateTrabajador = useCallback(async (id, trabajadorData) => {
-    return updateMutation.mutateAsync({ id, data: trabajadorData });
-  }, [updateMutation]);
+    const total = trabajadores.length;
+    const active = trabajadores.filter(t => t.estaActivo).length;
+    const inactive = total - active;
 
-  const deleteTrabajador = useCallback(async (id) => {
-    return deleteMutation.mutateAsync(id);
-  }, [deleteMutation]);
+    // Agrupar por cargo/posición (asume una propiedad 'cargo' en el objeto trabajador)
+    const byPosition = trabajadores.reduce((acc, trabajador) => {
+      const position = trabajador.cargo?.nombre || 'Sin cargo';
+      acc[position] = (acc[position] || 0) + 1;
+      return acc;
+    }, {});
 
-  const toggleTrabajadorStatus = useCallback(async (trabajador) => {
-    return toggleStatusMutation.mutateAsync({ trabajador });
-  }, [toggleStatusMutation]);
+    // Contrataciones recientes (último mes)
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const recentHires = trabajadores.filter(t => 
+      new Date(t.fechaContratacion) > oneMonthAgo
+    ).length;
 
-  // Funciones de filtrado y búsqueda
-  const updateFilters = useCallback((newFilters) => {
-    setFilters(prev => ({ ...prev, ...newFilters }));
-  }, []);
+    return {
+      total,
+      active,
+      inactive,
+      byPosition,
+      recentHires,
+    };
+  }, [trabajadores]);
+  // --- Fin de la Sección de Estadísticas ---
 
-  const resetFilters = useCallback(() => {
-    setFilters({
-      tipoDocumento: '',
-      estaActivo: '',
-      search: ''
-    });
-  }, []);
+  // Funciones CRUD usando mutations
+  const createTrabajador = useCallback(async (trabajadorData) => {
+    return createMutation.mutateAsync(trabajadorData);
+  }, [createMutation]);
 
-  const searchTrabajadores = useCallback((searchTerm) => {
-    updateFilters({ search: searchTerm });
-  }, [updateFilters]);
+  const updateTrabajador = useCallback(async (id, trabajadorData) => {
+    return updateMutation.mutateAsync({ id, data: trabajadorData });
+  }, [updateMutation]);
 
-  const filterByTipoDocumento = useCallback((tipoDocumento) => {
-    updateFilters({ tipoDocumento });
-  }, [updateFilters]);
+  const deleteTrabajador = useCallback(async (id) => {
+    return deleteMutation.mutateAsync(id);
+  }, [deleteMutation]);
 
-  const filterByEstado = useCallback((estaActivo) => {
-    updateFilters({ estaActivo });
-  }, [updateFilters]);
+  const toggleTrabajadorStatus = useCallback(async (trabajador) => {
+    return toggleStatusMutation.mutateAsync({ trabajador });
+  }, [toggleStatusMutation]);
 
-  // Estados derivados
-  const creating = createMutation.isPending;
-  const updating = updateMutation.isPending;
-  const deleting = deleteMutation.isPending;
-  const uploading = false; // Para compatibilidad
-  
-  // Funciones de utilidad
-  const fetchTrabajadores = useCallback(async (customFilters = {}) => {
-    if (Object.keys(customFilters).length > 0) {
-      updateFilters(customFilters);
-    } else {
-      return refetchTrabajadores();
-    }
-  }, [refetchTrabajadores, updateFilters]);
+  // Funciones de filtrado y búsqueda
+  const updateFilters = useCallback((newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
 
-  const refreshTrabajadores = useCallback(() => {
-    return refetchTrabajadores();
-  }, [refetchTrabajadores]);
+  const resetFilters = useCallback(() => {
+    setFilters({
+      tipoDocumento: '',
+      estaActivo: '',
+      search: ''
+    });
+  }, []);
 
-  // Objeto de retorno del hook
-  return {
-    // Estados
-    trabajadores,
-    loading,
-    creating,
-    updating,
-    deleting,
-    uploading,
-    filters,
-    error,
+  const searchTrabajadores = useCallback((searchTerm) => {
+    updateFilters({ search: searchTerm });
+  }, [updateFilters]);
 
-    // Funciones CRUD
-    createTrabajador,
-    updateTrabajador,
-    deleteTrabajador,
-    toggleTrabajadorStatus,
-    
-    // Funciones de búsqueda y filtrado
-    searchTrabajadores,
-    filterByTipoDocumento,
-    filterByEstado,
-    updateFilters,
-    resetFilters,
-    
-    // Funciones de utilidad
-    fetchTrabajadores,
-    refreshTrabajadores,
-    
-    // Funciones de cache
-    invalidateCache: invalidateAll,
-    invalidateLists,
-    
-    // Funciones derivadas
-    getActiveTrabajadores: () => trabajadores.filter(t => t.estaActivo === true),
-    getInactiveTrabajadores: () => trabajadores.filter(t => t.estaActivo === false),
-    getTotalTrabajadores: () => trabajadores.length,
-    
-    // Estados computados
-    hasTrabajadores: trabajadores.length > 0,
-    isOperating: creating || updating || deleting || uploading,
-    isCached: true, // TanStack Query maneja el cache automáticamente
-  };
+  const filterByTipoDocumento = useCallback((tipoDocumento) => {
+    updateFilters({ tipoDocumento });
+  }, [updateFilters]);
+
+  const filterByEstado = useCallback((estaActivo) => {
+    updateFilters({ estaActivo });
+  }, [updateFilters]);
+
+  // Estados derivados
+  const creating = createMutation.isPending;
+  const updating = updateMutation.isPending;
+  const deleting = deleteMutation.isPending;
+  const uploading = false; // Para compatibilidad
+  
+  // Funciones de utilidad
+  const fetchTrabajadores = useCallback(async (customFilters = {}) => {
+    if (Object.keys(customFilters).length > 0) {
+      updateFilters(customFilters);
+    } else {
+      return refetchTrabajadores();
+    }
+  }, [refetchTrabajadores, updateFilters]);
+
+  const refreshTrabajadores = useCallback(() => {
+    return refetchTrabajadores();
+  }, [refetchTrabajadores]);
+
+  // Objeto de retorno del hook
+  return {
+    // Estados
+    trabajadores,
+    loading,
+    creating,
+    updating,
+    deleting,
+    uploading,
+    filters,
+    error,
+    statistics, // <-- Agregar las estadísticas aquí
+
+    // Funciones CRUD
+    createTrabajador,
+    updateTrabajador,
+    deleteTrabajador,
+    toggleTrabajadorStatus,
+    
+    // Funciones de búsqueda y filtrado
+    searchTrabajadores,
+    filterByTipoDocumento,
+    filterByEstado,
+    updateFilters,
+    resetFilters,
+    
+    // Funciones de utilidad
+    fetchTrabajadores,
+    refreshTrabajadores,
+    
+    // Funciones de cache
+    invalidateCache: invalidateAll,
+    invalidateLists,
+    
+    // Funciones derivadas
+    getActiveTrabajadores: () => trabajadores.filter(t => t.estaActivo === true),
+    getInactiveTrabajadores: () => trabajadores.filter(t => t.estaActivo === false),
+    getTotalTrabajadores: () => trabajadores.length,
+    
+    // Estados computados
+    hasTrabajadores: trabajadores.length > 0,
+    isOperating: creating || updating || deleting || uploading,
+    isCached: true, // TanStack Query maneja el cache automáticamente
+  };
 };
 
 export default useTrabajadores;

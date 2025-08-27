@@ -1,5 +1,5 @@
 // src/hooks/useStudents.js
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react'; // <-- Agrega useMemo
 import {
   useEstudiantes,
   useCreateEstudiante,
@@ -10,7 +10,7 @@ import {
 
 /**
  * Hook personalizado para gestionar estudiantes usando TanStack Query
- * Proporciona todas las funcionalidades CRUD y gestión de estado
+ * Proporciona todas las funcionalidades CRUD, gestión de estado y estadísticas
  */
 export const useStudents = () => {
   // Estado para filtros y búsqueda
@@ -32,6 +32,50 @@ export const useStudents = () => {
   const updating = updateMutation.isPending;
   const deleting = deleteMutation.isPending;
   const uploading = creating || updating; // Se maneja internamente en las mutaciones
+
+  // --- Sección de Estadísticas ---
+  /**
+   * Calcular y memorizar estadísticas de los estudiantes
+   */
+  const statistics = useMemo(() => {
+    if (!students || students.length === 0) {
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        byGrade: {},
+        recentEnrollments: 0
+      };
+    }
+
+    const total = students.length;
+    const active = students.filter(s => s.estaActivo).length;
+    const inactive = total - active;
+
+    // Agrupar por grado
+    const byGrade = students.reduce((acc, student) => {
+      // Asume que el objeto estudiante tiene un campo idGrado.grado o similar
+      const grade = student.idGrado?.grado || student.grado || 'Sin grado';
+      acc[grade] = (acc[grade] || 0) + 1;
+      return acc;
+    }, {});
+    
+    // Matrículas recientes (último mes)
+    const oneMonthAgo = new Date();
+    oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+    const recentEnrollments = students.filter(s => 
+      new Date(s.fechaIngreso) > oneMonthAgo
+    ).length;
+
+    return {
+      total,
+      active,
+      inactive,
+      byGrade,
+      recentEnrollments,
+    };
+  }, [students]);
+  // --- Fin de la Sección de Estadísticas ---
 
   /**
    * Crear un nuevo estudiante
@@ -57,8 +101,7 @@ export const useStudents = () => {
   /**
    * Cambiar estado de un estudiante
    */
-  const changeStudentStatus = useCallback(async (id, status) => {
-    // Para compatibilidad, convertir el status al toggle
+  const changeStudentStatus = useCallback(async (id) => {
     return toggleStatusMutation.mutateAsync(id);
   }, [toggleStatusMutation]);
 
@@ -105,7 +148,6 @@ export const useStudents = () => {
    * Obtener un estudiante por ID (se puede implementar con useEstudiante)
    */
   const getStudentById = useCallback(async (id) => {
-    // Esta función puede usar el hook useEstudiante cuando sea necesario
     const student = students.find(s => s.id === id || s.idEstudiante === id);
     return student;
   }, [students]);
@@ -120,6 +162,7 @@ export const useStudents = () => {
     deleting,
     uploading,
     filters,
+    statistics, // <-- Agregas esto aquí
 
     // Funciones CRUD
     createStudent,

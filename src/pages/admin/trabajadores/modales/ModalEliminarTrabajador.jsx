@@ -137,7 +137,7 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
             >
               <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-orange-50">
+                <div className="flex items-center justify-between p-6 bg-orange-50">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                       <AlertTriangle className="w-6 h-6 text-orange-600" />
@@ -161,7 +161,7 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
                 {/* Content */}
                 <div className="p-6">
                   {/* Información del Trabajador */}
-                  <div className="bg-gray-50 rounded-lg p-4 mb-6 border">
+                  <div className="bg-gray-50 rounded-lg p-4 mb-6">
                     <div className="flex items-center gap-4 mb-4">
                       <div className="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center border-2 border-gray-200">
                         <span className="text-lg font-medium text-blue-600">

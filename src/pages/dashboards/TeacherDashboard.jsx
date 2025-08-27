@@ -21,7 +21,8 @@ import {
   CheckCircle,
   AlertCircle,
   Menu,
-  X
+  X,
+  Baby
 } from "lucide-react";
 
 // Importar los componentes que creamos
@@ -117,7 +118,7 @@ const TeacherDashboard = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 border-r">
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -130,11 +131,11 @@ const TeacherDashboard = () => {
       <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
-        {/* Logo */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 lg:justify-start">
-          <div className="flex items-center space-x-3">
-            <GraduationCap className="w-8 h-8 text-green-600" />
-            <span className="text-xl font-bold text-gray-900">NidoPro</span>
+        {/* Mobile close button */}
+        <div className="flex items-center bg-green-600 justify-between p-7 border-b border-gray-200 lg:justify-start">
+          <div className="flex items-center space-x-3 ">
+            <Baby className="w-8 h-8 text-white" />
+            <span className="text-xl font-bold text-white">Nido Bea</span>
           </div>
           <button
             className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
@@ -152,25 +153,45 @@ const TeacherDashboard = () => {
             return (
               <button
                 key={item.id}
-                className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group ${
+                className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
                   isActive 
-                    ? "bg-green-50 text-green-700 border-r-4 border-green-600" 
+                    ? "bg-green-600 text-white" 
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
                 onClick={() => handleMenuItemClick(item.id)}
               >
                 <div className="flex items-center space-x-3">
-                  <IconComponent className={`w-5 h-5 ${isActive ? "text-green-600" : "text-gray-400 group-hover:text-gray-600"}`} />
+                  <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
                   <span className="font-medium">{item.label}</span>
                 </div>
-                <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-green-600" : "text-gray-400"}`} />
+                <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
               </button>
             );
           })}
         </nav>
         
-        {/* Logout Button */}
-        <div className="absolute bottom-6 left-3 right-3 w-50">
+        {/* User Info Card & Logout Button */}
+        <div className="absolute bottom-6 left-3 right-3 w-58 flex flex-col gap-3">
+          {/* User Info */}
+           <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-2 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-green-100 cursor-pointer">
+             <img
+               src={'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
+               alt="Foto de usuario"
+               className="w-11 h-11 object-cover rounded-full border-2 border-green-500 shadow bg-white"
+             />
+             <div className="flex flex-col min-w-0">
+               <span className="font-semibold text-gray-900 text-sm truncate">
+                 {user?.nombre || ''} {user?.apellido || ''}
+               </span>
+               <span className="text-xs text-gray-700 truncate">{user?.email || 'correo@ejemplo.com'}</span>
+               {user?.role?.nombre && (
+                 <span className="text-[10px] text-white bg-green-500 rounded px-2 py-0.5 mt-1 mb-1 w-fit font-semibold tracking-wide uppercase">
+                   {user.role.nombre}
+                 </span>
+               )}
+             </div>
+           </div>
+          {/* Logout Button */}
           <button 
             className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
             onClick={logout}
@@ -184,7 +205,7 @@ const TeacherDashboard = () => {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-4 lg:px-6 py-4">
+        <header className="bg-green-600 border-gray-200 px-4 lg:px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Mobile menu button */}
             <button
@@ -195,11 +216,11 @@ const TeacherDashboard = () => {
             </button>
             
             <div className="flex-1 lg:ml-0 ml-4">
-              <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
-                {menuItems.find(item => item.id === activeSection)?.label || "Panel Profesor"}
+              <h1 className="text-xl lg:text-2xl font-bold text-white">
+                Panel de Trabajador
               </h1>
-              <p className="text-sm text-gray-600 mt-1 hidden sm:block">
-                Bienvenido/a, {user?.username} | {new Date().toLocaleDateString('es-ES', { 
+              <p className="text-sm text-white mt-1 hidden sm:block">
+                {user?.username} | {new Date().toLocaleDateString('es-ES', { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
@@ -209,18 +230,8 @@ const TeacherDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {/* Search Box */}
-              <div className="relative hidden md:block">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Buscar estudiantes, materias..." 
-                  className="pl-10 pr-4 py-2 w-48 lg:w-64 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                />
-              </div>
-              
               {/* Notifications */}
-              <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors">
+              <button className="relative p-2 text-white border-white border hover:text-gray-900 hover:bg-white rounded-lg transition-colors">
                 <Bell className="w-5 h-5" />
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">2</span>
               </button>
@@ -231,14 +242,13 @@ const TeacherDashboard = () => {
         {/* Content Area */}
         <div className="p-4 lg:p-6 h-full overflow-y-auto">
           {activeSection === "overview" && (
-            <div className="space-y-8">
+            <div className="space-y-6 lg:space-y-8">
               {/* Stats Grid */}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, index) => {
                   const IconComponent = stat.icon;
                   return (
-                    <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
+                    <div key={index} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
                       <div className="flex items-center justify-between mb-4">
                         <div 
                           className="p-3 rounded-lg"
@@ -249,7 +259,7 @@ const TeacherDashboard = () => {
                         <TrendingUp className="w-4 h-4 text-green-500" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                        <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
                         <p className="text-sm text-gray-600 mb-2">{stat.title}</p>
                         <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
                           {stat.change}
@@ -262,7 +272,7 @@ const TeacherDashboard = () => {
 
               {/* Metas del Día */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
                   <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
                     <Target className="w-5 h-5 text-gray-600" />
                     <span>Metas del Día</span>
@@ -274,33 +284,45 @@ const TeacherDashboard = () => {
                     Ver todas
                   </button>
                 </div>
-                <div className="p-6">
+                <div className="p-4 lg:p-6">
                   <div className="space-y-4">
-                    <div className="flex items-center space-x-4 p-4 bg-green-50 rounded-lg">
-                      <CheckCircle className="w-6 h-6 text-green-600" />
-                      <div className="flex-1">
+                    <div className="flex items-start space-x-4 p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">Completar evaluaciones de Matemáticas</p>
-                        <p className="text-xs text-gray-600">5to Grado - Progreso: 8/10 completadas</p>
+                        <p className="text-sm text-gray-600 mt-1">5to Grado - Progreso: 8/10 completadas</p>
                       </div>
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">80%</span>
+                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                        80%
+                      </span>
                     </div>
                     
-                    <div className="flex items-center space-x-4 p-4 bg-yellow-50 rounded-lg">
-                      <AlertCircle className="w-6 h-6 text-yellow-600" />
-                      <div className="flex-1">
+                    <div className="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg">
+                      <div className="flex items-center justify-center w-10 h-10 bg-yellow-100 rounded-full">
+                        <AlertCircle className="w-5 h-5 text-yellow-600" />
+                      </div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">Revisar tareas de Ciencias</p>
-                        <p className="text-xs text-gray-600">4to Grado - 15 tareas pendientes</p>
+                        <p className="text-sm text-gray-600 mt-1">4to Grado - 15 tareas pendientes</p>
                       </div>
-                      <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">Pendiente</span>
+                      <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
+                        Pendiente
+                      </span>
                     </div>
                     
-                    <div className="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
-                      <Clock className="w-6 h-6 text-blue-600" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">Preparar material para mañana</p>
-                        <p className="text-xs text-gray-600">Clase de Historia - 3ro Grado</p>
+                    <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                        <Clock className="w-5 h-5 text-blue-600" />
                       </div>
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Programado</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900">Preparar material para mañana</p>
+                        <p className="text-sm text-gray-600 mt-1">Clase de Historia - 3ro Grado</p>
+                      </div>
+                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                        Programado
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -308,7 +330,7 @@ const TeacherDashboard = () => {
 
               {/* Horario del Día */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
                   <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
                     <Calendar className="w-5 h-5 text-gray-600" />
                     <span>Mi Horario Hoy</span>
@@ -320,7 +342,7 @@ const TeacherDashboard = () => {
                     Ver cronograma completo
                   </button>
                 </div>
-                <div className="p-6">
+                <div className="p-4 lg:p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="p-4 border border-green-200 rounded-lg bg-green-50">
                       <div className="text-sm font-medium text-green-800">08:00 - 09:00</div>
@@ -351,26 +373,29 @@ const TeacherDashboard = () => {
 
               {/* Actividad Reciente */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
                   <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
                     <Clock className="w-5 h-5 text-gray-600" />
                     <span>Actividad Reciente</span>
                   </h3>
+                  <button className="text-sm text-green-600 hover:text-green-700 font-medium">Ver todas</button>
                 </div>
-                <div className="p-6">
+                <div className="p-4 lg:p-6">
                   <div className="space-y-4">
                     {recentActivities.map((activity, index) => {
                       const IconComponent = activity.icon;
                       return (
-                        <div key={index} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div className="p-2 bg-green-50 rounded-lg">
-                            <IconComponent className="w-4 h-4 text-green-600" />
+                        <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                          <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
+                            <IconComponent className="w-5 h-5 text-green-600" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                            <p className="text-sm text-gray-600">{activity.user}</p>
-                            <span className="text-xs text-gray-500">{activity.time}</span>
+                            <p className="text-sm text-gray-600 mt-1">Usuario: {activity.user}</p>
                           </div>
+                          <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
+                            {activity.time}
+                          </span>
                         </div>
                       );
                     })}
@@ -379,20 +404,20 @@ const TeacherDashboard = () => {
               </div>
 
               {/* Asistente IA Quick Access */}
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl shadow-sm p-6 text-white">
+              <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-sm p-4 lg:p-6 text-white">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-blue bg-opacity-20 rounded-lg">
+                    <div className="p-3 bg-white bg-opacity-20 rounded-lg">
                       <Bot className="w-8 h-8" />
                     </div>
                     <div>
                       <h3 className="text-lg font-semibold">Asistente IA Educativo</h3>
-                      <p className="text-blue-100">¿Necesitas ideas para tu próxima clase?</p>
+                      <p className="text-green-100">¿Necesitas ideas para tu próxima clase?</p>
                     </div>
                   </div>
                   <button 
                     onClick={() => setActiveSection("ai-chat")}
-                    className="bg-white text-black bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-200"
+                    className="bg-white text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg transition-all duration-200 font-medium"
                   >
                     Chatear ahora
                   </button>
@@ -409,11 +434,7 @@ const TeacherDashboard = () => {
           {activeSection === "notes" && <Notas />}
           {activeSection === "games" && <Juegos />}
           {activeSection === "students" && <MisEstudiantes />}
-          {activeSection === "classrooms" && (
-            <div>
-              <MisAulas />
-            </div>
-          )}
+          {activeSection === "classrooms" && <MisAulas />}
         </div>
       </main>
     </div>

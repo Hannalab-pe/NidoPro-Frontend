@@ -1,6 +1,6 @@
 import React from 'react';
 import { DataTable, matriculaColumns, matriculaFilters } from '../../../../components/common/DataTable';
-import { Eye, Edit, Trash2 } from 'lucide-react';
+import { Eye, Edit, Trash2, GraduationCap } from 'lucide-react';
 
 /**
  * Tabla de matrícula usando el componente DataTable unificado
@@ -40,7 +40,8 @@ const TablaMatricula = ({
       data={matriculas}
       columns={matriculaColumns}
       loading={loading}
-      title="Gestión de Matrícula"
+      title="Tabla de Matrícula"
+      icon={GraduationCap}
       searchPlaceholder="Buscar por nombre de estudiante..."
       filters={matriculaFilters}
       actions={{

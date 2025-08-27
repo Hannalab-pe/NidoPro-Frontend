@@ -22,6 +22,11 @@ import {
 const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
   if (!trabajador) return null;
 
+  // Función handleClose que respeta el ciclo de vida del componente
+  const handleClose = () => {
+    onClose();
+  };
+
   // Obtener URL de imagen segura
   const getTeacherPhoto = () => {
     if (trabajador.foto) {
@@ -124,7 +129,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -150,7 +155,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
             >
               <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-blue-50">
+                <div className="flex items-center justify-between p-6 bg-blue-50">
                   <div className="flex items-center gap-3">
                     <div>
                       <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
@@ -164,7 +169,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
                     </div>
                   </div>
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
                   >
                     <X className="w-6 h-6" />
@@ -232,7 +237,7 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
                           </label>
                           <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4 text-blue-600" />
-                            <span className="text-gray-900">{trabajador.email || 'No registrado'}</span>
+                            <span className="text-gray-900">{trabajador.correo || trabajador.email || 'No registrado'}</span>
                           </div>
                         </div>
                         
@@ -248,6 +253,16 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
                       </div>
                       
                       <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-1">
+                            Documento
+                          </label>
+                          <div className="flex items-center gap-2">
+                            <User className="w-4 h-4 text-gray-600" />
+                            <span className="text-gray-900">{trabajador.tipoDocumento}: {trabajador.nroDocumento || 'No registrado'}</span>
+                          </div>
+                        </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-600 mb-1">
                             Dirección
@@ -433,9 +448,9 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
                 </div>
 
                 {/* Footer */}
-                <div className="flex justify-end p-6 border-t bg-gray-50">
+                <div className="flex justify-end p-6 bg-gray-50">
                   <button
-                    onClick={onClose}
+                    onClick={handleClose}
                     className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
                     Cerrar

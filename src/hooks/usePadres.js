@@ -1,5 +1,5 @@
 // src/hooks/usePadres.js
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react'; // <-- Agregar useMemo
 import {
   usePadres as usePadresQuery,
   useCreatePadre,
@@ -10,7 +10,7 @@ import {
 
 /**
  * Hook personalizado para gestionar padres/apoderados usando TanStack Query
- * Proporciona todas las funcionalidades CRUD y gestión de estado
+ * Proporciona todas las funcionalidades CRUD, gestión de estado y estadísticas
  */
 export const usePadres = () => {
   // Estado para filtros y búsqueda
@@ -32,7 +32,55 @@ export const usePadres = () => {
   const creating = createMutation.isPending;
   const updating = updateMutation.isPending;
   const deleting = deleteMutation.isPending;
-  const uploading = creating || updating; // Se maneja internamente en las mutaciones
+  const uploading = creating || updating;
+
+  // --- Sección de Estadísticas ---
+  /**
+   * Calcular y memorizar estadísticas de los padres
+   */
+  const statistics = useMemo(() => {
+    if (!parents || parents.length === 0) {
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0,
+        byRelation: {},
+        byParticipation: {},
+        withChildren: 0
+      };
+    }
+
+    const total = parents.length;
+    const active = parents.filter(p => p.estaActivo).length;
+    const inactive = total - active;
+
+    // Agrupar por relación (asume una propiedad 'relacion' en el objeto padre)
+    const byRelation = parents.reduce((acc, parent) => {
+      const relation = parent.relacion || 'Sin relación';
+      acc[relation] = (acc[relation] || 0) + 1;
+      return acc;
+    }, {});
+    
+    // Agrupar por nivel de participación (asume una propiedad 'participacion')
+    const byParticipation = parents.reduce((acc, parent) => {
+        const level = parent.participacion || 'Sin definir';
+        acc[level] = (acc[level] || 0) + 1;
+        return acc;
+    }, {});
+
+    // Contar padres que tienen hijos asignados (asume un array 'hijos' no vacío)
+    const withChildren = parents.filter(p => p.hijos && p.hijos.length > 0).length;
+
+    return {
+      total,
+      active,
+      inactive,
+      byRelation,
+      byParticipation,
+      withChildren
+    };
+  }, [parents]);
+  // --- Fin de la Sección de Estadísticas ---
 
   /**
    * Crear un nuevo padre
@@ -58,8 +106,7 @@ export const usePadres = () => {
   /**
    * Cambiar estado de un padre
    */
-  const changeParentStatus = useCallback(async (id, status) => {
-    // Para compatibilidad, convertir el status al toggle
+  const changeParentStatus = useCallback(async (id) => {
     return toggleStatusMutation.mutateAsync(id);
   }, [toggleStatusMutation]);
 
@@ -88,7 +135,6 @@ export const usePadres = () => {
    * Obtener hijos de un padre (funcionalidad futura)
    */
   const getParentChildren = useCallback(async (parentId) => {
-    // Esta funcionalidad se puede implementar con queries adicionales
     const parent = parents.find(p => p.id === parentId || p.idApoderado === parentId);
     return parent?.hijos || [];
   }, [parents]);
@@ -97,7 +143,6 @@ export const usePadres = () => {
    * Asignar hijo a padre (funcionalidad futura)
    */
   const assignChildToParent = useCallback(async (parentId, studentId) => {
-    // Esta funcionalidad se puede implementar con mutaciones adicionales
     console.log('Asignando hijo', studentId, 'al padre', parentId);
     return { parentId, studentId };
   }, []);
@@ -146,6 +191,7 @@ export const usePadres = () => {
     deleting,
     uploading,
     filters,
+    statistics, // <-- Agregas esto aquí
 
     // Acciones CRUD
     createParent,
@@ -161,25 +207,19 @@ export const usePadres = () => {
     filterByRelation,
     filterByParticipation,
 
-    // Funciones de estadísticas
-    getActiveParents: () => parents.filter(p => p.estaActivo === true),
-    getInactiveParents: () => parents.filter(p => p.estaActivo === false),
-    getTotalParents: () => parents.length,
-    getParentsByRelation: (relation) => parents.filter(p => p.relacion === relation),
-    getHighParticipationParents: () => parents.filter(p => p.participacion === 'alta'),
-    getMediumParticipationParents: () => parents.filter(p => p.participacion === 'media'),
-    getLowParticipationParents: () => parents.filter(p => p.participacion === 'baja'),
-    
     // Funciones adicionales
     refreshParents,
     getParentById,
     getParentChildren,
     assignChildToParent,
     
+    // Se reemplazan las funciones de estadísticas por el objeto 'statistics'
+    // getActiveParents, getInactiveParents, etc. ya no son necesarios
+    
     // Estados computados
     hasParents: parents.length > 0,
     isOperating: creating || updating || deleting || uploading,
-    isCached: true, // TanStack Query maneja el cache automáticamente
+    isCached: true,
   };
 };
 

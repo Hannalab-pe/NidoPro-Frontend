@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  UserCheck, 
   Users,
-  Heart,
-  Calendar,
-  TrendingUp,
-  Phone
+  UserPlus
 } from 'lucide-react';
 import { usePadres } from '../../../hooks/usePadres';
 import TablaPadres from './tablas/TablaPadres';
@@ -19,11 +15,7 @@ const Padres = () => {
   const { 
     parents, 
     loading,
-    getActiveParents,
-    getTotalParents,
-    getHighParticipationParents,
-    getMediumParticipationParents,
-    getLowParticipationParents
+    statistics
   } = usePadres();
 
   // Estados locales solo para UI
@@ -41,49 +33,6 @@ const Padres = () => {
     }, 0);
     return Math.round((totalChildren / parents.length) * 10) / 10;
   };
-
-  // Función para calcular padres con contactos completos
-  const getCompleteContactsCount = () => {
-    return parents.filter(parent => 
-      parent.correo && parent.numero && parent.correo.trim() && parent.numero.trim()
-    ).length;
-  };
-
-  // Función para calcular reuniones este mes (simulado)
-  const getMeetingsThisMonth = () => {
-    // Esta función podría conectarse a un sistema de reuniones real
-    // Por ahora retornamos un cálculo basado en padres activos con alta participación
-    const highParticipation = getHighParticipationParents().length;
-    return Math.round(highParticipation * 1.5); // Simulación: 1.5 reuniones por padre activo
-  };
-
-  // Estadísticas dinámicas basadas en datos reales
-  const stats = [
-    { 
-      title: 'Total Padres', 
-      value: getTotalParents().toString(), 
-      icon: UserCheck, 
-      color: 'bg-blue-500' 
-    },
-    { 
-      title: 'Padres Activos', 
-      value: getActiveParents().length.toString(), 
-      icon: Users, 
-      color: 'bg-green-500' 
-    },
-    { 
-      title: 'Participación Alta', 
-      value: getHighParticipationParents().length.toString(), 
-      icon: Heart, 
-      color: 'bg-red-500' 
-    },
-    { 
-      title: 'Reuniones Este Mes', 
-      value: getMeetingsThisMonth().toString(),
-      icon: Calendar, 
-      color: 'bg-purple-500' 
-    }
-  ];
 
   // Funciones para manejar las acciones de la tabla
   const handleAdd = () => {
@@ -117,24 +66,36 @@ const Padres = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      {/* TODO: Agregar header si es necesario */}
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Padres</h1>
+            <p className="text-gray-600 mt-1">Administra los padres</p>
+          </div>
+        </div>
 
-      {/* Stats Cards Principales */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-full ${stat.color} text-white`}>
-                <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Users className="w-8 h-8 text-blue-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-blue-600">Total Padres</p>
+                <p className="text-2xl font-bold text-blue-900">{statistics.total}</p>
               </div>
             </div>
           </div>
-        ))}
+          
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <UserPlus className="w-8 h-8 text-green-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-600">Padres Activos</p>
+                <p className="text-2xl font-bold text-green-900">{statistics.active}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
 
