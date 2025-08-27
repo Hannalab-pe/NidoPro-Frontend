@@ -150,7 +150,7 @@ const AdminDashboard = () => {
           {/* User Info */}
            <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-2 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-blue-100 cursor-pointer">
              <img
-               src={'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1755701581/estudiantes/zoslqzw97fnfnuxfhcmj.gif'}
+               src={'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
                alt="Foto de usuario"
                className="w-11 h-11 object-cover rounded-full border-2 border-blue-500 shadow bg-white"
              />

@@ -29,7 +29,7 @@ const Asistencia = () => {
     {
       id: 1,
       name: "Ana María García",
-      photo: "/api/placeholder/40/40",
+      photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1756327657/Tung-Tung-Tung-Sahur-PNG-Photos_ybnh2k.png",
       status: "present", // present, absent, late, excused
       arrivalTime: "08:00",
       notes: "",
@@ -42,7 +42,7 @@ const Asistencia = () => {
     {
       id: 2,
       name: "Carlos Eduardo López",
-      photo: "/api/placeholder/40/40",
+      photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg",
       status: "present",
       arrivalTime: "07:55",
       notes: "",
@@ -55,7 +55,7 @@ const Asistencia = () => {
     {
       id: 3,
       name: "Isabella Rodríguez",
-      photo: "/api/placeholder/40/40",
+      photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg",
       status: "late",
       arrivalTime: "08:15",
       notes: "Cita médica",
@@ -68,7 +68,7 @@ const Asistencia = () => {
     {
       id: 4,
       name: "Diego Fernández",
-      photo: "/api/placeholder/40/40",
+      photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1756327657/Tung-Tung-Tung-Sahur-PNG-Photos_ybnh2k.png",
       status: "absent",
       arrivalTime: "",
       notes: "Enfermo",
@@ -81,7 +81,7 @@ const Asistencia = () => {
     {
       id: 5,
       name: "Sofía Mendoza",
-      photo: "/api/placeholder/40/40",
+      photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1755701581/estudiantes/zoslqzw97fnfnuxfhcmj.gif",
       status: "excused",
       arrivalTime: "",
       notes: "Viaje familiar",
