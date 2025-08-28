@@ -56,10 +56,6 @@ const Reportes = () => {
 
   const currentCategory = reportCategories.find(cat => cat.id === filters.category);
 
-  if (loading) {
-    return <div className="p-6 text-center text-gray-500">Cargando reportes...</div>;
-  }
-
   return (
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg shadow-sm">
@@ -86,12 +82,12 @@ const Reportes = () => {
 
       {/* Componente de Tabla de Reportes */}
       <TablaReportes
-        reportes={reportes}
-        loading={loading}
-        onDownload={handleDownload}
-        onDelete={handleDelete}
-        currentCategory={currentCategory?.name || 'Todos'}
-      />
+        informes={reportes}
+        loading={loading}
+        onDownload={handleDownload}
+        onDelete={handleDelete}
+        currentCategory={currentCategory?.name || 'Todos'}
+      />
     </div>
   );
 };

@@ -3,94 +3,33 @@ import {
   Users as UsersIcon, 
   Shield,
   Crown,
-  UserCheck
+  UserCheck,
+  Users,
+  UserPlus
 } from 'lucide-react';
+import { useUsuarios} from '../../../hooks/useUsuarios';
 import TablaUsuarios from './tablas/TablaUsuarios';
-import ModalAgregarUsuario from './modales/ModalAgregarUsuario';
+
+
 
 const Usuarios = () => {
-  const [showModal, setShowModal] = useState(false);
-  const [usuarios, setUsuarios] = useState([
-    {
-      id: 1,
-      name: 'Dr. Carmen Rodríguez',
-      email: 'carmen.rodriguez@nidopro.edu',
-      phone: '+51 987 654 321',
-      role: 'admin',
-      status: 'active',
-      lastLogin: '2024-08-15 09:30',
-      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/admin-carmen.jpg',
-      department: 'Dirección',
-      permissions: ['all']
-    },
-    {
-      id: 2,
-      name: 'María Elena Vásquez',
-      email: 'maria.vasquez@nidopro.edu',
-      phone: '+51 987 654 322',
-      role: 'teacher',
-      status: 'active',
-      lastLogin: '2024-08-15 08:15',
-      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/teacher-maria.jpg',
-      department: 'Matemáticas',
-      permissions: ['grades', 'attendance', 'reports']
-    },
-    {
-      id: 3,
-      name: 'Carlos Mendoza Ruiz',
-      email: 'carlos.mendoza@nidopro.edu',
-      phone: '+51 987 654 323',
-      role: 'teacher',
-      status: 'active',
-      lastLogin: '2024-08-14 16:45',
-      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/teacher-carlos.jpg',
-      department: 'Ciencias Naturales',
-      permissions: ['grades', 'attendance', 'reports']
-    },
-    {
-      id: 4,
-      name: 'Ana Torres García',
-      email: 'ana.torres@nidopro.edu',
-      phone: '+51 987 654 324',
-      role: 'secretary',
-      status: 'active',
-      lastLogin: '2024-08-15 07:30',
-      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/secretary-ana.jpg',
-      department: 'Administración',
-      permissions: ['students', 'parents', 'finances']
-    },
-    {
-      id: 5,
-      name: 'Luis García Silva',
-      email: 'luis.garcia@nidopro.edu',
-      phone: '+51 987 654 325',
-      role: 'teacher',
-      status: 'inactive',
-      lastLogin: '2024-08-10 14:20',
-      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/teacher-luis.jpg',
-      department: 'Historia',
-      permissions: ['grades', 'attendance']
-    },
-    {
-      id: 6,
-      name: 'Rosa Morales Castro',
-      email: 'rosa.morales@nidopro.edu',
-      phone: '+51 987 654 326',
-      role: 'specialist',
-      status: 'active',
-      lastLogin: '2024-08-15 10:15',
-      photo: 'https://res.cloudinary.com/danpv3pvc/image/upload/c_fill,w_100,h_100,f_auto,q_auto/usuarios/specialist-rosa.jpg',
-      department: 'Psicología',
-      permissions: ['students', 'reports', 'evaluations']
-    }
-  ]);
 
-  const stats = [
-    { title: 'Total Usuarios', value: '24', icon: UsersIcon, color: 'bg-blue-500' },
-    { title: 'Usuarios Activos', value: '22', icon: UserCheck, color: 'bg-green-500' },
-    { title: 'Administradores', value: '3', icon: Crown, color: 'bg-yellow-500' },
-    { title: 'Roles Definidos', value: '5', icon: Shield, color: 'bg-purple-500' }
-  ];
+  const {
+    usuarios, 
+    loading,
+    statistics,
+    refreshUsuarios,
+    error
+  } = useUsuarios();
+
+
+  // Estados locales solo para UI
+  const [showModal, setShowModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedUsuario, setSelectedUsuario] = useState(null);
+
 
   // Funciones para manejar las acciones de la tabla
   const handleAdd = () => {
@@ -145,28 +84,44 @@ const Usuarios = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div className="bg-white p-6 rounded-lg shadow-sm">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Usuarios</h1>
+            <p className="text-gray-600 mt-1">Administra los Usuarios</p>
+          </div>
+        </div>
 
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map((stat, index) => (
-          <div key={index} className="bg-white p-4 lg:p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                <p className="text-2xl lg:text-3xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-full ${stat.color} text-white`}>
-                <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
+        {/* Estadísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-blue-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Users className="w-8 h-8 text-blue-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-blue-600">Total Usuarios</p>
+                <p className="text-2xl font-bold text-blue-900">{statistics.total}</p>
               </div>
             </div>
           </div>
-        ))}
+          
+          <div className="bg-green-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <UserPlus className="w-8 h-8 text-green-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-green-600">Usuarios Activos</p>
+                <p className="text-2xl font-bold text-green-900">{statistics.active}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      
 
       {/* Componente de Tabla de Usuarios */}
       <TablaUsuarios
         usuarios={usuarios}
+        loading={loading}
         onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
@@ -175,12 +130,32 @@ const Usuarios = () => {
         onExport={handleExport}
       />
 
-      {/* Modal para agregar usuario */}
-      <ModalAgregarUsuario
+      {/* Modal para agregar usuario 
+      
+            <ModalAgregarUsuario
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSave={handleSave}
       />
+
+
+      <ModalVerUsuario
+        isOpen={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        usuario={selectedUsuario}
+      />
+      <ModalEditarUsuario
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        usuario={selectedUsuario}
+      />
+      <ModalEliminarUsuario
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        usuario={selectedUsuario}
+      />
+      */}
+
     </div>
   );
 };

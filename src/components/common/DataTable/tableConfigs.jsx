@@ -109,6 +109,57 @@ export const studentsFilters = {
   }
 };
 
+// Configuración de columnas para informes/reportes
+export const informesColumns = [
+  {
+    Header: 'ID Informe',
+    accessor: 'idInforme',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className="font-mono text-xs text-gray-600">
+        {value ? value.substring(0, 8) + '...' : 'Sin ID'}
+      </span>
+    )
+  },
+  {
+    Header: 'Detalle del Informe',
+    accessor: 'detalleInforme',
+    sortable: false,
+    Cell: ({ value }) => (
+      <div className="max-w-xs">
+        <p className="text-sm text-gray-900 truncate" title={value}>
+          {value || 'Sin detalle'}
+        </p>
+      </div>
+    )
+  },
+  {
+    Header: 'Fecha de Registro',
+    accessor: 'fechaRegistro',
+    type: 'date',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className="text-sm text-gray-900">
+        {value ? new Date(value).toLocaleDateString('es-PE') : 'Sin fecha'}
+      </span>
+    )
+  }
+];
+
+// Filtros para informes
+export const informesFilters = {
+  fechaRegistro: {
+    label: 'Fecha',
+    placeholder: 'Todas las fechas',
+    options: [
+      { value: 'hoy', label: 'Hoy' },
+      { value: 'semana', label: 'Esta semana' },
+      { value: 'mes', label: 'Este mes' },
+      { value: 'año', label: 'Este año' }
+    ]
+  }
+};
+
 // Configuración de columnas para pensiones
 export const pensionesColumns = [
   {
@@ -768,6 +819,166 @@ export const aulasFilters = {
     options: [
       { value: 'activa', label: 'Activa' },
       { value: 'inactiva', label: 'Inactiva' }
+    ]
+  }
+};
+
+// Configuración de columnas para usuarios
+export const usuariosColumns = [
+  {
+    Header: 'Usuario',
+    accessor: 'usuario', // Cambiado de 'nombre' a 'usuario'
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+          <span className="text-sm font-medium text-purple-600">
+            {value?.charAt(0)?.toUpperCase() || 'U'}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">{value || 'Sin usuario'}</div>
+          <div className="text-sm text-gray-500">ID: {row.idUsuario?.substring(0, 8)}...</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Tipo',
+    accessor: 'estudiantes', // Determinar tipo basado en relaciones
+    sortable: false,
+    Cell: ({ value, row }) => {
+      let tipo = 'Sistema';
+      let color = 'bg-gray-100 text-gray-800';
+      
+      if (row.estudiantes) {
+        tipo = 'Estudiante/Apoderado';
+        color = 'bg-blue-100 text-blue-800';
+      } else if (row.trabajadores) {
+        tipo = 'Trabajador';
+        color = 'bg-green-100 text-green-800';
+      }
+      
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${color}`}>
+          {tipo}
+        </span>
+      );
+    }
+  },
+  {
+    Header: 'Nombre Asociado',
+    accessor: 'estudiantes',
+    sortable: false,
+    Cell: ({ value, row }) => {
+      if (row.estudiantes) {
+        return (
+          <div>
+            <div className="font-medium text-gray-900">
+              {`${row.estudiantes.nombre} ${row.estudiantes.apellido}`}
+            </div>
+            <div className="text-sm text-gray-500">Estudiante</div>
+          </div>
+        );
+      }
+      
+      if (row.trabajadores) {
+        return (
+          <div>
+            <div className="font-medium text-gray-900">
+              {`${row.trabajadores.nombre} ${row.trabajadores.apellido}`}
+            </div>
+            <div className="text-sm text-gray-500">Trabajador</div>
+          </div>
+        );
+      }
+      
+      return (
+        <div className="text-sm text-gray-500">Usuario del sistema</div>
+      );
+    }
+  },
+  {
+    Header: 'Contacto',
+    accessor: 'estudiantes',
+    sortable: false,
+    Cell: ({ value, row }) => {
+      if (row.estudiantes) {
+        return (
+          <div>
+            <div className="text-sm text-gray-900">
+              {row.estudiantes.contactoEmergencia || 'Sin contacto'}
+            </div>
+            <div className="text-sm text-gray-500">
+              {row.estudiantes.nroEmergencia || 'Sin teléfono'}
+            </div>
+          </div>
+        );
+      }
+      
+      if (row.trabajadores) {
+        return (
+          <div>
+            <div className="text-sm text-gray-900">
+              {row.trabajadores.correo || 'Sin email'}
+            </div>
+            <div className="text-sm text-gray-500">
+              {row.trabajadores.telefono || 'Sin teléfono'}
+            </div>
+          </div>
+        );
+      }
+      
+      return <div className="text-sm text-gray-500">Sin información</div>;
+    }
+  },
+  {
+    Header: 'Fecha Creación',
+    accessor: 'creado',
+    type: 'date',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-900">
+        {value ? new Date(value).toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }) : 'Sin fecha'}
+      </div>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estaActivo',
+    type: 'status',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+        value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      }`}>
+        {value ? 'Activo' : 'Inactivo'}
+      </span>
+    )
+  }
+];
+
+// Filtros para usuarios (actualizados según la estructura de datos)
+export const usuariosFilters = {
+  tipo: {
+    label: 'Tipo de Usuario',
+    placeholder: 'Todos los tipos',
+    options: [
+      { value: 'estudiante', label: 'Estudiante/Apoderado' },
+      { value: 'trabajador', label: 'Trabajador' },
+      { value: 'sistema', label: 'Usuario del Sistema' }
+    ]
+  },
+  estaActivo: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'true', label: 'Activos' },
+      { value: 'false', label: 'Inactivos' }
     ]
   }
 };
