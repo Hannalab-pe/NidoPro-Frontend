@@ -1,19 +1,12 @@
 import React, { useState } from "react";
-import { 
-  Calendar, 
-  Clock, 
-  CheckCircle, 
-  XCircle, 
-  AlertCircle,
-  TrendingUp,
-  Filter,
-  MapPin,
-  User
-} from "lucide-react";
+import { Calendar, Clock, TrendingUp, Filter, MapPin, User } from "lucide-react";
+import PodModal from "./podmodal/PodModal";
 
 const Asistencia = () => {
   const [selectedMonth, setSelectedMonth] = useState("marzo");
   const [selectedView, setSelectedView] = useState("calendar");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
 
   // Datos de asistencia simulados
   const attendanceData = {
@@ -71,21 +64,21 @@ const Asistencia = () => {
         return {
           color: 'bg-green-100 text-green-800 border-green-200',
           label: 'Presente',
-          icon: CheckCircle,
+          icon: 'CheckCircle',
           bgColor: 'bg-green-500'
         };
       case 'absent':
         return {
           color: 'bg-red-100 text-red-800 border-red-200',
           label: 'Ausente',
-          icon: XCircle,
+          icon: 'XCircle',
           bgColor: 'bg-red-500'
         };
       case 'late':
         return {
           color: 'bg-yellow-100 text-yellow-800 border-yellow-200',
           label: 'Tarde',
-          icon: AlertCircle,
+          icon: 'AlertCircle',
           bgColor: 'bg-yellow-500'
         };
       case 'weekend':
@@ -107,6 +100,13 @@ const Asistencia = () => {
 
   const currentData = attendanceData[selectedMonth];
   const weekDays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
+
+  const handleDayClick = (day) => {
+    if (day.status !== 'weekend') {
+      setSelectedDay(day);
+      setModalOpen(true);
+    }
+  };
 
   const renderCalendarView = () => (
     <div className="bg-white rounded-xl p-6 border border-gray-100">
@@ -147,25 +147,22 @@ const Asistencia = () => {
               className={`relative aspect-square rounded-lg border-2 border-gray-100 flex flex-col items-center justify-center text-sm hover:shadow-md transition-shadow cursor-pointer ${
                 day.status === 'weekend' ? 'bg-gray-50' : 'bg-white'
               }`}
+              onClick={() => handleDayClick(day)}
             >
               <div className="text-gray-900 font-medium mb-1">{day.date}</div>
-              
               {day.status !== 'weekend' && (
                 <>
                   <div className="text-xl mb-1">{day.emoji}</div>
                   {day.time && (
                     <div className="text-xs text-gray-500">{day.time}</div>
                   )}
-                  
                   {/* Indicador de estado */}
                   <div className={`absolute top-1 right-1 w-3 h-3 rounded-full ${statusInfo.bgColor}`}></div>
                 </>
               )}
-
               {day.status === 'weekend' && (
                 <div className="text-lg">{day.emoji}</div>
               )}
-
               {day.reason && (
                 <div className="absolute bottom-1 left-1 text-xs bg-red-100 text-red-600 px-1 rounded">
                   {day.reason}
@@ -336,7 +333,11 @@ const Asistencia = () => {
       </div>
 
       {/* Contenido principal */}
-      {selectedView === "calendar" ? renderCalendarView() : renderListView()}
+
+  {selectedView === "calendar" ? renderCalendarView() : renderListView()}
+  <PodModal isOpen={modalOpen} onClose={() => setModalOpen(false)} day={selectedDay} />
+
+
 
       {/* Tendencias y análisis */}
       <div className="grid md:grid-cols-2 gap-6">

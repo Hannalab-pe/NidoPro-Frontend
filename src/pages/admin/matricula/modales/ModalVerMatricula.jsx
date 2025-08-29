@@ -25,8 +25,8 @@ const InfoField = ({ label, value, icon: Icon, className = "" }) => (
   </div>
 );
 
-const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
-  if (!estudiante) return null;
+const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
+  if (!matricula) return null;
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No especificado';
@@ -61,7 +61,7 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/20 bg-opacity-25" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -103,15 +103,15 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
                   {/* Foto y datos básicos */}
                   <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
                     <div className="flex-shrink-0">
-                      {estudiante.photo ? (
+                      {matricula.photo ? (
                         <img
-                          src={estudiante.photo}
-                          alt={`${estudiante.name} ${estudiante.lastName}`}
+                          src={matricula.photo}
+                          alt={`${matricula.name} ${matricula.lastName}`}
                           className="w-24 h-24 rounded-full object-cover border-4 border-white shadow-lg"
                         />
                       ) : (
                         <DefaultAvatar
-                          name={`${estudiante.name} ${estudiante.lastName}`}
+                          name={`${matricula.name} ${matricula.lastName}`}
                           size="w-24 h-24"
                           textSize="text-2xl"
                         />
@@ -119,21 +119,21 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
                     </div>
                     <div className="flex-1 text-center md:text-left">
                       <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                        {estudiante.name} {estudiante.lastName}
+                        {matricula.name} {matricula.lastName}
                       </h2>
-                      <p className="text-lg text-blue-600 font-medium mb-2">{estudiante.grade}</p>
+                      <p className="text-lg text-blue-600 font-medium mb-2">{matricula.grade}</p>
                       <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600">
                         <span className="flex items-center">
                           <Calendar className="w-4 h-4 mr-1" />
-                          {calculateAge(estudiante.birthDate)}
+                          {calculateAge(matricula.birthDate)}
                         </span>
                         <span className="flex items-center">
                           <Mail className="w-4 h-4 mr-1" />
-                          {estudiante.email}
+                          {matricula.email}
                         </span>
                         <span className="flex items-center">
                           <Phone className="w-4 h-4 mr-1" />
-                          {estudiante.phone}
+                          {matricula.phone}
                         </span>
                       </div>
                     </div>
@@ -148,33 +148,33 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InfoField
                         label="Fecha de Nacimiento"
-                        value={formatDate(estudiante.birthDate)}
+                        value={formatDate(matricula.birthDate)}
                         icon={Calendar}
                       />
                       <InfoField
                         label="Edad"
-                        value={calculateAge(estudiante.birthDate)}
+                        value={calculateAge(matricula.birthDate)}
                         icon={User}
                       />
                       <InfoField
                         label="Grado"
-                        value={estudiante.grade}
+                        value={matricula.grade}
                         icon={GraduationCap}
                       />
                       <InfoField
                         label="Teléfono"
-                        value={estudiante.phone}
+                        value={matricula.phone}
                         icon={Phone}
                       />
                       <InfoField
                         label="Email"
-                        value={estudiante.email}
+                        value={matricula.email}
                         icon={Mail}
                         className="md:col-span-2"
                       />
                       <InfoField
                         label="Dirección"
-                        value={estudiante.address}
+                        value={matricula.address}
                         icon={MapPin}
                         className="md:col-span-2"
                       />
@@ -190,17 +190,17 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InfoField
                         label="Nombre Completo"
-                        value={estudiante.parentName}
+                        value={matricula.parentName}
                         icon={User}
                       />
                       <InfoField
                         label="Teléfono"
-                        value={estudiante.parentPhone}
+                        value={matricula.parentPhone}
                         icon={Phone}
                       />
                       <InfoField
                         label="Email"
-                        value={estudiante.parentEmail}
+                        value={matricula.parentEmail}
                         icon={Mail}
                         className="md:col-span-2"
                       />
@@ -208,24 +208,24 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
                   </div>
 
                   {/* Información Médica */}
-                  {(estudiante.medicalConditions || estudiante.allergies) && (
+                  {(matricula.medicalConditions || matricula.allergies) && (
                     <div className="bg-white border rounded-lg p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <Baby className="w-5 h-5 mr-2 text-red-600" />
                         Información Médica
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {estudiante.medicalConditions && (
+                        {matricula.medicalConditions && (
                           <InfoField
                             label="Condiciones Médicas"
-                            value={estudiante.medicalConditions}
+                            value={matricula.medicalConditions}
                             icon={FileText}
                           />
                         )}
-                        {estudiante.allergies && (
+                        {matricula.allergies && (
                           <InfoField
                             label="Alergias"
-                            value={estudiante.allergies}
+                            value={matricula.allergies}
                             icon={FileText}
                           />
                         )}
@@ -234,14 +234,14 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
                   )}
 
                   {/* Notas Adicionales */}
-                  {estudiante.notes && (
+                  {matricula.notes && (
                     <div className="bg-white border rounded-lg p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <FileText className="w-5 h-5 mr-2 text-gray-600" />
                         Notas Adicionales
                       </h3>
                       <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-gray-900 whitespace-pre-wrap">{estudiante.notes}</p>
+                        <p className="text-gray-900 whitespace-pre-wrap">{matricula.notes}</p>
                       </div>
                     </div>
                   )}
@@ -255,17 +255,17 @@ const ModalVerMatricula = ({ isOpen, onClose, estudiante }) => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InfoField
                         label="Fecha de Matrícula"
-                        value={formatDate(estudiante.enrollmentDate)}
+                        value={formatDate(matricula.enrollmentDate)}
                         icon={Calendar}
                       />
                       <InfoField
                         label="Estado"
-                        value={estudiante.status === 'active' ? 'Activo' : 'Inactivo'}
+                        value={matricula.status === 'active' ? 'Activo' : 'Inactivo'}
                         icon={User}
                       />
                       <InfoField
                         label="Código de Estudiante"
-                        value={estudiante.studentCode || 'No asignado'}
+                        value={matricula.studentCode || 'No asignado'}
                         icon={FileText}
                       />
                     </div>

@@ -30,12 +30,15 @@ export const authService = {
       
       console.log('✅ Login exitoso:', data);
       
-      // Estructura del backend real con mapeo de roles
+
+      // Estructura del backend real con mapeo de roles (ajustado para SECRETARIA)
       const getRoleMappingForUser = (backendRole) => {
         if (backendRole === 'DIRECTORA' || backendRole === 'Admin') {
           return { id: '1', nombre: 'admin', permissions: ['all'] };
         } else if (backendRole === 'ESTUDIANTE') {
           return { id: '3', nombre: 'padre', permissions: ['read_own_data', 'view_grades'] };
+        } else if (backendRole === 'SECRETARIA') {
+          return { id: '4', nombre: 'SECRETARIA', permissions: ['read_students', 'write_students', 'academic_access'] };
         } else {
           return { id: '2', nombre: 'trabajador', permissions: ['read_students', 'write_students'] };
         }

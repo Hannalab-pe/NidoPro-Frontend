@@ -1,28 +1,24 @@
 import React, { useState } from "react";
 import { useAuthStore } from "../../store";
-import { 
-  BarChart3, 
-  FileText, 
-  BookOpen, 
-  MessageSquare, 
-  Users, 
-  Heart, 
-  Brain, 
+import {
+  BarChart3,
+  FileText,
+  BookOpen,
+  MessageSquare,
+  Users as UsersIcon,
+  Heart,
+  Brain,
   Calendar,
   LogOut,
   Bell,
-  Search,
-  TrendingUp,
   Star,
   CheckCircle,
-  AlertCircle,
   User,
-  Home,
   Menu,
-  X
+  X,
+  TrendingUp,
+  ChevronRight
 } from "lucide-react";
-
-// Importar los componentes que crearemos
 import Reportes from "../parent/reportes/Reportes";
 import Tareas from "../parent/tareas/Tareas";
 import Sugerencias from "../parent/sugerencias/Sugerencias";
@@ -30,6 +26,7 @@ import Asistencia from "../parent/asistencia/Asistencia";
 import EstadoEmocional from "../parent/estadoemocional/EstadoEmocional";
 import Sociabilidad from "../parent/sociabilidad/Sociabilidad";
 import Aprendizaje from "../parent/aprendizaje/Aprendizaje";
+import ParentAIChat from '../parent/iachat/ParentAIChat';
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -37,14 +34,13 @@ const ParentDashboard = () => {
   const { logout, user } = useAuthStore();
 
   const menuItems = [
-    { id: "overview", label: "Inicio", icon: Home },
+    { id: "overview", label: "Resumen Familiar", icon: BarChart3 },
     { id: "reports", label: "Informes", icon: FileText },
     { id: "tasks", label: "Tareas", icon: BookOpen },
     { id: "suggestions", label: "Sugerencias", icon: MessageSquare },
     { id: "attendance", label: "Asistencia", icon: Calendar },
-    { id: "emotional", label: "Estado Emocional", icon: Heart },
-    { id: "sociability", label: "Sociabilidad", icon: Users },
-    { id: "learning", label: "Aprendizaje", icon: Brain }
+    { id: "learning", label: "Aprendizaje", icon: Brain },
+    { id: "iachat", label: "Asistente IA", icon: MessageSquare }
   ];
 
   // Datos del hijo/estudiante
@@ -144,77 +140,82 @@ const ParentDashboard = () => {
   };
 
   const renderOverview = () => (
-    <div className="space-y-6">
+    <div className="space-y-6 lg:space-y-8">
       {/* Información del hijo */}
-      <div className="bg-gradient-to-r from-blue-200 to-blue-100 rounded-xl p-6">
-        <div className="flex items-center space-x-6">
-          <div className="relative">
-            <img 
-              src={studentData.photo} 
-              alt={studentData.name}
-              className="w-20 h-20 rounded-full object-cover border-4 border-blue-200"
-            />
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-500 rounded-full border-2 border-white flex items-center justify-center">
-              <span className="text-xs">✓</span>
-            </div>
-          </div>
-          <div className="flex-1">
-            <h3 className="text-xl font-bold text-gray-900">{studentData.name}</h3>
-            <p className="text-blue-600 font-medium">{studentData.grade}</p>
-            <p className="text-gray-600">{studentData.age} años • {studentData.teacher}</p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl mb-1">🌟</div>
-            <p className="text-sm font-medium text-gray-700">Excelente</p>
-          </div>
+      <div className="bg-gradient-to-r from-yellow-200 to-yellow-100 rounded-xl p-6 flex items-center gap-6">
+        <img 
+          src={studentData.photo} 
+          alt={studentData.name}
+          className="w-20 h-20 rounded-full object-cover border-4 border-blue-200"
+        />
+        <div className="flex-1">
+          <h3 className="text-xl font-bold text-gray-900">{studentData.name}</h3>
+          <p className="text-blue-600 font-medium">{studentData.grade}</p>
+          <p className="text-gray-600">{studentData.age} años • {studentData.teacher}</p>
+        </div>
+        <div className="text-right">
+          <div className="text-3xl mb-1">🌟</div>
+          <p className="text-sm font-medium text-gray-700">Excelente</p>
         </div>
       </div>
-
       {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {quickStats.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center`} style={{ backgroundColor: `${stat.color}20` }}>
-                <stat.icon className="w-5 h-5" style={{ color: stat.color }} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {quickStats.map((stat, index) => {
+          const IconComponent = stat.icon;
+          return (
+            <div key={index} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <div 
+                  className="p-3 rounded-lg"
+                  style={{ backgroundColor: `${stat.color}15`, color: stat.color }}
+                >
+                  <IconComponent className="w-6 h-6" />
+                </div>
+                <TrendingUp className="w-4 h-4 text-green-500" />
               </div>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(stat.status)}`}>
-                {stat.status === 'excellent' ? '💚' : stat.status === 'good' ? '💙' : stat.status === 'warning' ? '💛' : '❤️'}
-              </span>
+              <div>
+                <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                <p className="text-sm text-gray-600 mb-2">{stat.title}</p>
+                <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                  {stat.detail}
+                </span>
+              </div>
             </div>
-            <div className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</div>
-            <div className="text-sm text-gray-600 mb-2">{stat.title}</div>
-            <div className="text-xs text-gray-500">{stat.detail}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-
       {/* Actividades recientes */}
-      <div className="bg-white rounded-xl p-6 border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-bold text-gray-900">Actividades Recientes</h3>
-          <TrendingUp className="w-5 h-5 text-purple-500" />
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
+          <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
+            <Star className="w-5 h-5 text-yellow-500" />
+            <span>Actividades Recientes</span>
+          </h3>
         </div>
-        <div className="space-y-4">
-          {recentActivities.map((activity, index) => (
-            <div key={index} className="flex items-center space-x-4 p-3 rounded-lg hover:bg-gray-50 transition-colors">
-              <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${getStatusColor(activity.status)}`}>
-                <activity.icon className="w-5 h-5" />
-              </div>
-              <div className="flex-1">
-                <p className="font-medium text-gray-900">{activity.title}</p>
-                <p className="text-sm text-gray-500">{activity.time}</p>
-              </div>
-              <div className="text-lg">
-                {activity.status === 'excellent' ? '🎉' : 
-                 activity.status === 'completed' ? '✅' : 
-                 activity.status === 'positive' ? '👏' : '⭐'}
-              </div>
-            </div>
-          ))}
+        <div className="p-4 lg:p-6">
+          <div className="space-y-4">
+            {recentActivities.map((activity, index) => {
+              const IconComponent = activity.icon;
+              return (
+                <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
+                  <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                    <IconComponent className="w-5 h-5 text-blue-600" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">{activity.title}</p>
+                    <p className="text-sm text-gray-600 mt-1">{activity.time}</p>
+                  </div>
+                  <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
+                    {activity.status === 'excellent' ? '🎉' : 
+                     activity.status === 'completed' ? '✅' : 
+                     activity.status === 'positive' ? '👏' : '⭐'}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-
       {/* Próximas actividades */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Próximas Actividades</h3>
@@ -264,25 +265,99 @@ const ParentDashboard = () => {
         return <Sociabilidad />;
       case "learning":
         return <Aprendizaje />;
+      case "iachat":
+        return <ParentAIChat />;
       default:
         return renderOverview();
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-blue-50">
+    <div className="flex h-screen bg-gray-50 border-r">
       {/* Mobile menu overlay */}
       {isMobileMenuOpen && (
         <div 
-          className="fixed inset-0 z-40 bg-black/20 bg-opacity-50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 bg-opacity-50 lg:hidden"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
 
-      {/* Header */}
-      <div className="bg-white border-b border-purple-100 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        {/* Mobile close button */}
+        <div className="flex items-center bg-yellow-600 justify-between p-7 border-b border-gray-200 lg:justify-start">
+          <div className="flex items-center space-x-3 ">
+            <User className="w-8 h-8 text-white" />
+            <span className="text-xl font-bold text-white">Nido Pro</span>
+          </div>
+          <button
+            className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+            onClick={() => setIsMobileMenuOpen(false)}
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        {/* Navigation */}
+        <nav className="mt-6 px-3">
+          {menuItems.map((item) => {
+            const IconComponent = item.icon;
+            const isActive = activeSection === item.id;
+            return (
+              <button
+                key={item.id}
+                className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
+                  isActive 
+                    ? "bg-yellow-600 text-white" 
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+                onClick={() => handleMenuItemClick(item.id)}
+              >
+                <div className="flex items-center space-x-3">
+                  <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
+                  <span className="font-medium">{item.label}</span>
+                </div>
+                <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
+              </button>
+            );
+          })}
+        </nav>
+        {/* User Info Card & Logout Button */}
+        <div className="absolute bottom-6 left-3 right-3 w-58 flex flex-col gap-3">
+          {/* User Info */}
+           <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-2 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-yellow-100 cursor-pointer">
+             <img
+               src={user?.photo || 'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
+               alt="Foto de usuario"
+               className="w-11 h-11 object-cover rounded-full border-2 border-yellow-500 shadow bg-white"
+             />
+             <div className="flex flex-col min-w-0">
+               <span className="font-semibold text-gray-900 text-sm truncate">
+                 {user?.nombre || ''} {user?.apellido || ''}
+               </span>
+               <span className="text-xs text-gray-700 truncate">{user?.email || 'correo@ejemplo.com'}</span>
+               {user?.role?.nombre && (
+                 <span className="text-[10px] text-white bg-yellow-500 rounded px-2 py-0.5 mt-1 mb-1 w-fit font-semibold tracking-wide uppercase">
+                   {user.role.nombre}
+                 </span>
+               )}
+             </div>
+           </div>
+          {/* Logout Button */}
+          <button 
+            className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
+            onClick={logout}
+          >
+            <LogOut className="w-5 h-5" />
+            <span className="font-medium">Cerrar Sesión</span>
+          </button>
+        </div>
+      </aside>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col overflow-hidden lg:ml-0">
+        {/* Header */}
+        <header className="bg-yellow-600 border-gray-200 px-4 lg:px-6 py-4">
+          <div className="flex items-center justify-between">
             {/* Mobile menu button */}
             <button
               className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
@@ -290,91 +365,33 @@ const ParentDashboard = () => {
             >
               <Menu className="w-6 h-6" />
             </button>
-
-            <div className="flex items-center space-x-4">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-blue-400 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">N</span>
-                </div>
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="text-xl font-bold text-gray-900">Portal de Padres</h1>
-                <p className="text-sm text-gray-600">Seguimiento del progreso de tu hijo</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <button className="relative p-2 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 rounded-lg">
-                <Bell className="w-6 h-6" />
-                <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-400 ring-2 ring-white"></span>
-              </button>
-              
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-blue-600" />
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">{user?.name || "Padre/Madre"}</p>
-                  <p className="text-xs text-gray-500">Cuenta de Padre</p>
-                </div>
-              </div>
-              
-              <button 
-                onClick={logout}
-                className="flex items-center space-x-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 rounded-lg"
-              >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:block">Salir</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar */}
-          <div className={`lg:w-64 flex-shrink-0 fixed inset-y-0 left-0 z-50 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
-            isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-          } lg:bg-transparent lg:shadow-none`}>
-            <div className="bg-white rounded-xl shadow-sm border border-blue-100 overflow-hidden h-full lg:h-auto mt-16 lg:mt-0">
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-500 to-blue-400 lg:justify-start">
-                <h2 className="text-lg font-bold text-white">Navegación</h2>
-                <button
-                  className="lg:hidden p-2 text-white hover:text-gray-200"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <X className="w-6 h-6" />
-                </button>
-              </div>
-              <nav className="p-2">
-                {menuItems.map((item) => {
-                  const Icon = item.icon;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleMenuItemClick(item.id)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
-                        activeSection === item.id
-                          ? "bg-gradient-to-r from-blue-100 to-blue-100 text-blue-700 border border-blue-200"
-                          : "text-gray-700 hover:bg-blue-50"
-                      }`}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{item.label}</span>
-                    </button>
-                  );
+            <div className="flex-1 lg:ml-0 ml-4">
+              <h1 className="text-xl lg:text-2xl font-bold text-white">
+                Panel Familiar
+              </h1>
+              <p className="text-sm text-white mt-1 hidden sm:block">
+                {user?.username} | {new Date().toLocaleDateString('es-ES', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
                 })}
-              </nav>
+              </p>
+            </div>
+            <div className="flex items-center space-x-2 lg:space-x-4">
+              {/* Notifications */}
+              <button className="relative p-2 text-white border-white border hover:text-gray-900 hover:bg-white rounded-lg transition-colors">
+                <Bell className="w-5 h-5" />
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+              </button>
             </div>
           </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            {renderContent()}
-          </div>
+        </header>
+        {/* Content Area */}
+        <div className="p-4 lg:p-6 h-full overflow-y-auto">
+          {renderContent()}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

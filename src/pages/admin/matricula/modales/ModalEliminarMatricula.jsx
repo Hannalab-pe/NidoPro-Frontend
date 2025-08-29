@@ -11,15 +11,15 @@ import {
 import DefaultAvatar from '../../../../components/common/DefaultAvatar';
 import { useMatricula } from '../../../../hooks/useMatricula';
 
-const ModalEliminarMatricula = ({ isOpen, onClose, estudiante }) => {
+const ModalEliminarMatricula = ({ isOpen, onClose, matricula, onDelete }) => {
   const { deleteStudent, loading } = useMatricula();
 
-  if (!estudiante) return null;
+  if (!matricula) return null;
 
   const handleDelete = async () => {
     try {
-      await deleteStudent(estudiante.id);
-      onClose();
+      await deleteStudent(matricula.id);
+      onDelete(); // Llamar la función onDelete pasada como prop
     } catch (error) {
       console.error('Error al eliminar estudiante:', error);
     }
@@ -37,7 +37,7 @@ const ModalEliminarMatricula = ({ isOpen, onClose, estudiante }) => {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/20 bg-opacity-25" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -97,15 +97,15 @@ const ModalEliminarMatricula = ({ isOpen, onClose, estudiante }) => {
                   <div className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center space-x-4">
                       <div className="flex-shrink-0">
-                        {estudiante.photo ? (
+                        {matricula.photo ? (
                           <img
-                            src={estudiante.photo}
-                            alt={`${estudiante.name} ${estudiante.lastName}`}
+                            src={matricula.photo}
+                            alt={`${matricula.name} ${matricula.lastName}`}
                             className="w-12 h-12 rounded-full object-cover"
                           />
                         ) : (
                           <DefaultAvatar
-                            name={`${estudiante.name} ${estudiante.lastName}`}
+                            name={`${matricula.name} ${matricula.lastName}`}
                             size="w-12 h-12"
                             textSize="text-sm"
                           />
@@ -114,14 +114,14 @@ const ModalEliminarMatricula = ({ isOpen, onClose, estudiante }) => {
                       <div className="flex-1">
                         <h4 className="font-medium text-gray-900 flex items-center">
                           <User className="w-4 h-4 mr-1 text-gray-600" />
-                          {estudiante.name} {estudiante.lastName}
+                          {matricula.name} {matricula.lastName}
                         </h4>
                         <p className="text-sm text-gray-600 flex items-center mt-1">
                           <GraduationCap className="w-4 h-4 mr-1" />
-                          {estudiante.grade}
+                          {matricula.grade}
                         </p>
                         <p className="text-sm text-gray-500 mt-1">
-                          {estudiante.email}
+                          {matricula.email}
                         </p>
                       </div>
                     </div>

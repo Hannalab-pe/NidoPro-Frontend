@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { usePadres } from '../../../../hooks/usePadres';
 
-const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
+const ModalEliminarPadre = ({ isOpen, onClose, onSuccess, padre }) => {
   // Hook personalizado para gestión de padres
   const { deleteParent, deleting } = usePadres();
   
@@ -21,7 +21,7 @@ const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
   
   if (!padre) return null;
 
-  const isConfirmDisabled = confirmName.trim().toLowerCase() !== padre.name.toLowerCase();
+  const isConfirmDisabled = confirmName.trim().toLowerCase() !== (padre.name?.toLowerCase() || '');
 
   const handleConfirm = async () => {
     if (isConfirmDisabled) return;
@@ -30,8 +30,13 @@ const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
       // El hook se encarga de todo el proceso (delete + toast + update state)
       await deleteParent(padre.id);
       
-      // Limpiar y cerrar modal después del éxito
-      handleClose();
+      // Llamar onSuccess si está disponible, sino handleClose
+      if (onSuccess) {
+        setConfirmName('');
+        onSuccess();
+      } else {
+        handleClose();
+      }
     } catch (error) {
       console.error('❌ Error al eliminar padre:', error);
       // El error ya está siendo manejado por el hook con toast
@@ -110,11 +115,11 @@ const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
                     <div className="flex items-center gap-3">
                       <img
                         src={getParentPhoto()}
-                        alt={padre.name}
+                        alt={padre.name || 'Padre/Madre'}
                         className="w-12 h-12 rounded-full object-cover border-2 border-gray-200"
                       />
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">{padre.name}</h3>
+                        <h3 className="font-semibold text-gray-900">{padre.name || 'Sin nombre'}</h3>
                         <div className="flex items-center gap-1 text-sm text-gray-600">
                           <Heart className="w-3 h-3 text-pink-500" />
                           <span>{padre.relation}</span>
@@ -162,7 +167,7 @@ const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
                       <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                       <div>
                         <h4 className="font-medium text-red-800 mb-2">
-                          ¿Estás seguro de eliminar a "{padre.name}"?
+                          ¿Estás seguro de eliminar a "{padre.name || 'Sin nombre'}"?
                         </h4>
                         <ul className="text-sm text-red-700 space-y-1">
                           <li>• Se eliminará toda la información del padre/madre</li>
@@ -180,7 +185,7 @@ const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
                   {/* Confirmation Input */}
                   <div className="mb-6">
                     <p className="text-sm text-gray-700 mb-3">
-                      Para confirmar la eliminación, escribe <strong>"{padre.name}"</strong> en el campo de abajo:
+                      Para confirmar la eliminación, escribe <strong>"{padre.name || 'Sin nombre'}"</strong> en el campo de abajo:
                     </p>
                     <input
                       type="text"
@@ -188,7 +193,7 @@ const ModalEliminarPadre = ({ isOpen, onClose, padre }) => {
                       value={confirmName}
                       onChange={(e) => setConfirmName(e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
-                      placeholder={`Escribe "${padre.name}" para confirmar`}
+                      placeholder={`Escribe "${padre.name || 'Sin nombre'}" para confirmar`}
                       disabled={deleting}
                     />
                   </div>

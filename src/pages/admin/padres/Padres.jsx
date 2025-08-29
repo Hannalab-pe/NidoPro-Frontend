@@ -15,7 +15,8 @@ const Padres = () => {
   const { 
     parents, 
     loading,
-    statistics
+    statistics,
+    refreshParents
   } = usePadres();
 
   // Estados locales solo para UI
@@ -117,6 +118,10 @@ const Padres = () => {
       <ModalAgregarPadre
         isOpen={showModal}
         onClose={() => setShowModal(false)}
+        onSuccess={() => {
+          setShowModal(false);
+          refreshParents();
+        }}
       />
 
       {/* Modal para ver padre */}
@@ -136,6 +141,11 @@ const Padres = () => {
           setShowEditModal(false);
           setSelectedParent(null);
         }}
+        onSuccess={() => {
+          setShowEditModal(false);
+          setSelectedParent(null);
+          refreshParents();
+        }}
         padre={selectedParent}
       />
 
@@ -145,6 +155,11 @@ const Padres = () => {
         onClose={() => {
           setShowDeleteModal(false);
           setSelectedParent(null);
+        }}
+        onSuccess={() => {
+          setShowDeleteModal(false);
+          setSelectedParent(null);
+          refreshParents();
         }}
         padre={selectedParent}
       />

@@ -22,7 +22,8 @@ import {
   AlertCircle,
   Menu,
   X,
-  Baby
+  Baby,
+  FileText
 } from "lucide-react";
 
 // Importar los componentes que creamos
@@ -35,6 +36,7 @@ import Juegos from "../teacher/juegos/Juegos";
 import MisEstudiantes from "../teacher/misestudiantes/MisEstudiantes";
 import MisAulas from "../teacher/misaulas/MisAulas";
 import Clases from "../teacher/clases/Clases";
+import TeacherPlanificaciones from '../teacher/planificaciones/TeacherPlanificaciones';
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -50,7 +52,8 @@ const TeacherDashboard = () => {
     { id: "notes", label: "Anotaciones", icon: StickyNote },
     { id: "games", label: "Juegos", icon: Gamepad2 },
     { id: "students", label: "Mis Alumnos", icon: Users },
-    { id: "classrooms", label: "Mis Aulas", icon: School }
+    { id: "classrooms", label: "Mis Aulas", icon: School },
+    { id: "planificaciones", label: "Planificaciones", icon: FileText }
   ];
 
   const stats = [
@@ -135,7 +138,7 @@ const TeacherDashboard = () => {
         <div className="flex items-center bg-green-600 justify-between p-7 border-b border-gray-200 lg:justify-start">
           <div className="flex items-center space-x-3 ">
             <Baby className="w-8 h-8 text-white" />
-            <span className="text-xl font-bold text-white">Nido Bea</span>
+            <span className="text-xl font-bold text-white">Nido Pro</span>
           </div>
           <button
             className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
@@ -435,6 +438,7 @@ const TeacherDashboard = () => {
           {activeSection === "games" && <Juegos />}
           {activeSection === "students" && <MisEstudiantes />}
           {activeSection === "classrooms" && <MisAulas />}
+          {activeSection === "planificaciones" && <TeacherPlanificaciones />}
         </div>
       </main>
     </div>

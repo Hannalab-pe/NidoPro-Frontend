@@ -56,7 +56,13 @@ const FormField = ({ label, error, required, children, className = "" }) => (
   </div>
 );
 
-const ModalEditarMatricula = ({ isOpen, onClose, estudiante }) => {
+const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
+  // Validación temprana para evitar errores de undefined
+  if (!matricula) {
+    console.warn('ModalEditarMatricula: matricula prop is undefined');
+    return null;
+  }
+
   const { updateStudent, loading } = useMatricula();
 
   const {
@@ -72,36 +78,36 @@ const ModalEditarMatricula = ({ isOpen, onClose, estudiante }) => {
 
   const photo = watch('photo');
 
-  // Cargar datos del estudiante cuando se abre el modal
+  // Cargar datos del estudiante (matricula) cuando se abre el modal
   useEffect(() => {
-    if (estudiante && isOpen) {
-      const formattedDate = estudiante.birthDate 
-        ? new Date(estudiante.birthDate).toISOString().split('T')[0]
+    if (matricula && isOpen) {
+      const formattedDate = matricula.birthDate 
+        ? new Date(matricula.birthDate).toISOString().split('T')[0]
         : '';
 
       reset({
-        name: estudiante.name || '',
-        lastName: estudiante.lastName || '',
-        email: estudiante.email || '',
-        phone: estudiante.phone || '',
-        grade: estudiante.grade || '',
+        name: matricula.name || '',
+        lastName: matricula.lastName || '',
+        email: matricula.email || '',
+        phone: matricula.phone || '',
+        grade: matricula.grade || '',
         birthDate: formattedDate,
-        address: estudiante.address || '',
-        parentName: estudiante.parentName || '',
-        parentPhone: estudiante.parentPhone || '',
-        parentEmail: estudiante.parentEmail || '',
-        photo: estudiante.photo || null,
-        medicalConditions: estudiante.medicalConditions || '',
-        allergies: estudiante.allergies || '',
-        notes: estudiante.notes || ''
+        address: matricula.address || '',
+        parentName: matricula.parentName || '',
+        parentPhone: matricula.parentPhone || '',
+        parentEmail: matricula.parentEmail || '',
+        photo: matricula.photo || null,
+        medicalConditions: matricula.medicalConditions || '',
+        allergies: matricula.allergies || '',
+        notes: matricula.notes || ''
       });
     }
-  }, [estudiante, isOpen, reset]);
+  }, [matricula, isOpen, reset]);
 
   const onSubmit = async (data) => {
     try {
-      await updateStudent(estudiante.id, data);
-      onClose();
+      await updateStudent(matricula.id, data);
+      onSave(); // Usar onSave en lugar de onClose
     } catch (error) {
       console.error('Error al actualizar estudiante:', error);
     }
@@ -131,8 +137,6 @@ const ModalEditarMatricula = ({ isOpen, onClose, estudiante }) => {
     '11° Media'
   ];
 
-  if (!estudiante) return null;
-
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-50" onClose={handleClose}>
@@ -145,7 +149,7 @@ const ModalEditarMatricula = ({ isOpen, onClose, estudiante }) => {
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
+          <div className="fixed inset-0 bg-black/20 bg-opacity-25" />
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
@@ -171,7 +175,7 @@ const ModalEditarMatricula = ({ isOpen, onClose, estudiante }) => {
                         Editar Información del Estudiante
                       </Dialog.Title>
                       <p className="text-sm text-gray-500">
-                        Modifique la información de matrícula de {estudiante.name} {estudiante.lastName}
+                        Modifique la información de matrícula de {matricula.name} {matricula.lastName}
                       </p>
                     </div>
                   </div>
@@ -185,13 +189,6 @@ const ModalEditarMatricula = ({ isOpen, onClose, estudiante }) => {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   {/* Foto del estudiante */}
-                  <div className="flex justify-center">
-                    <ImageUploader
-                      onImageUpload={handleImageUpload}
-                      currentImage={photo}
-                      className="w-32 h-32"
-                    />
-                  </div>
 
                   {/* Información Personal */}
                   <div className="bg-gray-50 p-4 rounded-lg">
