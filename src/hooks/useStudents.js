@@ -88,6 +88,14 @@ export const useStudents = () => {
    * Actualizar un estudiante existente
    */
   const updateStudent = useCallback(async (id, studentData) => {
+    console.log('🔧 useStudents updateStudent - ID recibido:', id);
+    console.log('🔧 useStudents updateStudent - Datos recibidos:', studentData);
+    
+    if (!id) {
+      console.error('❌ useStudents: ID del estudiante es undefined o null');
+      throw new Error('ID del estudiante es requerido para actualizar');
+    }
+    
     return updateMutation.mutateAsync({ id, ...studentData });
   }, [updateMutation]);
 

@@ -16,11 +16,29 @@ import {
   TrendingUp,
   UserCheck,
   Eye,
-  Briefcase
+  Briefcase,
+  FileText,
+  CreditCard,
+  DollarSign
 } from 'lucide-react';
+
+const InfoField = ({ label, value, icon: Icon, className = "" }) => (
+  <div className={`bg-gray-50 p-3 rounded-lg ${className}`}>
+    <div className="flex items-center space-x-2 mb-1">
+      <Icon className="w-4 h-4 text-gray-600" />
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+    </div>
+    <p className="text-gray-900 ml-6">{value || 'No especificado'}</p>
+  </div>
+);
 
 const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
   if (!trabajador) return null;
+
+  // Console log para debuggear la estructura de datos
+  console.log('🔍 Datos completos del trabajador recibidos:', trabajador);
+  console.log('📊 Claves disponibles:', Object.keys(trabajador));
+  console.log('📝 Valores por clave:', Object.entries(trabajador));
 
   // Función handleClose que respeta el ciclo de vida del componente
   const handleClose = () => {
@@ -153,233 +171,268 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 bg-blue-50">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Eye className="w-6 h-6 text-blue-600" />
+                    </div>
                     <div>
-                      <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                        <Eye className="w-6 h-6 text-blue-600" />
-                        {`${trabajador.nombre} ${trabajador.apellido}`}
+                      <Dialog.Title className="text-lg font-semibold text-gray-900">
+                        Información del Trabajador
                       </Dialog.Title>
-                      <p className="text-blue-600 font-medium flex items-center gap-1">
-                        <BookOpen className="w-4 h-4" />
-                        {trabajador.cargo || 'Sin cargo'}
+                      <p className="text-sm text-gray-500">
+                        Detalles completos del trabajador
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={handleClose}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   >
-                    <X className="w-6 h-6" />
+                    <X className="w-5 h-5 text-gray-500" />
                   </button>
                 </div>
 
-                {/* Content */}
-                <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-                  {/* Estado y Información Básica */}
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <UserCheck className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Estado</p>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(trabajador.estaActivo ? 'active' : 'inactive')}`}>
-                        {getStatusText(trabajador.estaActivo ? 'active' : 'inactive')}
-                      </span>
+                <div className="space-y-6">
+                  {/* Foto y datos básicos */}
+                  <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
+                    <div className="flex-shrink-0">
+                      {/* Aquí puedes agregar la foto del trabajador si es necesario */}
                     </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <Award className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Experiencia</p>
-                      <p className={`text-2xl font-bold ${getExperienceColor(trabajador.experiencia)}`}>
-                        {trabajador.experiencia || 0} años
-                      </p>
-                      <p className="text-xs text-gray-500">{getExperienceLabel(trabajador.experiencia)}</p>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <Star className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Calificación</p>
-                      <div className="flex justify-center">
-                        {renderRating(trabajador.calificacion)}
+                    <div className="flex-1 text-center md:text-left">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                        {trabajador.nombre && trabajador.apellido 
+                          ? `${trabajador.nombre} ${trabajador.apellido}` 
+                          : trabajador.nombre || trabajador.apellido || 'Sin nombre'
+                        }
+                      </h2>
+                      {trabajador.idRol?.nombre && (
+                        <p className="text-lg text-blue-600 font-medium mb-2">
+                          {trabajador.idRol.nombre}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600">
+                        {trabajador.idUsuario?.usuario && (
+                          <span className="flex items-center">
+                            <User className="w-4 h-4 mr-1" />
+                            Usuario: {trabajador.idUsuario.usuario}
+                          </span>
+                        )}
+                        {trabajador.correo && (
+                          <span className="flex items-center">
+                            <Mail className="w-4 h-4 mr-1" />
+                            {trabajador.correo}
+                          </span>
+                        )}
+                        {trabajador.telefono && (
+                          <span className="flex items-center">
+                            <Phone className="w-4 h-4 mr-1" />
+                            {trabajador.telefono}
+                          </span>
+                        )}
                       </div>
-                      <p className="text-xs text-gray-500">{getRatingLabel(trabajador.calificacion)}</p>
-                    </div>
-
-                    <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <Users className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Estudiantes</p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {trabajador.estudiantes || 0}
-                      </p>
                     </div>
                   </div>
-
                   {/* Información Personal */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <User className="w-5 h-5 text-blue-600" />
+                  <div className="bg-white rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-blue-600" />
                       Información Personal
                     </h3>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Nombre Completo
-                          </label>
-                          <p className="text-gray-900 font-medium">{`${trabajador.nombre} ${trabajador.apellido}`}</p>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Email
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-blue-600" />
-                            <span className="text-gray-900">{trabajador.correo || trabajador.email || 'No registrado'}</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Teléfono
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-green-600" />
-                            <span className="text-gray-900">{trabajador.telefono || 'No registrado'}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Documento
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <User className="w-4 h-4 text-gray-600" />
-                            <span className="text-gray-900">{trabajador.tipoDocumento}: {trabajador.nroDocumento || 'No registrado'}</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Dirección
-                          </label>
-                          <div className="flex items-start gap-2">
-                            <MapPin className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-900">{trabajador.direccion || 'No registrada'}</span>
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Horario de Trabajo
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-purple-600" />
-                            <span className="text-gray-900">
-                              {getScheduleIcon(trabajador.horario)} {trabajador.horario || 'No especificado'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      {/* Solo mostrar campos que tienen datos */}
+                      {(trabajador.nombre || trabajador.apellido) && (
+                        <InfoField
+                          label="Nombre Completo"
+                          value={`${trabajador.nombre || ''} ${trabajador.apellido || ''}`.trim()}
+                          icon={User}
+                        />
+                      )}
+                      {(trabajador.tipoDocumento || trabajador.nroDocumento) && (
+                        <InfoField
+                          label="Documento"
+                          value={`${trabajador.tipoDocumento || 'DNI'}: ${trabajador.nroDocumento || 'No especificado'}`}
+                          icon={FileText}
+                        />
+                      )}
+                      {trabajador.correo && (
+                        <InfoField
+                          label="Email"
+                          value={trabajador.correo}
+                          icon={Mail}
+                        />
+                      )}
+                      {trabajador.telefono && (
+                        <InfoField
+                          label="Teléfono"
+                          value={trabajador.telefono}
+                          icon={Phone}
+                        />
+                      )}
+                      {typeof trabajador.estaActivo !== 'undefined' && (
+                        <InfoField
+                          label="Estado"
+                          value={trabajador.estaActivo ? 'Activo' : 'Inactivo'}
+                          icon={UserCheck}
+                        />
+                      )}
+                      {trabajador.direccion && (
+                        <InfoField
+                          label="Dirección"
+                          value={trabajador.direccion}
+                          icon={MapPin}
+                          className="md:col-span-2"
+                        />
+                      )}
                     </div>
                   </div>
 
-                  {/* Información Académica */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5 text-green-600" />
-                      Información Académica
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Materia Principal
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4 text-blue-600" />
-                            <span className="text-gray-900 font-medium">{trabajador.materia || 'Sin materia'}</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Título/Grado Académico
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <GraduationCap className="w-4 h-4 text-purple-600" />
-                            <span className="text-gray-900">{trabajador.titulo || 'Sin título'}</span>
-                          </div>
-                        </div>
+                  {/* Información del Rol - Solo si existe */}
+                  {trabajador.idRol && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Briefcase className="w-5 h-5 mr-2 text-green-600" />
+                        Información del Rol
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {trabajador.idRol?.nombre && (
+                          <InfoField
+                            label="Rol"
+                            value={trabajador.idRol.nombre}
+                            icon={Briefcase}
+                          />
+                        )}
+                        {trabajador.idRol?.descripcion && (
+                          <InfoField
+                            label="Descripción del Rol"
+                            value={trabajador.idRol.descripcion}
+                            icon={FileText}
+                          />
+                        )}
+                        {trabajador.idRol?.idRol && (
+                          <InfoField
+                            label="ID del Rol"
+                            value={trabajador.idRol.idRol}
+                            icon={FileText}
+                          />
+                        )}
+                        {typeof trabajador.idRol?.estaActivo !== 'undefined' && (
+                          <InfoField
+                            label="Estado del Rol"
+                            value={trabajador.idRol.estaActivo ? 'Activo' : 'Inactivo'}
+                            icon={UserCheck}
+                          />
+                        )}
                       </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Años de Experiencia
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Award className="w-4 h-4 text-yellow-600" />
-                            <span className={`font-semibold ${getExperienceColor(trabajador.experiencia)}`}>
-                              {trabajador.experiencia || 0} años
-                            </span>
-                            <span className="text-sm text-gray-500">
-                              ({getExperienceLabel(trabajador.experiencia)})
-                            </span>
-                          </div>
-                        </div>
+                    </div>
+                  )}
 
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Calificación Promedio
-                          </label>
-                          <div className="flex items-center gap-2">
-                            {renderRating(trabajador.calificacion)}
-                            <span className="text-sm text-gray-500">
-                              ({getRatingLabel(trabajador.calificacion)})
-                            </span>
-                          </div>
-                        </div>
+                  {/* Información del Usuario - Solo si existe */}
+                  {trabajador.idUsuario && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <User className="w-5 h-5 mr-2 text-purple-600" />
+                        Información de Usuario
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {trabajador.idUsuario?.usuario && (
+                          <InfoField
+                            label="Nombre de Usuario"
+                            value={trabajador.idUsuario.usuario}
+                            icon={User}
+                          />
+                        )}
+                        {trabajador.idUsuario?.creado && (
+                          <InfoField
+                            label="Fecha de Creación"
+                            value={new Date(trabajador.idUsuario.creado).toLocaleDateString('es-ES')}
+                            icon={Calendar}
+                          />
+                        )}
+                        {trabajador.idUsuario?.actualizado && (
+                          <InfoField
+                            label="Última Actualización"
+                            value={new Date(trabajador.idUsuario.actualizado).toLocaleDateString('es-ES')}
+                            icon={Calendar}
+                          />
+                        )}
+                        {typeof trabajador.idUsuario?.estaActivo !== 'undefined' && (
+                          <InfoField
+                            label="Estado del Usuario"
+                            value={trabajador.idUsuario.estaActivo ? 'Activo' : 'Inactivo'}
+                            icon={UserCheck}
+                          />
+                        )}
+                        {trabajador.idUsuario?.idUsuario && (
+                          <InfoField
+                            label="ID de Usuario"
+                            value={trabajador.idUsuario.idUsuario}
+                            icon={FileText}
+                          />
+                        )}
                       </div>
+                    </div>
+                  )}
+
+                  {/* IDs de Referencia del Sistema */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <FileText className="w-5 h-5 mr-2 text-gray-600" />
+                      IDs de Referencia del Sistema
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {trabajador.idTrabajador && (
+                        <InfoField
+                          label="ID del Trabajador"
+                          value={trabajador.idTrabajador}
+                          icon={FileText}
+                        />
+                      )}
+                      {trabajador.id_Usuario_Tabla && (
+                        <InfoField
+                          label="ID Usuario Tabla"
+                          value={trabajador.id_Usuario_Tabla}
+                          icon={FileText}
+                        />
+                      )}
                     </div>
                   </div>
 
                   {/* Especializaciones */}
                   {trabajador.especializaciones && trabajador.especializaciones.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Briefcase className="w-5 h-5 text-orange-600" />
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Briefcase className="w-5 h-5 mr-2 text-orange-600" />
                         Especializaciones
                       </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {trabajador.especializaciones.map((spec, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-                          >
-                            {spec}
-                          </span>
-                        ))}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="flex flex-wrap gap-2">
+                          {trabajador.especializaciones.map((spec, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                            >
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}
 
                   {/* Clases Asignadas */}
                   {trabajador.clases && trabajador.clases.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-green-600" />
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Users className="w-5 h-5 mr-2 text-green-600" />
                         Clases Asignadas
                       </h3>
-                      <div className="bg-green-50 p-4 rounded-lg">
+                      <div className="bg-gray-50 p-4 rounded-lg">
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                           {trabajador.clases.map((clase, index) => (
-                            <div key={index} className="text-sm text-green-800 font-medium">
+                            <div key={index} className="text-sm text-gray-900 font-medium">
                               • {clase}
                             </div>
                           ))}
@@ -390,68 +443,23 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
 
                   {/* Notas Adicionales */}
                   {trabajador.notas && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Calendar className="w-5 h-5 text-purple-600" />
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FileText className="w-5 h-5 mr-2 text-gray-600" />
                         Notas Adicionales
                       </h3>
-                      <div className="bg-purple-50 p-4 rounded-lg border-l-4 border-purple-400">
-                        <p className="text-gray-900">{trabajador.notas}</p>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-gray-900 whitespace-pre-wrap">{trabajador.notas}</p>
                       </div>
                     </div>
                   )}
-
-                  {/* Estadísticas de Rendimiento */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <TrendingUp className="w-5 h-5 text-blue-600" />
-                      Rendimiento General
-                    </h3>
-                    
-                    <div className="bg-gradient-to-r from-blue-50 to-purple-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <Users className="w-5 h-5 text-green-600" />
-                            <span className="font-medium text-gray-700">Estudiantes</span>
-                          </div>
-                          <p className="text-2xl font-bold text-green-600">
-                            {trabajador.estudiantes || 0}
-                          </p>
-                          <p className="text-sm text-gray-600">A cargo</p>
-                        </div>
-                        
-                        <div>
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <Award className="w-5 h-5 text-yellow-600" />
-                            <span className="font-medium text-gray-700">Experiencia</span>
-                          </div>
-                          <p className={`text-2xl font-bold ${getExperienceColor(trabajador.experiencia)}`}>
-                            {trabajador.experiencia || 0}
-                          </p>
-                          <p className="text-sm text-gray-600">Años</p>
-                        </div>
-                        
-                        <div>
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <Star className="w-5 h-5 text-purple-600" />
-                            <span className="font-medium text-gray-700">Calificación</span>
-                          </div>
-                          <p className={`text-2xl font-bold ${getRatingColor(trabajador.calificacion)}`}>
-                            {Number(trabajador.calificacion || 0).toFixed(1)}
-                          </p>
-                          <p className="text-sm text-gray-600">de 5.0</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Footer */}
-                <div className="flex justify-end p-6 bg-gray-50">
+                {/* Botón de cerrar */}
+                <div className="flex justify-end pt-6 border-t mt-6">
                   <button
                     onClick={handleClose}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Cerrar
                   </button>

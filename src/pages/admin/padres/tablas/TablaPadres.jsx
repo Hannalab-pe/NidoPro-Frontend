@@ -33,7 +33,7 @@ const TablaPadres = ({
         actions={{
           add: false, // Los padres se agregan solo a través de matrícula
           edit: true,
-          delete: true,
+          delete: false,
           view: true,
           import: false, // Import manejado por matrícula
           export: true

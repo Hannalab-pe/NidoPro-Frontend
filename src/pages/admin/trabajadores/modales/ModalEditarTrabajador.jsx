@@ -16,31 +16,23 @@ import {
   Save,
   Edit3,
   Loader2,
-  Star
+  Star,
+  Briefcase
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
 import { useTrabajadores } from '../../../../hooks/useTrabajadores';
+import { useRoles } from '../../../../hooks/useRoles';
 
-// Esquema de validación con Yup (igual que crear)
+// Esquema de validación con Yup (solo campos reales del backend)
 const validationSchema = yup.object({
   nombre: yup.string().required('El nombre es requerido').trim(),
   apellido: yup.string().required('El apellido es requerido').trim(),
-  email: yup.string()
+  correo: yup.string()
     .email('El email no es válido')
     .required('El email es requerido'),
   telefono: yup.string().required('El teléfono es requerido').trim(),
-  materia: yup.string().required('La materia es requerida'),
-  experiencia: yup.number()
-    .required('La experiencia es requerida')
-    .min(0, 'La experiencia debe ser positiva')
-    .max(50, 'La experiencia no puede ser mayor a 50 años'),
-  titulo: yup.string().required('El título es requerido').trim(),
-  direccion: yup.string().required('La dirección es requerida').trim(),
-  horario: yup.string().required('El horario es requerido'),
-  // Para editar, la foto no es requerida si ya existe
-  foto: yup.object().nullable(),
-  especializaciones: yup.array().of(yup.string()),
-  notas: yup.string()
+  direccion: yup.string().required('La dirección es requerida').trim()
+  // tipoDocumento, nroDocumento e idRol se excluyen porque no se pueden editar una vez creado el trabajador
 });
 
 // Componente FormField reutilizable
@@ -65,17 +57,16 @@ const FormSection = ({ title, icon: Icon, iconColor, children }) => (
   </div>
 );
 
-const subjects = [
-  'Matemáticas', 'Comunicación', 'Ciencias Naturales', 'Ciencias Sociales',
-  'Inglés', 'Educación Física', 'Arte y Cultura', 'Música', 'Computación',
-  'Personal Social', 'Religión', 'Tutoría'
-];
-
+const subjects = ['Matemáticas', 'Comunicación', 'Ciencias Naturales', 'Ciencias Sociales'];
 const schedules = ['Mañana', 'Tarde', 'Completo'];
+const tiposDocumento = ['DNI', 'Carnet de Extranjería', 'Pasaporte'];
 
 const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
-  // Hook personalizado para gestión de profesores
-  const { updateTeacher, updating, uploading } = useTrabajadores();
+  // Hook personalizado para gestión de trabajadores
+  const { updateTrabajador, updating, uploading } = useTrabajadores();
+  
+  // Hook para obtener los roles disponibles
+  const { roles, isLoading: loadingRoles } = useRoles();
 
   const {
     register,
@@ -89,17 +80,12 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
     defaultValues: {
       nombre: '',
       apellido: '',
-      email: '',
+      correo: '',
       telefono: '',
-      materia: '',
-      experiencia: '',
-      titulo: '',
       direccion: '',
-      horario: '',
-      foto: null,
-      photoFile: null,
-      especializaciones: [],
-      notas: ''
+      tipoDocumento: 'DNI',
+      nroDocumento: '',
+      idRol: ''
     }
   });
 
@@ -110,69 +96,36 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
     if (trabajador && isOpen) {
       console.log('📝 Cargando datos del trabajador para editar:', trabajador);
       
-      // Resetear y cargar datos
+      // Resetear y cargar solo los datos que existen en el backend
       reset({
         nombre: trabajador.nombre || '',
         apellido: trabajador.apellido || '',
-        email: trabajador.email || '',
+        correo: trabajador.correo || '',
         telefono: trabajador.telefono || '',
-        materia: trabajador.materia || '',
-        experiencia: trabajador.experiencia || '',
-        titulo: trabajador.titulo || '',
         direccion: trabajador.direccion || '',
-        horario: trabajador.horario || '',
-        especializaciones: trabajador.especializaciones || [],
-        notas: trabajador.notas || '',
-        foto: trabajador.foto ? {
-          url: trabajador.foto.url || trabajador.foto,
-          publicId: trabajador.foto.publicId || trabajador.fotoPublicId
-        } : null,
-        photoFile: null
+        tipoDocumento: trabajador.tipoDocumento || 'DNI',
+        nroDocumento: trabajador.nroDocumento || '',
+        idRol: trabajador.idRol || ''
       });
     }
   }, [trabajador, isOpen, reset]);
-
-  // Función para subir imagen (maneja solo el archivo local)
-  const handleUploadImage = async (file) => {
-    console.log('🔄 handleUploadImage called with file:', file);
-    return { file };
-  };
-
-  // Manejar upload de imagen
-  const handleImageUpload = (result) => {
-    console.log('📷 handleImageUpload called with result:', result);
-    if (result && result.file) {
-      // Guardamos el archivo para el upload posterior
-      setValue('photoFile', result.file);
-      
-      // Creamos una URL local para preview
-      const previewUrl = URL.createObjectURL(result.file);
-      setValue('foto', { url: previewUrl });
-    } else {
-      setValue('photoFile', null);
-      // Mantener la foto original si no se sube una nueva
-      if (trabajador?.foto) {
-        setValue('foto', {
-          url: trabajador.foto.url || trabajador.foto,
-          publicId: trabajador.foto.publicId || trabajador.fotoPublicId
-        });
-      } else {
-        setValue('foto', null);
-      }
-    }
-  };
 
   const onSubmit = async (data) => {
     console.log('📋 Form submission - data:', data);
     
     try {
-      // El hook se encarga de todo el proceso (upload + save)
-      await updateTeacher(trabajador.id, data);
+      // Excluir campos inmutables de los datos a enviar (no se pueden editar)
+      const { idRol, tipoDocumento, nroDocumento, ...dataToUpdate } = data;
+      console.log('📋 Datos a actualizar (sin campos inmutables):', dataToUpdate);
+      console.log('📋 Campos excluidos:', { idRol, tipoDocumento, nroDocumento });
+      
+      // El hook se encarga del proceso de actualización
+      await updateTrabajador(trabajador.idTrabajador, dataToUpdate);
       
       // Cerrar modal después del éxito
       handleClose();
     } catch (error) {
-      console.error('❌ Error al actualizar profesor:', error);
+      console.error('❌ Error al actualizar trabajador:', error);
       // El error ya está siendo manejado por el hook con toast
     }
   };
@@ -243,21 +196,6 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
                 <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
                   {/* Información Personal */}
                   <FormSection title="Información Personal" icon={User} iconColor="text-blue-600">
-                    {/* Foto del Profesor */}
-                    <FormField 
-                      label="Foto del Trabajador" 
-                      error={errors.foto?.message}
-                      className="mb-6"
-                    >
-                      <ImageUploader
-                        onUpload={handleUploadImage}
-                        onImageUpload={handleImageUpload}
-                        currentImage={photoValue?.url}
-                        required={false}
-                        disabled={isLoading}
-                      />
-                    </FormField>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField label="Nombre" required error={errors.nombre?.message}>
                         <input
@@ -277,11 +215,39 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
                         />
                       </FormField>
 
-                      <FormField label="Email" required error={errors.email?.message}>
+                      <FormField label="Tipo de Documento" required error={errors.tipoDocumento?.message}>
+                        <select
+                          {...register('tipoDocumento')}
+                          className={`${inputClassName(errors.tipoDocumento)} bg-gray-100 cursor-not-allowed`}
+                          disabled={true}
+                        >
+                          {tiposDocumento.map(tipo => (
+                            <option key={tipo} value={tipo}>{tipo}</option>
+                          ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          ℹ️ El tipo de documento no se puede modificar una vez creado el trabajador
+                        </p>
+                      </FormField>
+
+                      <FormField label="Número de Documento" required error={errors.nroDocumento?.message}>
+                        <input
+                          {...register('nroDocumento')}
+                          className={`${inputClassName(errors.nroDocumento)} bg-gray-100 cursor-not-allowed`}
+                          placeholder="Ej: 12345678"
+                          disabled={true}
+                          readOnly
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          ℹ️ El número de documento no se puede modificar (es único e inmutable)
+                        </p>
+                      </FormField>
+
+                      <FormField label="Email" required error={errors.correo?.message}>
                         <input
                           type="email"
-                          {...register('email')}
-                          className={inputClassName(errors.email)}
+                          {...register('correo')}
+                          className={inputClassName(errors.correo)}
                           placeholder="Ej: maria.vasquez@colegio.edu"
                           disabled={isLoading}
                         />
@@ -297,98 +263,40 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
                         />
                       </FormField>
 
-                      <FormField label="Dirección" required error={errors.direccion?.message}>
+                      <FormField label="Dirección" required error={errors.direccion?.message} className="md:col-span-2">
                         <input
                           {...register('direccion')}
                           className={inputClassName(errors.direccion)}
-                          placeholder="Ej: San Isidro, Lima"
+                          placeholder="Ej: Jr. San Isidro 2403, Lima"
                           disabled={isLoading}
                         />
                       </FormField>
                     </div>
                   </FormSection>
 
-                  {/* Información Académica */}
-                  <FormSection title="Información Académica" icon={GraduationCap} iconColor="text-green-600">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField label="Materia Principal" required error={errors.materia?.message}>
+                  {/* Sección de Rol */}
+                  <FormSection title="Información del Rol" icon={Briefcase} iconColor="text-purple-600">
+                    <div className="grid grid-cols-1 gap-4">
+                      <FormField label="Rol" required error={errors.idRol?.message}>
                         <select
-                          {...register('materia')}
-                          className={inputClassName(errors.materia)}
-                          disabled={isLoading}
+                          {...register('idRol')}
+                          className={`${inputClassName(errors.idRol)} bg-gray-100 cursor-not-allowed`}
+                          disabled={true}
                         >
-                          <option value="">Seleccionar materia</option>
-                          {subjects.map(subject => (
-                            <option key={subject} value={subject}>{subject}</option>
+                          <option value="">
+                            {loadingRoles ? 'Cargando roles...' : 'Seleccione un rol'}
+                          </option>
+                          {Array.isArray(roles) && roles.map((rol) => (
+                            <option key={rol.idRol} value={rol.idRol}>
+                              {rol.nombre}
+                            </option>
                           ))}
                         </select>
-                      </FormField>
-
-                      <FormField label="Años de Experiencia" required error={errors.experiencia?.message}>
-                        <input
-                          type="number"
-                          {...register('experiencia')}
-                          className={inputClassName(errors.experiencia)}
-                          placeholder="Ej: 8"
-                          min="0"
-                          max="50"
-                          disabled={isLoading}
-                        />
-                      </FormField>
-
-                      <FormField label="Título/Grado Académico" required error={errors.titulo?.message}>
-                        <input
-                          {...register('titulo')}
-                          className={inputClassName(errors.titulo)}
-                          placeholder="Ej: Licenciada en Educación Matemática"
-                          disabled={isLoading}
-                        />
-                      </FormField>
-
-                      <FormField label="Horario de Trabajo" required error={errors.horario?.message}>
-                        <select
-                          {...register('horario')}
-                          className={inputClassName(errors.horario)}
-                          disabled={isLoading}
-                        >
-                          <option value="">Seleccionar horario</option>
-                          {schedules.map(schedule => (
-                            <option key={schedule} value={schedule}>{schedule}</option>
-                          ))}
-                        </select>
+                        <p className="text-xs text-gray-500 mt-1">
+                          ℹ️ El rol no se puede modificar una vez creado el trabajador
+                        </p>
                       </FormField>
                     </div>
-                  </FormSection>
-
-                  {/* Información Adicional */}
-                  <FormSection title="Información Adicional (Opcional)" icon={Star} iconColor="text-purple-600">
-                    <FormField label="Especializaciones" error={errors.especializaciones?.message} className="mb-4">
-                      <input
-                        {...register('especializaciones')}
-                        className={inputClassName(errors.especializaciones)}
-                        placeholder="Ej: Álgebra, Geometría, Cálculo (separados por comas)"
-                        disabled={isLoading}
-                        defaultValue={trabajador.especializaciones?.join(', ') || ''}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          const especializaciones = value ? value.split(',').map(s => s.trim()).filter(s => s) : [];
-                          setValue('especializaciones', especializaciones);
-                        }}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Separe múltiples especializaciones con comas
-                      </p>
-                    </FormField>
-
-                    <FormField label="Notas" error={errors.notas?.message}>
-                      <textarea
-                        {...register('notas')}
-                        className={inputClassName(errors.notas)}
-                        rows="3"
-                        placeholder="Información adicional sobre el trabajador, metodología, logros, etc."
-                        disabled={isLoading}
-                      />
-                    </FormField>
                   </FormSection>
                 </form>
 

@@ -103,7 +103,7 @@ export const trabajadorService = {
       console.log('📤 Enviando datos del trabajador al backend:', trabajadorData);
       
       // Validar datos requeridos según el backend
-      const requiredFields = ['nombre', 'apellido', 'tipoDocumento', 'nroDocumento', 'direccion', 'correo', 'telefono'];
+      const requiredFields = ['nombre', 'apellido', 'tipoDocumento', 'nroDocumento', 'direccion', 'correo', 'telefono', 'idRol'];
       const missingFields = requiredFields.filter(field => !trabajadorData[field]);
       
       if (missingFields.length > 0) {
@@ -120,7 +120,7 @@ export const trabajadorService = {
         correo: trabajadorData.correo.trim(),
         telefono: trabajadorData.telefono.trim(),
         estaActivo: trabajadorData.estaActivo !== undefined ? trabajadorData.estaActivo : true,
-        idRol: '6f915b56-56c4-42bd-8403-54a76981adfb' // ID fijo del rol trabajador
+        idRol: trabajadorData.idRol // Usar el rol seleccionado en el formulario
       };
 
       const response = await api.post('/trabajador', payload);
@@ -135,6 +135,54 @@ export const trabajadorService = {
     } catch (error) {
       console.error('❌ Error al crear trabajador:', error);
       throw new Error(error.response?.data?.message || 'Error al crear trabajador');
+    }
+  },
+
+  /**
+   * Actualizar un trabajador existente
+   * @param {string|number} id - ID del trabajador
+   * @param {Object} trabajadorData - Datos actualizados del trabajador
+   * @returns {Promise<Object>} Trabajador actualizado
+   */
+  async updateTrabajador(id, trabajadorData) {
+    try {
+      console.log('📤 Actualizando trabajador:', id, trabajadorData);
+      
+      // Preparar datos para el backend según el esquema del endpoint PATCH /api/v1/trabajador/{id}
+      const payload = {
+        nombre: trabajadorData.nombre?.trim(),
+        apellido: trabajadorData.apellido?.trim(),
+        correo: trabajadorData.correo?.trim(),
+        numero: trabajadorData.numero?.trim(),
+        direccion: trabajadorData.direccion?.trim(),
+        tipoDocumento: trabajadorData.tipoDocumento,
+        nroDocumento: trabajadorData.nroDocumento?.trim(),
+        fechaNacimiento: trabajadorData.fechaNacimiento,
+        idRol: trabajadorData.idRol,
+        estaActivo: trabajadorData.estaActivo
+      };
+
+      // Remover campos undefined para no enviar datos innecesarios
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined || payload[key] === '') {
+          delete payload[key];
+        }
+      });
+
+      console.log('📋 Payload a enviar:', payload);
+
+      const response = await api.patch(`/trabajador/${id}`, payload);
+      console.log('✅ Trabajador actualizado exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al actualizar trabajador:', error);
+      console.error('❌ Detalles del error:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      throw new Error(error.response?.data?.message || 'Error al actualizar trabajador');
     }
   },
 

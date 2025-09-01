@@ -18,7 +18,11 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔑 Token añadido a headers:', token.substring(0, 20) + '...');
+    } else {
+      console.log('⚠️ No se encontró token en localStorage');
     }
+    console.log('📤 Request config:', config);
     return config;
   },
   (error) => {
@@ -92,8 +96,8 @@ export const matriculaService = {
   },
 
   /**
-   * Matricular un nuevo estudiante
-   * @param {Object} studentData - Datos del estudiante
+   * Matricular un nuevo estudiante (legacy)
+   * @param {Object} matriculaData - Datos de la matrícula
    * @returns {Promise<Object>} Estudiante matriculado
    */
   async createStudent(matriculaData) {
@@ -135,43 +139,82 @@ export const matriculaService = {
   },
 
   /**
-   * Actualizar información de un estudiante matriculado
+   * Obtener matrícula por ID
+   * @param {string|number} id - ID de la matrícula
+   * @returns {Promise<Object>} Datos de la matrícula
+   */
+  async getMatriculaById(id) {
+    try {
+      console.log('📚 Obteniendo matrícula por ID:', id);
+      const response = await api.get(`/matricula/${id}`);
+      console.log('✅ Matrícula obtenida exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al obtener matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener matrícula');
+    }
+  },
+
+  /**
+   * Crear nueva matrícula
+   * @param {Object} matriculaData - Datos de la matrícula
+   * @returns {Promise<Object>} Matrícula creada
+   */
+  async createMatricula(matriculaData) {
+    try {
+      console.log('📤 Creando nueva matrícula:', matriculaData);
+      const response = await api.post('/matricula', matriculaData);
+      console.log('✅ Matrícula creada exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al crear matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al crear matrícula');
+    }
+  },
+
+  /**
+   * Actualizar matrícula existente
+   * @param {string|number} id - ID de la matrícula
+   * @param {Object} matriculaData - Datos actualizados de la matrícula
+   * @returns {Promise<Object>} Matrícula actualizada
+   */
+  async updateMatricula(id, matriculaData) {
+    try {
+      console.log('📤 Actualizando matrícula:', id, matriculaData);
+      
+      // Los datos ya vienen estructurados desde el modal
+      const payload = {
+        ...matriculaData,
+        fechaActualizacion: new Date().toISOString()
+      };
+
+      console.log('📋 Payload final para backend:', payload);
+
+      const response = await api.patch(`/matricula/${id}`, payload);
+      console.log('✅ Matrícula actualizada exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al actualizar matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al actualizar matrícula');
+    }
+  },
+
+  /**
+   * Actualizar información del estudiante
    * @param {string|number} id - ID del estudiante
-   * @param {Object} studentData - Datos actualizados del estudiante
+   * @param {Object} estudianteData - Datos actualizados del estudiante
    * @returns {Promise<Object>} Estudiante actualizado
    */
-  async updateStudent(id, studentData) {
+  async updateEstudiante(id, estudianteData) {
     try {
-      console.log('📤 Actualizando estudiante:', id, studentData);
-      
-      // Preparar datos para actualización
       const payload = {
-        // Información personal del estudiante
-        name: studentData.name?.trim(),
-        lastName: studentData.lastName?.trim(),
-        email: studentData.email?.trim(),
-        phone: studentData.phone?.trim(),
-        address: studentData.address?.trim(),
-        birthDate: studentData.birthDate,
-        grade: studentData.grade,
-        
-        // Información del padre/madre o acudiente
-        parentName: studentData.parentName?.trim(),
-        parentPhone: studentData.parentPhone?.trim(),
-        parentEmail: studentData.parentEmail?.trim(),
-        
-        // Información médica (opcional)
-        medicalConditions: studentData.medicalConditions?.trim() || null,
-        allergies: studentData.allergies?.trim() || null,
-        
-        // Notas adicionales
-        notes: studentData.notes?.trim() || null,
-        
-        // Foto
-        photo: studentData.photo || null,
-        
-        // Fecha de actualización
-        lastUpdated: new Date().toISOString()
+        nombre: estudianteData.nombre?.trim(),
+        apellido: estudianteData.apellido?.trim(),
+        nroDocumento: estudianteData.nroDocumento?.trim(),
+        tipoDocumento: estudianteData.tipoDocumento,
+        contactoEmergencia: estudianteData.contactoEmergencia?.trim(),
+        nroEmergencia: estudianteData.nroEmergencia?.trim(),
+        observaciones: estudianteData.observaciones?.trim() || null
       };
 
       // Remover campos undefined
@@ -181,12 +224,232 @@ export const matriculaService = {
         }
       });
 
-      const response = await api.put(`/students/${id}`, payload);
-      console.log('✅ Estudiante actualizado exitosamente:', response.data);
+      const response = await api.patch(`/estudiante/${id}`, payload);
       return response.data;
     } catch (error) {
-      console.error('❌ Error al actualizar estudiante:', error);
       throw new Error(error.response?.data?.message || 'Error al actualizar estudiante');
+    }
+  },
+
+  /**
+   * Actualizar información del apoderado
+   * @param {string|number} id - ID del apoderado
+   * @param {Object} apoderadoData - Datos actualizados del apoderado
+   * @returns {Promise<Object>} Apoderado actualizado
+   */
+  async updateApoderado(id, apoderadoData) {
+    try {
+      const payload = {
+        nombre: apoderadoData.nombre?.trim(),
+        apellido: apoderadoData.apellido?.trim(),
+        numero: apoderadoData.numero?.trim(),
+        correo: apoderadoData.correo?.trim(),
+        direccion: apoderadoData.direccion?.trim() || null
+      };
+
+      // Remover campos undefined
+      Object.keys(payload).forEach(key => {
+        if (payload[key] === undefined) {
+          delete payload[key];
+        }
+      });
+
+      const response = await api.patch(`/apoderado/${id}`, payload);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Error al actualizar apoderado');
+    }
+  },
+
+  /**
+   * Obtener todos los apoderados
+   * @returns {Promise<Array>} Lista de apoderados
+   */
+  async getApoderados() {
+    try {
+      console.log('🔍 Obteniendo todos los apoderados...');
+      const response = await api.get('/apoderado');
+      console.log('📥 Respuesta completa de getApoderados:', response);
+      console.log('📥 Data de getApoderados:', response.data);
+      
+      // Extraer la lista de apoderados de la estructura del backend
+      let apoderados = [];
+      
+      if (response.data?.info?.apoderados) {
+        apoderados = response.data.info.apoderados;
+        console.log('📋 Encontrados apoderados en data.info.apoderados:', apoderados);
+      } else if (response.data?.data) {
+        apoderados = response.data.data;
+        console.log('📋 Encontrados apoderados en data.data:', apoderados);
+      } else if (Array.isArray(response.data)) {
+        apoderados = response.data;
+        console.log('📋 response.data es array directo:', apoderados);
+      } else {
+        console.log('📋 Estructura no reconocida, intentando extraer todas las propiedades:', response.data);
+        // Buscar en todas las propiedades si hay algún array
+        const values = Object.values(response.data || {});
+        const arrayFound = values.find(value => Array.isArray(value));
+        if (arrayFound) {
+          apoderados = arrayFound;
+          console.log('📋 Array encontrado en propiedades:', apoderados);
+        }
+      }
+      
+      console.log('📋 Lista final de apoderados:', apoderados);
+      console.log('📋 Cantidad de apoderados:', apoderados.length);
+      
+      return Array.isArray(apoderados) ? apoderados : [];
+    } catch (error) {
+      console.error('❌ Error al obtener apoderados:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error data:', error.response?.data);
+      throw new Error(error.response?.data?.message || 'Error al obtener apoderados');
+    }
+  },
+
+  /**
+   * Obtener apoderado por ID
+   * @param {string|number} id - ID del apoderado
+   * @returns {Promise<Object>} Datos del apoderado
+   */
+  async getApoderadoById(id) {
+    try {
+      const response = await api.get(`/apoderado/${id}`);
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Error al obtener apoderado');
+    }
+  },
+
+  /**
+   * Buscar apoderados por nombre
+   * @param {string} searchTerm - Término de búsqueda
+   * @returns {Promise<Array>} Lista de apoderados que coinciden
+   */
+  async searchApoderados(searchTerm) {
+    try {
+      console.log('🔍 Buscando apoderados con término:', searchTerm);
+      const response = await api.get('/apoderado');
+      console.log('📥 Respuesta completa de searchApoderados:', response);
+      console.log('📥 Data de searchApoderados:', response.data);
+      
+      // Extraer la lista de apoderados según la estructura del backend
+      let apoderados = [];
+      
+      if (response.data?.info?.data) {
+        apoderados = response.data.info.data;
+        console.log('📋 Encontrados apoderados en data.info.data:', apoderados);
+      } else if (response.data?.info?.apoderados) {
+        apoderados = response.data.info.apoderados;
+        console.log('📋 Encontrados apoderados en data.info.apoderados:', apoderados);
+      } else if (response.data?.data) {
+        apoderados = response.data.data;
+        console.log('📋 Encontrados apoderados en data.data:', apoderados);
+      } else if (Array.isArray(response.data)) {
+        apoderados = response.data;
+        console.log('📋 response.data es array directo:', apoderados);
+      } else {
+        console.log('📋 Estructura no reconocida, intentando extraer todas las propiedades:', response.data);
+        // Buscar en todas las propiedades si hay algún array
+        const values = Object.values(response.data || {});
+        const arrayFound = values.find(value => Array.isArray(value));
+        if (arrayFound) {
+          apoderados = arrayFound;
+          console.log('📋 Array encontrado en propiedades:', apoderados);
+        }
+      }
+      
+      console.log('� Lista final de apoderados:', apoderados);
+      console.log('📋 Cantidad de apoderados:', apoderados.length);
+      console.log('� Tipo de apoderados:', typeof apoderados);
+      console.log('📋 Es array?:', Array.isArray(apoderados));
+      
+      // Validar que tenemos un array
+      if (!Array.isArray(apoderados)) {
+        console.log('❌ apoderados no es un array, devolviendo array vacío');
+        return [];
+      }
+      
+      // Filtrar por nombre o apellido
+      const filtered = apoderados.filter(apoderado => {
+        console.log('🔍 Revisando apoderado:', apoderado);
+        console.log('🔍 Nombre:', apoderado.nombre || apoderado.nombres);
+        console.log('🔍 Apellido:', apoderado.apellido || apoderado.apellidos);
+        
+        const matchNombre = apoderado.nombre?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchApellido = apoderado.apellido?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchNombres = apoderado.nombres?.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchApellidos = apoderado.apellidos?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        console.log('✅ Match nombre:', matchNombre);
+        console.log('✅ Match apellido:', matchApellido);
+        console.log('✅ Match nombres:', matchNombres);
+        console.log('✅ Match apellidos:', matchApellidos);
+        
+        return matchNombre || matchApellido || matchNombres || matchApellidos;
+      });
+      
+      console.log('🎯 Resultados filtrados:', filtered);
+      console.log('🎯 Cantidad de resultados:', filtered.length);
+      
+      return filtered;
+    } catch (error) {
+      console.error('❌ Error al buscar apoderados:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error status:', error.response?.status);
+      console.error('❌ Error data:', error.response?.data);
+      throw new Error(error.response?.data?.message || 'Error al buscar apoderados');
+    }
+  },
+
+  /**
+   * Eliminar matrícula
+   * @param {string|number} id - ID de la matrícula
+   * @returns {Promise<boolean>} Confirmación de eliminación
+   */
+  async deleteMatricula(id) {
+    try {
+      console.log('🗑️ Eliminando matrícula:', id);
+      await api.delete(`/matricula/${id}`);
+      console.log('✅ Matrícula eliminada exitosamente');
+      return true;
+    } catch (error) {
+      console.error('❌ Error al eliminar matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al eliminar matrícula');
+    }
+  },
+
+  /**
+   * Cambiar estado de una matrícula (activa/inactiva)
+   * @param {string|number} id - ID de la matrícula
+   * @returns {Promise<Object>} Matrícula actualizada
+   */
+  async toggleMatriculaStatus(id) {
+    try {
+      console.log('🔄 Cambiando estado de la matrícula:', id);
+      const response = await api.patch(`/matricula/${id}/toggle-status`);
+      console.log('✅ Estado de la matrícula actualizado exitosamente');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al cambiar estado de la matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al cambiar estado de la matrícula');
+    }
+  },
+
+  /**
+   * Obtener estadísticas de matrícula
+   * @returns {Promise<Object>} Estadísticas de matrícula
+   */
+  async getMatriculaStats() {
+    try {
+      console.log('📊 Obteniendo estadísticas de matrícula...');
+      const response = await api.get('/matricula/stats');
+      console.log('✅ Estadísticas obtenidas exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al obtener estadísticas de matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener estadísticas');
     }
   },
 
@@ -262,6 +525,64 @@ export const matriculaService = {
    * @param {string} format - Formato de exportación ('excel' | 'pdf' | 'csv')
    * @returns {Promise<Blob>} Archivo de exportación
    */
+  async exportMatriculas(filters = {}, format = 'excel') {
+    try {
+      console.log('📤 Exportando datos de matrícula...', { filters, format });
+      
+      const params = new URLSearchParams();
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value);
+        }
+      });
+      params.append('format', format);
+
+      const response = await api.get(`/matricula/export?${params.toString()}`, {
+        responseType: 'blob'
+      });
+      
+      console.log('✅ Datos de matrícula exportados exitosamente');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al exportar datos de matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al exportar datos');
+    }
+  },
+
+  /**
+   * Importar datos de matrícula desde archivo
+   * @param {File} file - Archivo con datos de matrícula
+   * @param {string} format - Formato del archivo ('excel' | 'csv')
+   * @returns {Promise<Object>} Resultado de la importación
+   */
+  async importMatriculas(file, format = 'excel') {
+    try {
+      console.log('📥 Importando datos de matrícula...', { fileName: file.name, format });
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('format', format);
+
+      const response = await api.post('/matricula/import', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('✅ Datos de matrícula importados exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al importar datos de matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al importar datos');
+    }
+  },
+
+  /**
+   * Exportar datos de matrícula (legacy)
+   * @param {Object} filters - Filtros para la exportación
+   * @param {string} format - Formato de exportación ('excel' | 'pdf' | 'csv')
+   * @returns {Promise<Blob>} Archivo de exportación
+   */
   async exportEnrollmentData(filters = {}, format = 'excel') {
     try {
       const params = new URLSearchParams();
@@ -284,7 +605,7 @@ export const matriculaService = {
   },
 
   /**
-   * Importar datos de matrícula desde archivo
+   * Importar datos de matrícula desde archivo (legacy)
    * @param {File} file - Archivo con datos de estudiantes
    * @returns {Promise<Object>} Resultado de la importación
    */

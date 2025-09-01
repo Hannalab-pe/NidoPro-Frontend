@@ -120,6 +120,14 @@ export const useApoderados = () => {
    * Actualizar información de un apoderado
    */
   const updateApoderado = useCallback(async (apoderadoId, apoderadoData) => {
+    console.log('🔧 useApoderados updateApoderado - ID recibido:', apoderadoId);
+    console.log('🔧 useApoderados updateApoderado - Datos recibidos:', apoderadoData);
+    
+    if (!apoderadoId) {
+      console.error('❌ useApoderados: ID del apoderado es undefined o null');
+      throw new Error('ID del apoderado es requerido para actualizar');
+    }
+    
     setUpdating(true);
     
     // Toast de carga

@@ -113,8 +113,14 @@ export const apoderadoService = {
    */
   async updateApoderado(id, apoderadoData) {
     try {
-      console.log('🔄 Actualizando apoderado:', id);
-      const response = await api.put(`/apoderado/${id}`, apoderadoData);
+      console.log('🔄 Actualizando apoderado - ID:', id);
+      console.log('🔄 Datos a actualizar:', apoderadoData);
+      
+      if (!id) {
+        throw new Error('ID del apoderado es requerido para actualizar');
+      }
+      
+      const response = await api.patch(`/apoderado/${id}`, apoderadoData);
       console.log('✅ Apoderado actualizado exitosamente:', response.data);
       return response.data;
     } catch (error) {
