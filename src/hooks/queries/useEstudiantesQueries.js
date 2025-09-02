@@ -64,10 +64,17 @@ const estudiantesService = {
 
   // Actualizar estudiante
   updateEstudiante: async ({ id, ...estudianteData }) => {
+    console.log('🔧 Service updateEstudiante - ID recibido:', id);
+    console.log('🔧 Service updateEstudiante - Datos:', estudianteData);
+    
+    if (!id) {
+      throw new Error('ID del estudiante es requerido para actualizar');
+    }
+    
     const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
     const token = localStorage.getItem('token');
     
-    const response = await axios.put(`${API_BASE_URL}/estudiante/${id}`, estudianteData, {
+    const response = await axios.patch(`${API_BASE_URL}/estudiante/${id}`, estudianteData, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
@@ -186,6 +193,14 @@ export const useUpdateEstudiante = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...estudianteData }) => {
+      console.log('🔧 useUpdateEstudiante mutation - ID recibido:', id);
+      console.log('🔧 useUpdateEstudiante mutation - Datos recibidos:', estudianteData);
+      
+      if (!id) {
+        console.error('❌ ID del estudiante es undefined o null');
+        throw new Error('ID del estudiante es requerido');
+      }
+      
       let photoData = estudianteData.photo;
 
       // Si hay una nueva imagen, subirla primero
@@ -211,6 +226,7 @@ export const useUpdateEstudiante = () => {
       };
       delete finalData.photoFile;
 
+      console.log('🔧 Datos finales a enviar:', finalData);
       return estudiantesService.updateEstudiante({ id, ...finalData });
     },
     onSuccess: (updatedEstudiante, { id }) => {

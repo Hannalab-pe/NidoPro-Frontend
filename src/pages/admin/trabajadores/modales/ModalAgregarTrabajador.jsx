@@ -8,9 +8,11 @@ import {
   User, 
   Save,
   UserPlus,
-  Loader2
+  Loader2,
+  Briefcase
 } from 'lucide-react';
 import { useTrabajadores } from '../../../../hooks/useTrabajadores';
+import { useRoles } from '../../../../hooks/useRoles';
 
 // Esquema de validación con Yup para trabajadores
 const validationSchema = yup.object({
@@ -23,6 +25,7 @@ const validationSchema = yup.object({
     .email('El correo no es válido')
     .required('El correo es requerido'),
   telefono: yup.string().required('El teléfono es requerido').trim(),
+  idRol: yup.string().required('El rol es requerido'),
   estaActivo: yup.boolean()
 });
 
@@ -51,6 +54,9 @@ const FormSection = ({ title, icon: Icon, iconColor, children }) => (
 const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   // Hook personalizado para gestión de trabajadores
   const { createTrabajador, creating, uploading } = useTrabajadores();
+  
+  // Hook para obtener los roles disponibles
+  const { roles, isLoading: loadingRoles } = useRoles();
 
   const {
     register,
@@ -69,6 +75,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
       direccion: '',
       correo: '',
       telefono: '',
+      idRol: '',
       estaActivo: true
     }
   });
@@ -104,7 +111,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
     }`;
 
   // Estado de carga general
-  const isLoading = creating || uploading;
+  const isLoading = creating || uploading || loadingRoles;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -224,6 +231,23 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                         />
                       </FormField>
 
+                      <FormField label="Rol" required error={errors.idRol?.message}>
+                        <select
+                          {...register('idRol')}
+                          className={inputClassName(errors.idRol)}
+                          disabled={isLoading}
+                        >
+                          <option value="">
+                            {loadingRoles ? 'Cargando roles...' : 'Seleccione un rol'}
+                          </option>
+                          {Array.isArray(roles) && roles.map((rol) => (
+                            <option key={rol.idRol} value={rol.idRol}>
+                              {rol.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </FormField>
+
                       <FormField label="Estado" error={errors.estaActivo?.message}>
                         <select
                           {...register('estaActivo')}
@@ -236,6 +260,28 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                       </FormField>
                     </div>
                   </FormSection>
+
+                  {/* Información del Rol - Solo mostrar si hay rol seleccionado */}
+                  {watch('idRol') && roles.length > 0 && (
+                    <FormSection title="Información del Rol" icon={Briefcase} iconColor="text-green-600">
+                      <div className="bg-green-50 p-4 rounded-lg">
+                        {(() => {
+                          const selectedRole = roles.find(rol => rol.idRol === watch('idRol'));
+                          return selectedRole ? (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2">
+                                <Briefcase className="w-4 h-4 text-green-600" />
+                                <span className="font-medium text-green-800">{selectedRole.nombre}</span>
+                              </div>
+                              {selectedRole.descripcion && (
+                                <p className="text-green-700 text-sm ml-6">{selectedRole.descripcion}</p>
+                              )}
+                            </div>
+                          ) : null;
+                        })()}
+                      </div>
+                    </FormSection>
+                  )}
 
                 </form>
 

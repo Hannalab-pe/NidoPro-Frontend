@@ -33,6 +33,7 @@ import Finanzas from '../admin/finanzas/Finanzas';
 import Reportes from '../admin/reportes/Reportes';
 import Configuraciones from "../admin/configuraciones/Configuracion";
 import Usuarios from '../admin/usuarios/Usuarios';
+import Planificaciones from '../admin/planificaciones/Planificaciones';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -49,7 +50,7 @@ const AdminDashboard = () => {
     { id: "finances", label: "Finanzas", icon: DollarSign },
     { id: "reports", label: "Reportes", icon: FileText },
     { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
-    { id: "settings", label: "Configuraciones", icon: Settings },
+    { id: "planificaciones", label: "Planificaciones", icon: FileText },
   ];
 
   const stats = [
@@ -110,7 +111,7 @@ const AdminDashboard = () => {
         <div className="flex items-center bg-blue-800 justify-between p-7 border-b border-gray-200 lg:justify-start">
           <div className="flex items-center space-x-3 ">
             <Baby className="w-8 h-8 text-white" />
-            <span className="text-xl font-bold text-white">Nido Bea</span>
+            <span className="text-xl font-bold text-white">Nido Pro</span>
           </div>
           <button
             className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
@@ -291,6 +292,7 @@ const AdminDashboard = () => {
           {activeSection === "reports" && <Reportes />}
           {activeSection === "users" && <Usuarios />}
           {activeSection === "settings" && <Configuraciones />}
+          {activeSection === "planificaciones" && <Planificaciones />}
         </div>
       </main>
     </div>

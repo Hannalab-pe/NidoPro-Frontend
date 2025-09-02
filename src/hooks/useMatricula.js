@@ -5,7 +5,7 @@ import {
   useCreateMatricula, 
   useUpdateMatricula, 
   useDeleteMatricula,
-  useMatriculaStats,
+  // useMatriculaStats, // Comentado - endpoint no existe
   useToggleMatriculaStatus,
   useImportMatriculas,
   useExportMatriculas
@@ -27,7 +27,7 @@ export const useMatricula = () => {
     refetch: refetchMatriculas 
   } = useMatriculas(filters);
   
-  const { data: stats = {} } = useMatriculaStats();
+  const { data: stats = {} } = {}; // useMatriculaStats(); // Comentado - endpoint no existe
   
   // Mutations
   const createMatriculaMutation = useCreateMatricula();
