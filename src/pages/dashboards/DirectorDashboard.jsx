@@ -109,7 +109,7 @@ const DirectorDashboard = () => {
             </button>
             <div className="flex-1 lg:ml-0 ml-4">
               <h1 className="text-xl lg:text-2xl font-bold text-white">Panel de Coordinación Académica</h1>
-              <p className="text-sm text-white mt-1 hidden sm:block">{user?.username} | {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+              <p className="text-sm text-white mt-1 hidden sm:block">{user?.fullName || user?.nombre || user?.username} | {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
               <button className="relative p-2 text-white border-white border hover:text-gray-900 hover:bg-white rounded-lg transition-colors">

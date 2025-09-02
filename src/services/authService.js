@@ -46,13 +46,17 @@ export const authService = {
 
       const roleMapping = getRoleMappingForUser(data.usuario.rol);
 
-      return {
+      const authResponse = {
         token: data.access_token,
         user: {
           id: data.usuario.sub,
           email: data.usuario.usuario,
-          nombre: data.usuario.usuario,
-          apellido: '',
+          nombre: data.usuario.fullName?.split(' ')[0] || data.usuario.usuario, // Primer nombre del fullName
+          apellido: data.usuario.fullName?.split(' ').slice(1).join(' ') || '', // Resto como apellido
+          fullName: data.usuario.fullName || data.usuario.usuario, // Nombre completo
+          tipo: data.usuario.tipo,
+          rol: data.usuario.rol,
+          entidadId: data.usuario.entidadId,
           role: { 
             id: roleMapping.id, 
             nombre: roleMapping.nombre
@@ -65,6 +69,11 @@ export const authService = {
         },
         permissions: roleMapping.permissions
       };
+
+      console.log('🔐 Datos de autenticación procesados:', authResponse);
+      console.log('🔐 Usuario con fullName:', authResponse.user.fullName);
+
+      return authResponse;
     } catch (error) {
       console.error('❌ Error en login:', error);
       

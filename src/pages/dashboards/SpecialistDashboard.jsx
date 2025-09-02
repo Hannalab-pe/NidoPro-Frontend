@@ -69,7 +69,7 @@ const SpecialistDashboard = () => {
               <div className="specialist-user-profile">
                 <div className="specialist-user-avatar">{user?.avatar}</div>
                 <div className="specialist-user-info">
-                  <span className="specialist-user-name">{user?.name}</span>
+                  <span className="specialist-user-name">{user?.fullName || user?.nombre || user?.name}</span>
                   <span className="specialist-user-role">{user?.specialty}</span>
                 </div>
               </div>
@@ -81,7 +81,7 @@ const SpecialistDashboard = () => {
           {activeSection === "overview" && (
             <div className="specialist-overview-section">
               <div className="specialist-welcome-card">
-                <h2>Bienvenido(a), {user?.name}</h2>
+                <h2>Bienvenido(a), {user?.fullName || user?.nombre || user?.name}</h2>
                 <p>Especialista en {user?.specialty}</p>
               </div>
 

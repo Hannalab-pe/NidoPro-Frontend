@@ -88,6 +88,13 @@ const DataTable = ({
       if (value && value !== 'all') {
         filtered = filtered.filter(item => {
           const itemValue = getNestedValue(item, key);
+          
+          // Manejar valores booleanos (para el filtro de estado)
+          if (value === 'true' || value === 'false') {
+            return itemValue === (value === 'true');
+          }
+          
+          // Manejar otros tipos de valores
           return itemValue === value;
         });
       }

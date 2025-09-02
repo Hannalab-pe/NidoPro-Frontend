@@ -155,3 +155,6 @@ export const useAulasHook = () => {
 };
 
 export default useAulasHook;
+
+// Alias para compatibilidad con componentes que esperan useAulas
+export { useAulasHook as useAulas };
