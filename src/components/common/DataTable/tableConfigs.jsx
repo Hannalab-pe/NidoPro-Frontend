@@ -288,12 +288,46 @@ export const trabajadoresColumns = [
     Header: 'Rol',
     accessor: 'idRol',
     sortable: true,
-    Cell: ({ value }) => (
-      <div>
-        <div className="text-sm text-gray-900">{value?.nombre || 'Sin rol'}</div>
-        <div className="text-sm text-gray-500">{value?.descripcion || ''}</div>
-      </div>
-    )
+    Cell: ({ value }) => {
+      const getRoleBadgeColor = (roleName) => {
+        switch (roleName) {
+          case 'DOCENTE':
+            return 'bg-blue-100 text-blue-800';
+          case 'SECRETARIA':
+            return 'bg-purple-100 text-purple-800';
+          case 'DIRECTORA':
+            return 'bg-green-100 text-green-800';
+          case 'ESTUDIANTE':
+            return 'bg-yellow-100 text-yellow-800';
+          default:
+            return 'bg-gray-100 text-gray-800';
+        }
+      };
+
+      const getRoleDisplayName = (roleName) => {
+        switch (roleName) {
+          case 'DOCENTE':
+            return 'Docente';
+          case 'SECRETARIA':
+            return 'Secretaria';
+          case 'DIRECTORA':
+            return 'Directora';
+          default:
+            return roleName || 'Sin rol';
+        }
+      };
+
+      return (
+        <div>
+          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleBadgeColor(value?.nombre)}`}>
+            {getRoleDisplayName(value?.nombre)}
+          </span>
+          {value?.descripcion && (
+            <div className="text-xs text-gray-500 mt-1">{value.descripcion}</div>
+          )}
+        </div>
+      );
+    }
   },
   {
     Header: 'Estado',
@@ -312,6 +346,15 @@ export const trabajadoresColumns = [
 
 // Filtros para trabajadores
 export const trabajadoresFilters = {
+  'idRol.nombre': {
+    label: 'Rol',
+    placeholder: 'Todos los roles',
+    options: [
+      { value: 'DOCENTE', label: 'Docente' },
+      { value: 'SECRETARIA', label: 'Secretaria' },
+      { value: 'DIRECTORA', label: 'Directora' },
+    ]
+  },
   tipoDocumento: {
     label: 'Tipo de Documento',
     placeholder: 'Todos los tipos',

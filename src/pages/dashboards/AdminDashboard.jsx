@@ -196,7 +196,7 @@ const AdminDashboard = () => {
                 Panel de Administración
               </h1>
               <p className="text-sm text-white mt-1 hidden sm:block">
-                {user?.username} | {new Date().toLocaleDateString('es-ES', { 
+                {user?.fullName || user?.nombre || user?.username} | {new Date().toLocaleDateString('es-ES', { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 

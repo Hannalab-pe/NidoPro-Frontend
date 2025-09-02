@@ -22,12 +22,14 @@ import {
   Upload,
   DollarSign,
   Search,
-  UserCheck
+  UserCheck,
+  School
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
 import { toast } from 'sonner';
 import { matriculaKeys } from '../../../../hooks/queries/useMatriculaQueries';
 import matriculaService from '../../../../services/matriculaService';
+import { useAulasAsignacion } from '../../../../hooks/useAulasAsignacion';
 
 // Esquema de validación con Yup según backend
 const validationSchema = yup.object({
@@ -36,6 +38,15 @@ const validationSchema = yup.object({
   fechaIngreso: yup.date().required('La fecha de ingreso es requerida'),
   idGrado: yup.string().required('El grado es requerido'),
   metodoPago: yup.string().required('El método de pago es requerido'),
+  
+  // Asignación de aula
+  tipoAsignacionAula: yup.string().required('El tipo de asignación es requerido'),
+  idAulaEspecifica: yup.string().when('tipoAsignacionAula', {
+    is: 'manual',
+    then: (schema) => schema.required('Debe seleccionar un aula específica'),
+    otherwise: (schema) => schema.notRequired()
+  }),
+  motivoPreferencia: yup.string(),
   
   // Datos del apoderado
   apoderadoNombre: yup.string().required('El nombre del apoderado es requerido').trim(),
@@ -78,6 +89,9 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
   const [selectedApoderado, setSelectedApoderado] = useState(null);
 
   const queryClient = useQueryClient();
+
+  // Hook para obtener las aulas disponibles
+  const { aulas, loadingAulas } = useAulasAsignacion();
 
   // Query para obtener apoderados cuando se busca
   const { data: apoderados = [], isLoading: loadingApoderados } = useQuery({
@@ -169,6 +183,11 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
       idGrado: 'd59cef90-422d-4562-88df-85dbf9514a9b',
       metodoPago: 'Transferencia bancaria',
       
+      // Asignación de aula
+      tipoAsignacionAula: 'manual',
+      idAulaEspecifica: '',
+      motivoPreferencia: '',
+      
       // Datos del apoderado
       apoderadoNombre: '',
       apoderadoApellido: '',
@@ -189,6 +208,9 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
     }
   });
 
+  // Vigilar el tipo de asignación de aula
+  const tipoAsignacionAula = watch('tipoAsignacionAula');
+
   const onSubmit = async (data) => {
     try {
       // Estructurar datos según el formato esperado
@@ -198,6 +220,11 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
         metodoPago: data.metodoPago,
         voucherImg: "", // Simplificado por ahora
         idGrado: data.idGrado,
+        
+        // Datos de asignación de aula
+        tipoAsignacionAula: data.tipoAsignacionAula,
+        idAulaEspecifica: data.idAulaEspecifica || null,
+        motivoPreferencia: data.motivoPreferencia || '',
         
         apoderadoData: {
           nombre: data.apoderadoNombre,
@@ -220,6 +247,8 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
           idRol: "35225955-5aeb-4df0-8014-1cdfbce9b41e" // ID del rol ESTUDIANTE
         }
       };
+
+      console.log('📋 Datos de matrícula a enviar:', matriculaData);
 
       // Ejecutar la mutation
       await createMatriculaMutation.mutateAsync(matriculaData);
@@ -445,6 +474,78 @@ const ModalAgregarMatricula = ({ isOpen, onClose }) => {
                             </div>
                           </FormField>
                         </div>
+                      </div>
+
+                      {/* Asignación de Aula */}
+                      <div className="bg-blue-50 border border-blue-300 p-6 rounded-lg">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center">
+                          <School className="w-6 h-6 mr-3 text-blue-600" />
+                          Asignación de Aula
+                        </h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            label="Tipo de Asignación"
+                            error={errors.tipoAsignacionAula?.message}
+                            required
+                          >
+                            <select
+                              {...register('tipoAsignacionAula')}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                              <option value="manual">Asignación Manual</option>
+                              <option value="automatica">Asignación Automática</option>
+                            </select>
+                          </FormField>
+
+                          {tipoAsignacionAula === 'manual' && (
+                            <FormField
+                              label="Aula Específica"
+                              error={errors.idAulaEspecifica?.message}
+                              required
+                            >
+                              <select
+                                {...register('idAulaEspecifica')}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={loadingAulas}
+                              >
+                                <option value="">
+                                  {loadingAulas ? 'Cargando aulas...' : 'Seleccione un aula'}
+                                </option>
+                                {Array.isArray(aulas) && aulas.map((aula) => (
+                                  <option key={aula.idAula} value={aula.idAula}>
+                                    Sección {aula.seccion} - {aula.cantidadEstudiantes} estudiantes
+                                  </option>
+                                ))}
+                              </select>
+                            </FormField>
+                          )}
+                        </div>
+
+                        {tipoAsignacionAula === 'manual' && (
+                          <div className="mt-4">
+                            <FormField
+                              label="Motivo de Preferencia (Opcional)"
+                              error={errors.motivoPreferencia?.message}
+                            >
+                              <textarea
+                                {...register('motivoPreferencia')}
+                                rows={3}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Ej: Hermano en la misma sección, cercanía al hogar, etc."
+                              />
+                            </FormField>
+                          </div>
+                        )}
+
+                        {tipoAsignacionAula === 'automatica' && (
+                          <div className="mt-4 p-4 bg-blue-100 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <School className="w-4 h-4 inline mr-1" />
+                              El sistema asignará automáticamente el aula más adecuada según disponibilidad y criterios del centro educativo.
+                            </p>
+                          </div>
+                        )}
                       </div>
 
                       {/* Información del Estudiante */}

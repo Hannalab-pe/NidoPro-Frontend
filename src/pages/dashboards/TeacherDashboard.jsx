@@ -186,10 +186,9 @@ const TeacherDashboard = () => {
                <span className="font-semibold text-gray-900 text-sm truncate">
                  {user?.nombre || ''} {user?.apellido || ''}
                </span>
-               <span className="text-xs text-gray-700 truncate">{user?.email || 'correo@ejemplo.com'}</span>
                {user?.role?.nombre && (
                  <span className="text-[10px] text-white bg-green-500 rounded px-2 py-0.5 mt-1 mb-1 w-fit font-semibold tracking-wide uppercase">
-                   {user.role.nombre}
+                   {user.rol}
                  </span>
                )}
              </div>
@@ -223,7 +222,7 @@ const TeacherDashboard = () => {
                 Panel de Trabajador
               </h1>
               <p className="text-sm text-white mt-1 hidden sm:block">
-                {user?.username} | {new Date().toLocaleDateString('es-ES', { 
+                {user?.fullName || user?.nombre || user?.username} | {new Date().toLocaleDateString('es-ES', { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
