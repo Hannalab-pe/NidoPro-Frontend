@@ -435,90 +435,108 @@ export const teachersFilters = {
 // Configuración de columnas para padres
 export const parentsColumns = [
   {
-    Header: 'Padre/Madre',
+    Header: 'Apoderado',
     accessor: 'nombre',
     sortable: true,
     Cell: ({ value, row }) => (
       <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-          {row.foto ? (
-            <img 
-              src={row.foto} 
-              alt={`${value} ${row.apellido}`} 
-              className="w-10 h-10 rounded-full object-cover"
-            />
-          ) : (
-            <span className="text-gray-600 font-medium">
-              {value?.charAt(0)?.toUpperCase()}
-            </span>
-          )}
+        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <span className="text-blue-600 font-medium">
+            {value?.charAt(0)?.toUpperCase()}{row.apellido?.charAt(0)?.toUpperCase()}
+          </span>
         </div>
         <div>
-          <div className="font-medium text-gray-900">{`${value} ${row.apellido || ''}`}</div>
+          <div className="font-medium text-gray-900">{`${value || ''} ${row.apellido || ''}`}</div>
           <div className="text-sm text-gray-500">{row.correo || 'Sin correo'}</div>
         </div>
       </div>
     )
   },
   {
-    Header: 'Relación',
-    accessor: 'relacion',
+    Header: 'Documento',
+    accessor: 'documentoIdentidad',
     sortable: true,
-    Cell: ({ value }) => (
-      <span className="capitalize">{value || 'No especificado'}</span>
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="font-mono text-sm text-gray-900">{value || 'Sin documento'}</div>
+        <div className="text-xs text-gray-500">{row.tipoDocumentoIdentidad || 'DNI'}</div>
+      </div>
     )
   },
   {
-    Header: 'Teléfono',
+    Header: 'Contacto',
     accessor: 'numero',
     sortable: false,
-    Cell: ({ value }) => (
-      <span>{value || 'Sin teléfono'}</span>
+    Cell: ({ value, row }) => (
+      <div>
+        <div className="text-sm text-gray-900">{value || 'Sin teléfono'}</div>
+        <div className="text-xs text-gray-500 truncate max-w-[150px]" title={row.direccion}>
+          {row.direccion || 'Sin dirección'}
+        </div>
+      </div>
     )
   },
   {
-    Header: 'DNI',
-    accessor: 'dni',
+    Header: 'ID Apoderado',
+    accessor: 'idApoderado',
     sortable: true,
     Cell: ({ value }) => (
-      <span className="font-mono">{value || 'Sin DNI'}</span>
+      <span className="font-mono text-xs text-gray-600" title={value}>
+        {value ? value.substring(0, 8) + '...' : 'Sin ID'}
+      </span>
     )
   },
   {
-    Header: 'Estado',
-    accessor: 'estado',
-    type: 'status',
+    Header: 'Fecha Registro',
+    accessor: 'creado',
+    type: 'date',
     sortable: true,
-    statusColors: {
-      'activo': 'bg-green-100 text-green-800',
-      'inactivo': 'bg-red-100 text-red-800'
-    },
-    statusLabels: {
-      'activo': 'Activo',
-      'inactivo': 'Inactivo'
-    }
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-900">
+        {value ? new Date(value).toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }) : 'Sin fecha'}
+      </div>
+    )
+  },
+  {
+    Header: 'Última Actualización',
+    accessor: 'actualizado',
+    type: 'date',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-600">
+        {value ? new Date(value).toLocaleDateString('es-PE', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }) : 'Sin actualización'}
+      </div>
+    )
   }
 ];
 
 // Filtros para padres
 export const parentsFilters = {
-  relacion: {
-    label: 'Relación',
-    placeholder: 'Todas las relaciones',
+  tipoDocumentoIdentidad: {
+    label: 'Tipo de Documento',
+    placeholder: 'Todos los tipos',
     options: [
-      { value: 'padre', label: 'Padre' },
-      { value: 'madre', label: 'Madre' },
-      { value: 'tutor', label: 'Tutor/a' },
-      { value: 'abuelo', label: 'Abuelo/a' },
-      { value: 'otro', label: 'Otro' }
+      { value: 'DNI', label: 'DNI' },
+      { value: 'Carnet de Extranjería', label: 'Carnet de Extranjería' },
+      { value: 'Pasaporte', label: 'Pasaporte' }
     ]
   },
-  estado: {
-    label: 'Estado',
-    placeholder: 'Todos los estados',
+  creado: {
+    label: 'Fecha de Registro',
+    placeholder: 'Todas las fechas',
     options: [
-      { value: 'activo', label: 'Activo' },
-      { value: 'inactivo', label: 'Inactivo' }
+      { value: 'hoy', label: 'Hoy' },
+      { value: 'semana', label: 'Esta semana' },
+      { value: 'mes', label: 'Este mes' },
+      { value: 'año', label: 'Este año' }
     ]
   }
 };

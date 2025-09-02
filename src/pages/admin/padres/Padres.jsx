@@ -7,7 +7,7 @@ import { usePadres } from '../../../hooks/usePadres';
 import TablaPadres from './tablas/TablaPadres';
 import ModalAgregarPadre from './modales/ModalAgregarPadre';
 import ModalVerPadre from './modales/ModalVerPadre';
-import ModalEditarPadre from './modales/ModalEditarPadre';
+// import ModalEditarPadre from './modales/ModalEditarPadre'; // Eliminado - no existe endpoint
 import ModalEliminarPadre from './modales/ModalEliminarPadre';
 
 const Padres = () => {
@@ -22,7 +22,7 @@ const Padres = () => {
   // Estados locales solo para UI
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  // const [showEditModal, setShowEditModal] = useState(false); // Eliminado - no existe endpoint
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedParent, setSelectedParent] = useState(null);
 
@@ -41,8 +41,8 @@ const Padres = () => {
   };
 
   const handleEdit = (padre) => {
-    setSelectedParent(padre);
-    setShowEditModal(true);
+    // Funcionalidad deshabilitada - no existe endpoint de actualización en backend
+    console.log('Edición deshabilitada - no existe endpoint en backend');
   };
 
   const handleDelete = (padre) => {
@@ -134,20 +134,7 @@ const Padres = () => {
         padre={selectedParent}
       />
 
-      {/* Modal para editar padre */}
-      <ModalEditarPadre
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedParent(null);
-        }}
-        onSuccess={() => {
-          setShowEditModal(false);
-          setSelectedParent(null);
-          refreshParents();
-        }}
-        padre={selectedParent}
-      />
+      {/* Modal para editar padre - ELIMINADO: No existe endpoint en backend */}
 
       {/* Modal para eliminar padre */}
       <ModalEliminarPadre

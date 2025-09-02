@@ -107,26 +107,14 @@ export const apoderadoService = {
 
   /**
    * Actualizar información de un apoderado
+   * NOTA: Esta función está deshabilitada porque no existe el endpoint PATCH en el backend
    * @param {string|number} id - ID del apoderado
    * @param {Object} apoderadoData - Datos actualizados del apoderado
-   * @returns {Promise<Object>} Apoderado actualizado
+   * @returns {Promise<Object>} Error - funcionalidad no disponible
    */
   async updateApoderado(id, apoderadoData) {
-    try {
-      console.log('🔄 Actualizando apoderado - ID:', id);
-      console.log('🔄 Datos a actualizar:', apoderadoData);
-      
-      if (!id) {
-        throw new Error('ID del apoderado es requerido para actualizar');
-      }
-      
-      const response = await api.patch(`/apoderado/${id}`, apoderadoData);
-      console.log('✅ Apoderado actualizado exitosamente:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('❌ Error al actualizar apoderado:', error);
-      throw new Error(error.response?.data?.message || 'Error al actualizar apoderado');
-    }
+    console.warn('⚠️ updateApoderado está deshabilitado - no existe endpoint PATCH en backend');
+    throw new Error('Error: Cannot PATCH /api/v1/apoderado/' + id + ' - Endpoint no existe en backend');
   },
 
   /**

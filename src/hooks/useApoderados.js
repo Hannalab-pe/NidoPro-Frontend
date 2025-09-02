@@ -118,54 +118,11 @@ export const useApoderados = () => {
 
   /**
    * Actualizar información de un apoderado
+   * NOTA: Esta función está deshabilitada porque no existe el endpoint en el backend
    */
   const updateApoderado = useCallback(async (apoderadoId, apoderadoData) => {
-    console.log('🔧 useApoderados updateApoderado - ID recibido:', apoderadoId);
-    console.log('🔧 useApoderados updateApoderado - Datos recibidos:', apoderadoData);
-    
-    if (!apoderadoId) {
-      console.error('❌ useApoderados: ID del apoderado es undefined o null');
-      throw new Error('ID del apoderado es requerido para actualizar');
-    }
-    
-    setUpdating(true);
-    
-    // Toast de carga
-    const loadingToast = toast.loading('Actualizando apoderado...', {
-      description: 'Guardando cambios...'
-    });
-    
-    try {
-      console.log('🔄 Actualizando apoderado:', apoderadoId);
-      
-      // Actualizar en el backend
-      const updatedApoderado = await apoderadoService.updateApoderado(apoderadoId, apoderadoData);
-      
-      // Actualizar lista local
-      setApoderados(prevApoderados => 
-        prevApoderados.map(apoderado => 
-          apoderado.idApoderado === apoderadoId ? (updatedApoderado.data || updatedApoderado) : apoderado
-        )
-      );
-      
-      // Toast de éxito
-      const apoderadoInfo = updatedApoderado.data || updatedApoderado;
-      toast.success('¡Apoderado actualizado exitosamente!', {
-        id: loadingToast,
-        description: `${apoderadoInfo.nombre} ${apoderadoInfo.apellido} ha sido actualizado`
-      });
-      
-      return updatedApoderado;
-      
-    } catch (error) {
-      toast.error('Error al actualizar apoderado', {
-        id: loadingToast,
-        description: error.message
-      });
-      throw error;
-    } finally {
-      setUpdating(false);
-    }
+    console.warn('⚠️ updateApoderado está deshabilitado - no existe endpoint PATCH en backend');
+    throw new Error('La funcionalidad de actualización no está disponible - no existe endpoint en backend');
   }, []);
 
   /**

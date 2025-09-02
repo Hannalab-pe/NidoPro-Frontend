@@ -50,7 +50,6 @@ const AdminDashboard = () => {
     { id: "finances", label: "Finanzas", icon: DollarSign },
     { id: "reports", label: "Reportes", icon: FileText },
     { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
-    { id: "settings", label: "Configuraciones", icon: Settings },
     { id: "planificaciones", label: "Planificaciones", icon: FileText },
   ];
 
