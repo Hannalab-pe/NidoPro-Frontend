@@ -92,7 +92,6 @@ const Login = () => {
         console.warn('Backend no disponible, usando modo desarrollo:', backendError.message);
         // Fallback a modo desarrollo
         userData = await authService.loginDev(formData);
-        toast.success('¡Bienvenido a NidoPro! (Modo desarrollo)');
       }
       
       // Actualizar store de Zustand
@@ -400,7 +399,7 @@ const Login = () => {
             <div className="w-full max-w-md">
               
               {/* Form Container */}
-              <div className={`bg-white/90 backdrop-blur-xl rounded-3xl border border-white/30 p-8 relative transition-all duration-1200 transform ${
+              <div className={`bg-transparent rounded-3xl border border-white/30 p-8 relative transition-all duration-1200 transform ${
                 isVisible ? 'translate-y-0 opacity-100 scale-100' : 'translate-y-8 opacity-0 scale-95'
               }`}>
                 {/* Mobile logo */}
@@ -415,7 +414,7 @@ const Login = () => {
                   isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
                 }`} style={{ transitionDelay: '0.3s' }}>
                   <h3 className="text-2xl font-bold text-gray-800 mb-2">
-                    Iniciar Sesión
+                    NidoPro
                   </h3>
                   <p className="text-gray-600">
                     Accede a tu cuenta para continuar
@@ -625,6 +624,24 @@ const Login = () => {
                    animationDelay: '4s'
                  }}></div>
 
+          </div>
+        </div>
+      </div>
+      
+      {/* Powered by HannahLab - Marca en inferior izquierda */}
+      <div className="absolute bottom-4 left-6 z-20 hover:-translate-y-1 transition-all duration-400">
+        <div className={`flex justify-center items-center space-x-2  transition-all duration-1000 transform ${
+          isVisible ? 'translate-y-0' : 'translate-y-4 opacity-0'
+        }`} style={{ transitionDelay: '1.5s' }}>
+          <div className="text-black text-xs font-medium">
+            <a 
+              href="https://hannahlab.com/" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-black transition-colors cursor-pointer"
+            >
+              Powered by <span className="font-extrabold text-lg bg-green-700 bg-clip-text text-transparent">HannahLab</span>
+            </a>
           </div>
         </div>
       </div>

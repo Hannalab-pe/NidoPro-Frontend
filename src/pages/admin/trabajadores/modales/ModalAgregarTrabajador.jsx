@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react';
+import React, { Fragment, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -9,10 +9,12 @@ import {
   Save,
   UserPlus,
   Loader2,
-  Briefcase
+  Briefcase,
+  School
 } from 'lucide-react';
 import { useTrabajadores } from '../../../../hooks/useTrabajadores';
 import { useRoles } from '../../../../hooks/useRoles';
+import { useAulasAsignacion } from '../../../../hooks/useAulasAsignacion';
 
 // Esquema de validación con Yup para trabajadores
 const validationSchema = yup.object({
@@ -26,7 +28,12 @@ const validationSchema = yup.object({
     .required('El correo es requerido'),
   telefono: yup.string().required('El teléfono es requerido').trim(),
   idRol: yup.string().required('El rol es requerido'),
-  estaActivo: yup.boolean()
+  estaActivo: yup.boolean(),
+  idAula: yup.string().when('isDocente', {
+    is: true,
+    then: (schema) => schema.required('Debe asignar un aula al docente'),
+    otherwise: (schema) => schema.notRequired()
+  })
 });
 
 // Componente FormField reutilizable
@@ -57,6 +64,38 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   
   // Hook para obtener los roles disponibles
   const { roles, isLoading: loadingRoles } = useRoles();
+  
+  // Hook para asignación de aulas (incluye carga de aulas)
+  const { 
+    aulas, 
+    loadingAulas, 
+    asignarAulaADocente, 
+    asignandoAula 
+  } = useAulasAsignacion();
+  
+  // Estado para controlar si es docente
+  const [isDocente, setIsDocente] = useState(false);
+
+  // Log para debug - mostrar aulas cargadas
+  React.useEffect(() => {
+    if (isOpen && aulas && roles) {
+      console.log('🚪 Modal abierto - datos cargados');
+      
+      // Debug de roles
+      console.log('👤 Roles disponibles:', roles);
+      if (roles && roles.length > 0) {
+        console.log('👤 Primer rol completo:', roles[0]);
+        console.log('👤 Propiedades del primer rol:', Object.keys(roles[0]));
+      }
+      
+      // Debug de aulas
+      console.log('🏫 Aulas disponibles:', aulas);
+      if (aulas && aulas.length > 0) {
+        console.log('🏫 Primera aula completa:', aulas[0]);
+        console.log('🏫 Propiedades de la primera aula:', Object.keys(aulas[0]));
+      }
+    }
+  }, [isOpen, aulas, roles]);
 
   const {
     register,
@@ -76,17 +115,60 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
       correo: '',
       telefono: '',
       idRol: '',
-      estaActivo: true
+      estaActivo: true,
+      idAula: '',
+      isDocente: false
     }
   });
 
+  // Vigilar cambios en el rol seleccionado
+  const selectedRoleId = watch('idRol');
+  
+  // Efecto para detectar si el rol seleccionado es DOCENTE
+  useEffect(() => {
+    if (selectedRoleId && roles.length > 0) {
+      const selectedRole = roles.find(rol => rol.idRol === selectedRoleId);
+      const isDocenteRole = selectedRole?.nombre?.toLowerCase() === 'docente';
+      
+      console.log('👤 Rol seleccionado:', selectedRole);
+      console.log('👤 Nombre del rol:', selectedRole?.nombre);
+      console.log('👤 Es docente?:', isDocenteRole);
+      console.log('👤 selectedRoleId:', selectedRoleId);
+      
+      setIsDocente(isDocenteRole);
+      setValue('isDocente', isDocenteRole);
+      
+      // Limpiar selección de aula si no es docente
+      if (!isDocenteRole) {
+        setValue('idAula', '');
+      }
+    }
+  }, [selectedRoleId, roles, setValue]);
 
   const onSubmit = async (data) => {
     console.log('📋 Form submission - data:', data);
+    console.log('📋 Es docente:', isDocente);
+    console.log('📋 Aula seleccionada:', data.idAula);
     
     try {
       // Crear trabajador con el servicio actualizado
-      await createTrabajador(data);
+      console.log('👤 Creando trabajador...');
+      const nuevoTrabajador = await createTrabajador(data);
+      console.log('✅ Trabajador creado exitosamente:', nuevoTrabajador);
+      
+      // Si es docente y se seleccionó un aula, asignarla
+      if (isDocente && data.idAula && nuevoTrabajador?.idTrabajador) {
+        console.log('🏫 Iniciando asignación de aula...');
+        console.log('🏫 ID Trabajador:', nuevoTrabajador.idTrabajador);
+        console.log('🏫 ID Aula:', data.idAula);
+        
+        await asignarAulaADocente(nuevoTrabajador.idTrabajador, data.idAula);
+        console.log('✅ Proceso completo: Trabajador creado y aula asignada');
+      } else if (isDocente && !data.idAula) {
+        console.warn('⚠️ Es docente pero no se seleccionó aula');
+      } else if (!isDocente) {
+        console.log('ℹ️ No es docente, no se asigna aula');
+      }
       
       // Cerrar modal después del éxito
       handleClose();
@@ -102,6 +184,8 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   };
 
   const handleClose = () => {
+    reset(); // Resetear formulario
+    setIsDocente(false); // Resetear estado de docente
     onClose();
   };
 
@@ -111,7 +195,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
     }`;
 
   // Estado de carga general
-  const isLoading = creating || uploading || loadingRoles;
+  const isLoading = creating || uploading || loadingRoles || asignandoAula;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -248,6 +332,43 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                         </select>
                       </FormField>
 
+                      {/* Campo de Aula - Solo para docentes */}
+                      {isDocente && (
+                        <FormField 
+                          label="Aula Asignada" 
+                          required 
+                          error={errors.idAula?.message}
+                          className="md:col-span-2"
+                        >
+                          <div className="flex items-center gap-3">
+                            <School className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                            <select
+                              {...register('idAula')}
+                              className={inputClassName(errors.idAula)}
+                              disabled={isLoading || loadingAulas}
+                            >
+                              <option value="">
+                                {loadingAulas ? 'Cargando aulas...' : 'Seleccione un aula'}
+                              </option>
+                              {Array.isArray(aulas) && aulas.map((aula) => (
+                                <option key={aula.idAula} value={aula.idAula}>
+                                  Sección {aula.seccion} - {aula.cantidadEstudiantes} estudiantes
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="mt-2">
+                            <p className="text-blue-600 text-sm flex items-center gap-1">
+                              <School className="w-4 h-4" />
+                              El docente será asignado a esta aula automáticamente
+                            </p>
+                            <p className="text-gray-500 text-xs mt-1">
+                              Debug: {aulas ? `${aulas.length} aulas disponibles` : 'Sin aulas cargadas'}
+                            </p>
+                          </div>
+                        </FormField>
+                      )}
+
                       <FormField label="Estado" error={errors.estaActivo?.message}>
                         <select
                           {...register('estaActivo')}
@@ -272,6 +393,12 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                               <div className="flex items-center gap-2">
                                 <Briefcase className="w-4 h-4 text-green-600" />
                                 <span className="font-medium text-green-800">{selectedRole.nombre}</span>
+                                {isDocente && (
+                                  <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                                    <School className="w-3 h-3" />
+                                    Requiere aula
+                                  </span>
+                                )}
                               </div>
                               {selectedRole.descripcion && (
                                 <p className="text-green-700 text-sm ml-6">{selectedRole.descripcion}</p>
@@ -303,7 +430,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        {uploading ? 'Subiendo...' : 'Guardando...'}
+                        {asignandoAula ? 'Asignando aula...' : uploading ? 'Subiendo...' : 'Guardando...'}
                       </>
                     ) : (
                       <>

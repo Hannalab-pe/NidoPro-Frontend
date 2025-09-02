@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
-import { BookOpen, School } from 'lucide-react';
+import { BookOpen, School, User, Calendar, Users } from 'lucide-react';
 import { DataTable } from '../../../../components/common/DataTable';
 import ModalAgregarAula from '../modales/ModalAgregarAula';
 import ModalVerAula from '../modales/ModalVerAula';
 import ModalEditarAula from '../modales/ModalEditarAula';
 import ModalEliminarAula from '../modales/ModalEliminarAula';
 
-// Definición de columnas para aulas
-const aulasColumns = [
+// Definición de columnas para asignaciones de aula
+const asignacionesColumns = [
   {
-    accessor: 'seccion',  // Cambiado para coincidir con los datos del backend
+    accessor: 'aula',
     Header: 'Aula',
     sortable: true,
     Cell: ({ row }) => (
@@ -19,41 +19,59 @@ const aulasColumns = [
         </div>
         <div className="ml-3">
           <div className="text-sm font-medium text-gray-900">
-            {row.seccion || row.nombreAula || row.nombre || row.name || 'Sin nombre'}
+            Sección {row.idAula?.seccion || 'N/A'}
           </div>
           <div className="text-sm text-gray-500">
-            {row.descripcion || row.grado || row.grade || 'Sin descripción'}
+            {row.idAula?.cantidadEstudiantes || 0} estudiantes
           </div>
         </div>
       </div>
     )
   },
   {
-    accessor: 'teacher',
-    Header: 'Profesor',
+    accessor: 'docente',
+    Header: 'Docente Asignado',
     sortable: true,
     Cell: ({ row }) => (
       <div className="flex items-center">
-        <img
-          src={row.profesor?.foto || 'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
-          alt="Profesor"
-          className="w-8 h-8 rounded-full object-cover"
-        />
+        <div className="flex-shrink-0 w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+          <User className="w-4 h-4 text-gray-600" />
+        </div>
         <div className="ml-3">
-          <div className="text-sm text-gray-900">
-            {row.profesor?.nombre || 'Sin profesor asignado'}
+          <div className="text-sm font-medium text-gray-900">
+            {row.idTrabajador?.nombre} {row.idTrabajador?.apellido}
+          </div>
+          <div className="text-sm text-gray-500">
+            {row.idTrabajador?.correo}
           </div>
         </div>
       </div>
     )
   },
   {
-    accessor: 'cantidadEstudiantes',  // Cambiado para coincidir con datos del backend
+    accessor: 'fechaAsignacion',
+    Header: 'Fecha Asignación',
+    sortable: true,
+    Cell: ({ row }) => (
+      <div className="flex items-center">
+        <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+        <span className="text-sm text-gray-900">
+          {new Date(row.fechaAsignacion).toLocaleDateString('es-ES', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+          })}
+        </span>
+      </div>
+    )
+  },
+  {
+    accessor: 'cantidadEstudiantes',
     Header: 'Estudiantes',
     sortable: true,
     Cell: ({ row }) => {
-      const students = row.cantidadEstudiantes || row.students || 0;
-      const capacity = row.capacidad || row.capacity || 30;
+      const students = row.idAula?.cantidadEstudiantes || 0;
+      const capacity = 30; // Capacidad máxima por defecto
       const occupancyPercentage = Math.round((students / capacity) * 100);
       
       const getOccupancyColor = (percentage) => {
@@ -65,13 +83,14 @@ const aulasColumns = [
       return (
         <div>
           <div className="flex items-center">
+            <Users className="w-4 h-4 text-gray-400 mr-2" />
             <span className="text-sm font-medium text-gray-900">
-              {students}/{capacity}
+              {students}
             </span>
           </div>
           <div className="mt-1">
             <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getOccupancyColor(occupancyPercentage)}`}>
-              {occupancyPercentage}% ocupado
+              {occupancyPercentage}% ocupación
             </span>
           </div>
         </div>
@@ -79,68 +98,44 @@ const aulasColumns = [
     }
   },
   {
-    accessor: 'ubicacion',  // Cambiado para coincidir con datos del backend
-    Header: 'Ubicación',
-    Cell: ({ row }) => (
-      <span className="text-sm text-gray-900">
-        {row.ubicacion || row.location || 'Sin ubicación'}
-      </span>
-    )
-  },
-  {
-    accessor: 'performance',
-    Header: 'Rendimiento',
-    sortable: true,
-    Cell: ({ row }) => (
-      <div>
-        <div className="text-sm font-medium text-gray-900">
-          {row.promedio || row.average || 'N/A'}
-        </div>
-        <div className="text-sm text-gray-500">
-          {row.asistencia || row.attendance || 0}% asistencia
-        </div>
-      </div>
-    )
-  },
-  {
-    accessor: 'schedule',
-    Header: 'Horario',
+    accessor: 'contacto',
+    Header: 'Contacto',
     Cell: ({ row }) => (
       <div>
         <div className="text-sm text-gray-900">
-          {row.turno || row.shift || 'Mañana'}
+          {row.idTrabajador?.telefono || 'Sin teléfono'}
         </div>
         <div className="text-sm text-gray-500">
-          {row.horario || row.schedule || '08:00 - 12:00'}
+          {row.idTrabajador?.nroDocumento || 'Sin documento'}
         </div>
       </div>
     )
   },
   {
-    accessor: 'estaActivo',  // Cambiado para coincidir con datos del backend
+    accessor: 'estadoActivo',
     Header: 'Estado',
     Cell: ({ row }) => (
       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-        row.estaActivo
+        row.estadoActivo
           ? 'bg-green-100 text-green-800'
           : 'bg-red-100 text-red-800'
       }`}>
-        {row.estaActivo ? 'Activo' : 'Inactivo'}
+        {row.estadoActivo ? 'Activo' : 'Inactivo'}
       </span>
     )
   }
 ];
 
-// Filtros para aulas
-const aulasFilters = {
-  grado: {
-    label: 'Grado',
+// Filtros para asignaciones de aula
+const asignacionesFilters = {
+  seccion: {
+    label: 'Sección',
     type: 'select',
     options: [
-      { value: 'all', label: 'Todos los grados' },
-      { value: '3 años', label: '3 años' },
-      { value: '4 años', label: '4 años' },
-      { value: '5 años', label: '5 años' }
+      { value: 'all', label: 'Todas las secciones' },
+      { value: 'A', label: 'Sección A' },
+      { value: 'B', label: 'Sección B' },
+      { value: 'C', label: 'Sección C' }
     ]
   },
   estado: {
@@ -155,84 +150,87 @@ const aulasFilters = {
 };
 
 const TablaAulas = ({ 
-  aulas = [], 
-  aulasLoading = false,
+  asignaciones = [], 
+  loading = false,
   onAdd, 
   onEdit, 
   onDelete, 
   onView,
   onImport,
-  onExport 
+  onExport,
+  onRefresh
 }) => {
-  // Estados para modales de aulas
+  // Estados para modales de asignaciones
   const [showAulaModal, setShowAulaModal] = useState(false);
   const [showViewAulaModal, setShowViewAulaModal] = useState(false);
   const [showEditAulaModal, setShowEditAulaModal] = useState(false);
   const [showDeleteAulaModal, setShowDeleteAulaModal] = useState(false);
-  const [selectedAula, setSelectedAula] = useState(null);
+  const [selectedAsignacion, setSelectedAsignacion] = useState(null);
 
-  // Funciones para aulas
+  // Funciones para asignaciones
   const handleAddAula = () => {
     setShowAulaModal(true);
   };
 
-  const handleEditAula = (aula) => {
-    setSelectedAula(aula);
+  const handleEditAula = (asignacion) => {
+    setSelectedAsignacion(asignacion);
     setShowEditAulaModal(true);
   };
 
-  const handleDeleteAula = (aula) => {
-    setSelectedAula(aula);
+  const handleDeleteAula = (asignacion) => {
+    setSelectedAsignacion(asignacion);
     setShowDeleteAulaModal(true);
   };
 
-  const handleViewAula = (aula) => {
-    setSelectedAula(aula);
+  const handleViewAula = (asignacion) => {
+    setSelectedAsignacion(asignacion);
     setShowViewAulaModal(true);
   };
 
   const handleImportAulas = () => {
-    console.log('Importar aulas');
+    console.log('Importar asignaciones');
   };
 
   const handleExportAulas = () => {
-    console.log('Exportar aulas');
+    console.log('Exportar asignaciones');
   };
 
   return (
     <div className="bg-white rounded-lg shadow-sm">
       <DataTable
-        data={aulas}
-        columns={aulasColumns}
-        loading={aulasLoading}
-        title="Gestión de Aulas"
+        data={asignaciones}
+        columns={asignacionesColumns}
+        loading={loading}
+        title="Gestión de Asignaciones de Aula"
         icon={School}
-        searchPlaceholder="Buscar por aula, profesor o ubicación..."
+        searchPlaceholder="Buscar por aula, docente o sección..."
         onAdd={handleAddAula}
         onEdit={handleEditAula}
         onDelete={handleDeleteAula}
         onView={handleViewAula}
         onImport={handleImportAulas}
         onExport={handleExportAulas}
+        onRefresh={onRefresh}
         actions={{
-          add: true,
+          add: false, // Las asignaciones se crean desde trabajadores
           edit: true,
           delete: true,
-          view: true,
-          import: true,
-          export: true
+          view: false,
+          import: false,
+          export: true,
+          refresh: true
         }}
-        filters={aulasFilters}
-        addButtonText="Agregar Aula"
-        loadingMessage="Cargando aulas..."
-        emptyMessage="No hay aulas registradas"
+        filters={asignacionesFilters}
+        addButtonText="Nueva Asignación"
+        loadingMessage="Cargando asignaciones..."
+        emptyMessage="No hay asignaciones de aula registradas"
         itemsPerPage={10}
         enablePagination={true}
         enableSearch={true}
         enableSort={true}
       />
 
-      {/* Modales de Aulas */}
+      {/* Modales de Asignaciones */}
       <ModalAgregarAula
         isOpen={showAulaModal}
         onClose={() => setShowAulaModal(false)}
@@ -242,27 +240,27 @@ const TablaAulas = ({
         isOpen={showViewAulaModal}
         onClose={() => {
           setShowViewAulaModal(false);
-          setSelectedAula(null);
+          setSelectedAsignacion(null);
         }}
-        aula={selectedAula}
+        asignacion={selectedAsignacion}
       />
 
       <ModalEditarAula
         isOpen={showEditAulaModal}
         onClose={() => {
           setShowEditAulaModal(false);
-          setSelectedAula(null);
+          setSelectedAsignacion(null);
         }}
-        aula={selectedAula}
+        asignacion={selectedAsignacion}
       />
 
       <ModalEliminarAula
         isOpen={showDeleteAulaModal}
         onClose={() => {
           setShowDeleteAulaModal(false);
-          setSelectedAula(null);
+          setSelectedAsignacion(null);
         }}
-        aula={selectedAula}
+        asignacion={selectedAsignacion}
       />
     </div>
   );
