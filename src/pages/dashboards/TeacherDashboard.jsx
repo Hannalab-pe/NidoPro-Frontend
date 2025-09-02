@@ -33,7 +33,7 @@ import Horarios from "../teacher/horarios/Horarios";
 import Asistencias from "../teacher/asistencia/Asistencia";
 import Notas from "../teacher/notas/Notas";
 import Juegos from "../teacher/juegos/Juegos";
-import MisEstudiantes from "../teacher/misestudiantes/MisEstudiantes";
+import { MisEstudiantes } from "../teacher/misestudiantes";
 import MisAulas from "../teacher/misaulas/MisAulas";
 import Clases from "../teacher/clases/Clases";
 import TeacherPlanificaciones from '../teacher/planificaciones/TeacherPlanificaciones';
