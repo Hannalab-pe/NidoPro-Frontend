@@ -4,6 +4,7 @@ import AdminDashboard from "../dashboards/AdminDashboard";
 import TeacherDashboard from "../dashboards/TeacherDashboard";
 import ParentDashboard from "../dashboards/ParentDashboard";
 import SpecialistDashboard from "../dashboards/SpecialistDashboard";
+import DirectorDashboard from "../dashboards/DirectorDashboard";
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuthStore();
@@ -25,6 +26,8 @@ const Dashboard = () => {
     case 'administrador':
     case 'DIRECTORA':
       return <AdminDashboard />;
+    case 'SECRETARIA':
+      return <DirectorDashboard />;
     case 'trabajador':
     case 'docente':
     case 'Docente':

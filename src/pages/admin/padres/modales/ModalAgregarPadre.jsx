@@ -68,7 +68,7 @@ const participationLevels = [
   { value: 'low', label: 'Baja' }
 ];
 
-const ModalAgregarPadre = ({ isOpen, onClose }) => {
+const ModalAgregarPadre = ({ isOpen, onClose, onSuccess }) => {
   // Hook personalizado para gestión de padres
   const { createParent, creating, uploading } = usePadres();
 
@@ -131,8 +131,13 @@ const ModalAgregarPadre = ({ isOpen, onClose }) => {
       // El hook se encarga de todo el proceso (upload + save)
       await createParent(data);
       
-      // Cerrar modal después del éxito
-      handleClose();
+      // Llamar onSuccess si está disponible, sino handleClose
+      if (onSuccess) {
+        reset();
+        onSuccess();
+      } else {
+        handleClose();
+      }
     } catch (error) {
       console.error('❌ Error al crear padre:', error);
       // El error ya está siendo manejado por el hook con toast

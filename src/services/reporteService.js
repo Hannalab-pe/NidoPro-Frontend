@@ -64,12 +64,25 @@ export const reporteService = {
       const response = await api.get(`/informe?${params.toString()}`);
       console.log('Respuesta del backend - informes:', response.data);
       
+      // CORRECCIÓN: Extraer datos de la estructura correcta
+      if (response.data.success && response.data.info?.data) {
+        console.log('Datos extraídos correctamente:', response.data.info.data);
+        return response.data.info.data;
+      }
+      
+      // Fallback para otras estructuras
       if (response.data.success && response.data.informes) {
         return response.data.informes;
       }
       
-      // Asume que la respuesta puede ser el array directamente
-      return response.data;
+      // Si es un array directo
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      // Fallback final - array vacío
+      console.warn('Estructura de datos no reconocida:', response.data);
+      return [];
     } catch (error) {
       console.error('Error al obtener reportes:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener reportes');
@@ -84,6 +97,11 @@ export const reporteService = {
   async getInformeById(id) {
     try {
       const response = await api.get(`/informe/${id}`);
+      
+      if (response.data.success && response.data.info) {
+        return response.data.info;
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error al obtener informe por ID:', error);
@@ -108,17 +126,42 @@ export const reporteService = {
         throw new Error(`Campos requeridos faltantes: ${missingFields.join(', ')}`);
       }
 
-      const response = await api.post('/informes/generate', reportData);
+      const response = await api.post('/informe', reportData);
       console.log('Respuesta del backend:', response.data);
 
       if (response.data.success && response.data.informe) {
         return response.data.informe;
       }
       
+      if (response.data.success && response.data.info) {
+        return response.data.info;
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error al generar informe:', error);
       throw new Error(error.response?.data?.message || 'Error al generar informe');
+    }
+  },
+
+  /**
+   * Actualizar un informe existente
+   * @param {string|number} id - ID del informe
+   * @param {Object} updateData - Datos para actualizar
+   * @returns {Promise<Object>} Informe actualizado
+   */
+  async updateInforme(id, updateData) {
+    try {
+      const response = await api.put(`/informe/${id}`, updateData);
+      
+      if (response.data.success && response.data.informe) {
+        return response.data.informe;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error al actualizar informe:', error);
+      throw new Error(error.response?.data?.message || 'Error al actualizar informe');
     }
   },
 
@@ -131,7 +174,7 @@ export const reporteService = {
   async downloadReport(id, format = 'pdf') {
     try {
       console.log(`Descargando reporte ID ${id} en formato ${format}`);
-      const response = await api.get(`/reportes/${id}/download?format=${format}`, {
+      const response = await api.get(`/informe/${id}/download?format=${format}`, {
         responseType: 'blob' // Importante para manejar archivos
       });
       console.log('Descarga completada');
@@ -143,12 +186,35 @@ export const reporteService = {
   },
 
   /**
+   * Exportar informe en formato específico
+   * @param {string|number} id - ID del informe
+   * @param {string} formato - Formato de exportación ('pdf', 'excel', 'csv')
+   * @returns {Promise<Blob>} Archivo exportado
+   */
+  async exportInforme(id, formato = 'pdf') {
+    try {
+      const response = await api.get(`/informe/${id}/export/${formato}`, {
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error al exportar informe:', error);
+      throw new Error(error.response?.data?.message || 'Error al exportar informe');
+    }
+  },
+
+  /**
    * Obtener estadísticas de uso de reportes
    * @returns {Promise<Object>} Estadísticas de uso
    */
   async getReportStats() {
     try {
-      const response = await api.get('/reportes/stats');
+      const response = await api.get('/informe/stats');
+      
+      if (response.data.success && response.data.stats) {
+        return response.data.stats;
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error al obtener estadísticas de reportes:', error);
@@ -163,11 +229,67 @@ export const reporteService = {
    */
   async deleteReport(id) {
     try {
-      const response = await api.delete(`/reportes/${id}`);
+      const response = await api.delete(`/informe/${id}`);
+      
+      if (response.data.success) {
+        return response.data;
+      }
+      
       return response.data;
     } catch (error) {
       console.error('Error al eliminar reporte:', error);
       throw new Error(error.response?.data?.message || 'Error al eliminar reporte');
+    }
+  },
+
+  /**
+   * Obtener tipos de informes disponibles
+   * @returns {Promise<Array>} Lista de tipos de informes
+   */
+  async getTiposInformes() {
+    try {
+      const response = await api.get('/informe/tipos');
+      
+      if (response.data.success && response.data.tipos) {
+        return response.data.tipos;
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error al obtener tipos de informes:', error);
+      throw new Error('Error al obtener tipos de informes');
+    }
+  },
+
+  /**
+   * Búsqueda avanzada de informes
+   * @param {Object} searchParams - Parámetros de búsqueda
+   * @returns {Promise<Array>} Lista de informes filtrados
+   */
+  async searchInformes(searchParams = {}) {
+    try {
+      const params = new URLSearchParams();
+      
+      Object.entries(searchParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value);
+        }
+      });
+      
+      const response = await api.get(`/informe/search?${params.toString()}`);
+      
+      if (response.data.success && response.data.informes) {
+        return response.data.informes;
+      }
+      
+      if (response.data.success && response.data.info?.data) {
+        return response.data.info.data;
+      }
+      
+      return Array.isArray(response.data) ? response.data : [];
+    } catch (error) {
+      console.error('Error en búsqueda de informes:', error);
+      throw new Error(error.response?.data?.message || 'Error en búsqueda de informes');
     }
   }
 };

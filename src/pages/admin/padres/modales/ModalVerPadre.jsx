@@ -14,76 +14,50 @@ import {
   TrendingUp,
   UserCheck,
   Eye,
-  FileText
+  FileText,
+  CreditCard,
+  Baby
 } from 'lucide-react';
+
+const InfoField = ({ label, value, icon: Icon, className = "" }) => (
+  <div className={`bg-gray-50 p-3 rounded-lg ${className}`}>
+    <div className="flex items-center space-x-2 mb-1">
+      <Icon className="w-4 h-4 text-gray-600" />
+      <span className="text-sm font-medium text-gray-700">{label}</span>
+    </div>
+    <p className="text-gray-900 ml-6">{value || 'No especificado'}</p>
+  </div>
+);
 
 const ModalVerPadre = ({ isOpen, onClose, padre }) => {
   if (!padre) return null;
 
-  // Función para obtener imagen del padre
+  // Console log para debuggear la estructura de datos
+  console.log('🔍 Datos completos del padre recibidos:', padre);
+  console.log('📊 Claves disponibles:', Object.keys(padre));
+  console.log('📝 Valores por clave:', Object.entries(padre));
+
+  // Función handleClose que respeta el ciclo de vida del componente
+  const handleClose = () => {
+    onClose();
+  };
+
+  // Obtener URL de imagen segura
   const getParentPhoto = () => {
-    if (padre.photo) {
-      if (typeof padre.photo === 'object' && padre.photo.url) {
-        return padre.photo.url;
+    if (padre.foto) {
+      // Si es un objeto con URL
+      if (typeof padre.foto === 'object' && padre.foto.url) {
+        return padre.foto.url;
       }
-      return padre.photo;
+      // Si es una string directa
+      return padre.foto;
     }
     return '/default-avatar.png';
   };
 
-  // Función para obtener color de estado
-  const getStatusColor = (status) => {
-    return status === 'active' 
-      ? 'bg-green-100 text-green-800' 
-      : 'bg-red-100 text-red-800';
-  };
-
-  const getStatusText = (status) => {
-    return status === 'active' ? 'Activo' : 'Inactivo';
-  };
-
-  // Función para obtener color de participación
-  const getParticipationColor = (level) => {
-    switch(level) {
-      case 'high': return 'bg-green-100 text-green-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getParticipationText = (level) => {
-    switch(level) {
-      case 'high': return 'Alta';
-      case 'medium': return 'Media';
-      case 'low': return 'Baja';
-      default: return 'Sin datos';
-    }
-  };
-
-  const getParticipationIcon = (level) => {
-    switch(level) {
-      case 'high': return '🌟';
-      case 'medium': return '👍';
-      case 'low': return '💭';
-      default: return '❓';
-    }
-  };
-
-  // Función para formatear fecha
-  const formatDate = (dateString) => {
-    if (!dateString) return 'No registrada';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-PE', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric'
-    });
-  };
-
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-50" onClose={onClose}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -107,168 +81,235 @@ const ModalVerPadre = ({ isOpen, onClose, padre }) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b bg-blue-50">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={getParentPhoto()}
-                      alt={padre.name}
-                      className="w-16 h-16 rounded-full object-cover border-2 border-blue-200"
-                    />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-pink-100 rounded-lg">
+                      <Eye className="w-6 h-6 text-pink-600" />
+                    </div>
                     <div>
-                      <Dialog.Title className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                        <Eye className="w-6 h-6 text-blue-600" />
-                        {padre.name}
+                      <Dialog.Title className="text-lg font-semibold text-gray-900">
+                        Información del Padre
                       </Dialog.Title>
-                      <div className="flex items-center gap-2 mt-1">
-                        <Heart className="w-4 h-4 text-pink-500" />
-                        <span className="text-blue-600 font-medium">{padre.relation}</span>
-                        {padre.occupation && (
-                          <>
-                            <span className="text-gray-400">•</span>
-                            <span className="text-gray-600">{padre.occupation}</span>
-                          </>
+                      <p className="text-sm text-gray-500">
+                        Detalles completos del apoderado
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleClose}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Foto y datos básicos */}
+                  <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 bg-gradient-to-r from-pink-50 to-rose-50 p-6 rounded-lg">
+                    <div className="flex-shrink-0">
+                      {/* Aquí puedes agregar la foto del padre si es necesario */}
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                      <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                        {padre.nombre && padre.apellido 
+                          ? `${padre.nombre} ${padre.apellido}` 
+                          : padre.nombre || padre.apellido || padre.name || 'Sin nombre'
+                        }
+                      </h2>
+                      {(padre.parentesco || padre.relation) && (
+                        <p className="text-lg text-pink-600 font-medium mb-2 flex items-center justify-center md:justify-start">
+                          <Heart className="w-5 h-5 mr-2" />
+                          {padre.parentesco || padre.relation}
+                        </p>
+                      )}
+                      <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600">
+                        {(padre.correo || padre.email) && (
+                          <span className="flex items-center">
+                            <Mail className="w-4 h-4 mr-1" />
+                            {padre.correo || padre.email}
+                          </span>
+                        )}
+                        {(padre.telefono || padre.phone) && (
+                          <span className="flex items-center">
+                            <Phone className="w-4 h-4 mr-1" />
+                            {padre.telefono || padre.phone}
+                          </span>
+                        )}
+                        {(padre.profesion || padre.occupation) && (
+                          <span className="flex items-center">
+                            <Briefcase className="w-4 h-4 mr-1" />
+                            {padre.profesion || padre.occupation}
+                          </span>
                         )}
                       </div>
                     </div>
                   </div>
-                  <button
-                    onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 transition-colors"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                </div>
-
-                {/* Content */}
-                <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
-                  {/* Estado y Métricas */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <UserCheck className="w-8 h-8 text-blue-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Estado</p>
-                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(padre.status)}`}>
-                        {getStatusText(padre.status)}
-                      </span>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <TrendingUp className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Participación</p>
-                      <div className="flex items-center justify-center gap-1">
-                        <span className="text-lg">{getParticipationIcon(padre.participationLevel)}</span>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getParticipationColor(padre.participationLevel)}`}>
-                          {getParticipationText(padre.participationLevel)}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="bg-gray-50 p-4 rounded-lg text-center">
-                      <Users className="w-8 h-8 text-purple-600 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 mb-1">Hijos</p>
-                      <p className="text-2xl font-bold text-purple-600">
-                        {padre.children?.length || 0}
-                      </p>
-                    </div>
-                  </div>
 
                   {/* Información Personal */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <User className="w-5 h-5 text-blue-600" />
+                  <div className="bg-white rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <User className="w-5 h-5 mr-2 text-pink-600" />
                       Información Personal
                     </h3>
-                    
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Nombre Completo
-                          </label>
-                          <p className="text-gray-900 font-medium">{padre.name}</p>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Relación/Parentesco
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Heart className="w-4 h-4 text-pink-500" />
-                            <span className="text-gray-900 font-medium">{padre.relation}</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Ocupación
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Briefcase className="w-4 h-4 text-gray-500" />
-                            <span className="text-gray-900">{padre.occupation || 'No especificada'}</span>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Email
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Mail className="w-4 h-4 text-blue-500" />
-                            <span className="text-gray-900">{padre.email}</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Teléfono
-                          </label>
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-4 h-4 text-green-500" />
-                            <span className="text-gray-900">{padre.phone}</span>
-                          </div>
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Dirección
-                          </label>
-                          <div className="flex items-start gap-2">
-                            <MapPin className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-900">{padre.address}</span>
-                          </div>
-                        </div>
-                      </div>
+                      {/* Solo mostrar campos que tienen datos */}
+                      {(padre.nombre || padre.apellido || padre.name) && (
+                        <InfoField
+                          label="Nombre Completo"
+                          value={
+                            padre.nombre && padre.apellido 
+                              ? `${padre.nombre} ${padre.apellido}` 
+                              : padre.name || `${padre.nombre || ''} ${padre.apellido || ''}`.trim()
+                          }
+                          icon={User}
+                        />
+                      )}
+                      {(padre.tipoDocumento || padre.nroDocumento) && (
+                        <InfoField
+                          label="Documento"
+                          value={`${padre.tipoDocumento || 'DNI'}: ${padre.nroDocumento || 'No especificado'}`}
+                          icon={CreditCard}
+                        />
+                      )}
+                      {(padre.correo || padre.email) && (
+                        <InfoField
+                          label="Email"
+                          value={padre.correo || padre.email}
+                          icon={Mail}
+                        />
+                      )}
+                      {(padre.telefono || padre.phone) && (
+                        <InfoField
+                          label="Teléfono"
+                          value={padre.telefono || padre.phone}
+                          icon={Phone}
+                        />
+                      )}
+                      {(padre.parentesco || padre.relation) && (
+                        <InfoField
+                          label="Parentesco"
+                          value={padre.parentesco || padre.relation}
+                          icon={Heart}
+                        />
+                      )}
+                      {(padre.profesion || padre.occupation) && (
+                        <InfoField
+                          label="Profesión"
+                          value={padre.profesion || padre.occupation}
+                          icon={Briefcase}
+                        />
+                      )}
+                      {typeof padre.estaActivo !== 'undefined' && (
+                        <InfoField
+                          label="Estado"
+                          value={padre.estaActivo ? 'Activo' : 'Inactivo'}
+                          icon={UserCheck}
+                        />
+                      )}
+                      {(padre.direccion || padre.address) && (
+                        <InfoField
+                          label="Dirección"
+                          value={padre.direccion || padre.address}
+                          icon={MapPin}
+                          className="md:col-span-2"
+                        />
+                      )}
                     </div>
                   </div>
 
-                  {/* Hijos */}
-                  {padre.children && padre.children.length > 0 && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <Users className="w-5 h-5 text-purple-600" />
-                        Hijos Registrados ({padre.children.length})
+                  {/* Información Adicional - Solo si existe */}
+                  {(padre.fechaNacimiento || padre.lugarNacimiento || padre.estadoCivil) && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Calendar className="w-5 h-5 mr-2 text-blue-600" />
+                        Información Adicional
                       </h3>
-                      
-                      <div className="bg-gradient-to-r from-purple-50 to-blue-50 p-4 rounded-lg">
-                        <div className="grid gap-3">
-                          {padre.children.map((child, index) => (
-                            <div key={index} className="flex items-center justify-between bg-white p-3 rounded-md shadow-sm">
-                              <div className="flex items-center gap-3">
-                                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                                  <span className="text-purple-600 font-semibold text-sm">
-                                    {child.name.charAt(0)}
-                                  </span>
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900">{child.name}</p>
-                                  <p className="text-sm text-gray-600">{child.grade}</p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="text-sm text-gray-600">{child.age} años</p>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {padre.fechaNacimiento && (
+                          <InfoField
+                            label="Fecha de Nacimiento"
+                            value={new Date(padre.fechaNacimiento).toLocaleDateString('es-ES')}
+                            icon={Calendar}
+                          />
+                        )}
+                        {padre.lugarNacimiento && (
+                          <InfoField
+                            label="Lugar de Nacimiento"
+                            value={padre.lugarNacimiento}
+                            icon={MapPin}
+                          />
+                        )}
+                        {padre.estadoCivil && (
+                          <InfoField
+                            label="Estado Civil"
+                            value={padre.estadoCivil}
+                            icon={Heart}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Información de Contacto de Emergencia - Solo si existe */}
+                  {(padre.contactoEmergencia || padre.telefonoEmergencia || padre.emergencyContact) && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <AlertCircle className="w-5 h-5 mr-2 text-red-600" />
+                        Contacto de Emergencia
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(padre.contactoEmergencia || padre.emergencyContact?.name) && (
+                          <InfoField
+                            label="Nombre del Contacto"
+                            value={padre.contactoEmergencia || padre.emergencyContact?.name}
+                            icon={User}
+                          />
+                        )}
+                        {(padre.telefonoEmergencia || padre.emergencyContact?.phone) && (
+                          <InfoField
+                            label="Teléfono de Emergencia"
+                            value={padre.telefonoEmergencia || padre.emergencyContact?.phone}
+                            icon={Phone}
+                          />
+                        )}
+                        {padre.emergencyContact?.relation && (
+                          <InfoField
+                            label="Relación"
+                            value={padre.emergencyContact.relation}
+                            icon={Heart}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Hijos Asociados - Solo si existe */}
+                  {((padre.hijos && padre.hijos.length > 0) || (padre.children && padre.children.length > 0)) && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Baby className="w-5 h-5 mr-2 text-green-600" />
+                        Hijos Asociados ({(padre.hijos || padre.children)?.length})
+                      </h3>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {(padre.hijos || padre.children)?.map((hijo, index) => (
+                            <div key={index} className="flex items-center p-3 bg-white rounded-lg border">
+                              <Baby className="w-4 h-4 text-green-600 mr-2" />
+                              <div className="flex-1">
+                                <p className="font-medium text-gray-900">
+                                  {typeof hijo === 'string' 
+                                    ? hijo 
+                                    : hijo.name || `${hijo.nombre || ''} ${hijo.apellido || ''}`.trim() || 'Sin nombre'
+                                  }
+                                </p>
+                                {typeof hijo === 'object' && (hijo.grado || hijo.grade) && (
+                                  <p className="text-sm text-gray-600">{hijo.grado || hijo.grade}</p>
+                                )}
+                                {typeof hijo === 'object' && hijo.age && (
+                                  <p className="text-sm text-gray-600">{hijo.age} años</p>
+                                )}
                               </div>
                             </div>
                           ))}
@@ -277,102 +318,63 @@ const ModalVerPadre = ({ isOpen, onClose, padre }) => {
                     </div>
                   )}
 
-                  {/* Contacto de Emergencia */}
-                  {(padre.emergencyContact?.name || padre.emergencyContact?.phone) && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <AlertCircle className="w-5 h-5 text-red-600" />
-                        Contacto de Emergencia
-                      </h3>
-                      
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">
-                              Nombre del Contacto
-                            </label>
-                            <p className="text-gray-900 font-medium">
-                              {padre.emergencyContact?.name || 'No registrado'}
-                            </p>
-                          </div>
-                          
-                          <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">
-                              Teléfono de Emergencia
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <Phone className="w-4 h-4 text-red-600" />
-                              <span className="text-gray-900">
-                                {padre.emergencyContact?.phone || 'No registrado'}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {padre.emergencyContact?.relation && (
-                            <div>
-                              <label className="block text-sm font-medium text-gray-600 mb-1">
-                                Relación
-                              </label>
-                              <p className="text-gray-900">{padre.emergencyContact.relation}</p>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Notas Adicionales */}
-                  {padre.notes && (
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-gray-600" />
-                        Notas Adicionales
-                      </h3>
-                      
-                      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                        <p className="text-gray-900 leading-relaxed">{padre.notes}</p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Información de Registro */}
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                      <Calendar className="w-5 h-5 text-green-600" />
-                      Información de Registro
+                  {/* IDs de Referencia del Sistema */}
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                      <FileText className="w-5 h-5 mr-2 text-gray-600" />
+                      IDs de Referencia del Sistema
                     </h3>
-                    
-                    <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <Calendar className="w-5 h-5 text-green-600" />
-                            <span className="font-medium text-gray-700">Fecha de Registro</span>
-                          </div>
-                          <p className="text-lg font-semibold text-green-600">
-                            {formatDate(padre.registrationDate)}
-                          </p>
-                        </div>
-                        
-                        <div className="text-center">
-                          <div className="flex items-center justify-center gap-2 mb-2">
-                            <UserCheck className="w-5 h-5 text-blue-600" />
-                            <span className="font-medium text-gray-700">Última Visita</span>
-                          </div>
-                          <p className="text-lg font-semibold text-blue-600">
-                            {formatDate(padre.lastVisit)}
-                          </p>
-                        </div>
-                      </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {padre.idApoderado && (
+                        <InfoField
+                          label="ID del Apoderado"
+                          value={padre.idApoderado}
+                          icon={FileText}
+                        />
+                      )}
+                      {padre.id && (
+                        <InfoField
+                          label="ID General"
+                          value={padre.id}
+                          icon={FileText}
+                        />
+                      )}
+                      {padre.registrationDate && (
+                        <InfoField
+                          label="Fecha de Registro"
+                          value={new Date(padre.registrationDate).toLocaleDateString('es-ES')}
+                          icon={Calendar}
+                        />
+                      )}
+                      {padre.lastVisit && (
+                        <InfoField
+                          label="Última Visita"
+                          value={new Date(padre.lastVisit).toLocaleDateString('es-ES')}
+                          icon={Calendar}
+                        />
+                      )}
                     </div>
                   </div>
+
+                  {/* Notas Adicionales */}
+                  {(padre.notas || padre.notes) && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FileText className="w-5 h-5 mr-2 text-gray-600" />
+                        Notas Adicionales
+                      </h3>
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <p className="text-gray-900 whitespace-pre-wrap">{padre.notas || padre.notes}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Footer */}
-                <div className="flex justify-end p-6 border-t bg-gray-50">
+                {/* Botón de cerrar */}
+                <div className="flex justify-end pt-6 border-t mt-6">
                   <button
-                    onClick={onClose}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                    onClick={handleClose}
+                    className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
                   >
                     Cerrar
                   </button>

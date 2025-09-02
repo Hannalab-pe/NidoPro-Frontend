@@ -11,7 +11,7 @@ export const matriculaKeys = {
   list: (filters) => [...matriculaKeys.lists(), { filters }],
   details: () => [...matriculaKeys.all, 'detail'],
   detail: (id) => [...matriculaKeys.details(), id],
-  stats: () => [...matriculaKeys.all, 'stats'],
+  // stats: () => [...matriculaKeys.all, 'stats'], // Comentado - endpoint no existe
 };
 
 // Hook para obtener lista de matrículas
@@ -48,17 +48,6 @@ export const useMatricula = (id) => {
   });
 };
 
-// Hook para obtener estadísticas de matrícula
-export const useMatriculaStats = () => {
-  return useQuery({
-    queryKey: matriculaKeys.stats(),
-    queryFn: () => matriculaService.getMatriculaStats(),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  });
-};
-
 // Hook para crear matrícula
 export const useCreateMatricula = () => {
   const queryClient = useQueryClient();
@@ -89,9 +78,8 @@ export const useCreateMatricula = () => {
       return matriculaService.createMatricula(finalData);
     },
     onSuccess: (newMatricula) => {
-      // Invalidar y refetch de las listas y estadísticas
+      // Invalidar y refetch de las listas
       queryClient.invalidateQueries({ queryKey: matriculaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: matriculaKeys.stats() });
       
       toast.success('¡Matrícula creada exitosamente!', {
         description: `La matrícula ha sido registrada en el sistema`
@@ -137,7 +125,7 @@ export const useUpdateMatricula = () => {
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: matriculaKeys.lists() });
       queryClient.invalidateQueries({ queryKey: matriculaKeys.detail(id) });
-      queryClient.invalidateQueries({ queryKey: matriculaKeys.stats() });
+      // queryClient.invalidateQueries({ queryKey: matriculaKeys.stats() }); // Comentado - endpoint no existe
       
       toast.success('Matrícula actualizada exitosamente', {
         description: 'Los datos de la matrícula han sido actualizados'
@@ -158,9 +146,9 @@ export const useDeleteMatricula = () => {
   return useMutation({
     mutationFn: matriculaService.deleteMatricula,
     onSuccess: (deletedId) => {
-      // Invalidar listas y estadísticas
+      // Invalidar listas
       queryClient.invalidateQueries({ queryKey: matriculaKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: matriculaKeys.stats() });
+      // queryClient.invalidateQueries({ queryKey: matriculaKeys.stats() }); // Comentado - endpoint no existe
       
       toast.success('Matrícula eliminada exitosamente', {
         description: 'El registro ha sido eliminado del sistema'
@@ -184,7 +172,7 @@ export const useToggleMatriculaStatus = () => {
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: matriculaKeys.lists() });
       queryClient.invalidateQueries({ queryKey: matriculaKeys.detail(updatedMatricula.idMatricula) });
-      queryClient.invalidateQueries({ queryKey: matriculaKeys.stats() });
+      // queryClient.invalidateQueries({ queryKey: matriculaKeys.stats() }); // Comentado - endpoint no existe
       
       const newStatus = updatedMatricula.estaActivo ? 'activada' : 'desactivada';
       toast.success(`¡Matrícula ${newStatus} exitosamente!`, {
@@ -204,13 +192,13 @@ export const useImportMatriculas = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: matriculaService.importMatriculas,
+    mutationFn: ({ file, format }) => matriculaService.importMatriculas(file, format),
     onSuccess: (result) => {
       // Invalidar todas las queries de matrícula
       queryClient.invalidateQueries({ queryKey: matriculaKeys.all });
       
       toast.success('Datos importados exitosamente', {
-        description: `Se importaron ${result.imported} registros correctamente`
+        description: `Se importaron ${result.imported || result.success || 'varios'} registros correctamente`
       });
     },
     onError: (error) => {
@@ -224,7 +212,7 @@ export const useImportMatriculas = () => {
 // Hook para exportar datos
 export const useExportMatriculas = () => {
   return useMutation({
-    mutationFn: ({ format, filters }) => matriculaService.exportMatriculas(format, filters),
+    mutationFn: ({ format, filters }) => matriculaService.exportMatriculas(filters, format),
     onSuccess: (blob, { format }) => {
       // Crear y descargar archivo
       const url = window.URL.createObjectURL(blob);

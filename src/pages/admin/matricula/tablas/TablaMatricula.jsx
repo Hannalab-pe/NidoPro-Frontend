@@ -47,7 +47,7 @@ const TablaMatricula = ({
       actions={{
         add: true,
         edit: true,
-        delete: true,
+        delete: false,
         view: true,
         import: false,
         export: false

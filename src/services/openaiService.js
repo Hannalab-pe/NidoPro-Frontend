@@ -63,7 +63,7 @@ Siempre termina tus respuestas preguntando si el profesor necesita más detalles
           'Authorization': `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
+          model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
             ...conversationHistory,

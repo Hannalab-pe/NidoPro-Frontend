@@ -37,18 +37,15 @@ export const useReportes = (initialFilters = {}) => {
         refetch: refetchReportes 
     } = useQuery({
         queryKey: reportesKeys.list(filters),
+// ✅ CORRECTO - El servicio ya devuelve el array limpio
         queryFn: async () => {
             const response = await reporteService.getAllReportes(filters);
+            console.log('Datos recibidos en el hook:', response);
             
-            // ✅ CORRECCIÓN: Accede a la data anidada 'info.data'
-            if (response && response.info && Array.isArray(response.info.data)) {
-                return response.info.data;
-            }
-            
-            // Si la respuesta no tiene la estructura esperada, retorna un array vacío.
-            return [];
+            // El servicio ya devuelve el array de datos directamente
+            return Array.isArray(response) ? response : [];
         },
-        staleTime: 5 * 60 * 1000,
+                staleTime: 5 * 60 * 1000,
         gcTime: 10 * 60 * 1000,
     });
 

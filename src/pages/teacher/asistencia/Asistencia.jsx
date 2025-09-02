@@ -43,9 +43,9 @@ const Asistencia = () => {
       id: 2,
       name: "Carlos Eduardo López",
       photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg",
-      status: "present",
-      arrivalTime: "07:55",
-      notes: "",
+      status: "late",
+      arrivalTime: "08:15",
+      notes: "Llegó tarde por cita médica",
       attendanceHistory: {
         thisWeek: 5,
         thisMonth: 20,
@@ -148,6 +148,14 @@ const Asistencia = () => {
     setStudents(prev => prev.map(student => 
       student.id === studentId 
         ? { ...student, status: newStatus, arrivalTime: newStatus === 'present' ? new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '' }
+        : student
+    ));
+  };
+
+  const updateStudentNotes = (studentId, notes) => {
+    setStudents(prev => prev.map(student => 
+      student.id === studentId 
+        ? { ...student, notes }
         : student
     ));
   };
@@ -345,7 +353,10 @@ const Asistencia = () => {
                           </span>
                         )}
                         {student.notes && (
-                          <span className="text-yellow-600">Nota: {student.notes}</span>
+                          <span className="flex items-center space-x-1 text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
+                            <Edit className="w-3 h-3" />
+                            <span>Obs: {student.notes}</span>
+                          </span>
                         )}
                       </div>
                     </div>
@@ -360,24 +371,48 @@ const Asistencia = () => {
 
                     {/* Status */}
                     {isEditing ? (
-                      <div className="flex space-x-2">
-                        {['present', 'late', 'absent', 'excused'].map((status) => {
-                          const Icon = getStatusIcon(status);
-                          return (
-                            <button
-                              key={status}
-                              onClick={() => updateStudentStatus(student.id, status)}
-                              className={`p-2 rounded-lg border-2 transition-colors ${
-                                student.status === status
-                                  ? getStatusColor(status)
-                                  : 'border-gray-200 text-gray-400 hover:border-gray-300'
-                              }`}
-                              title={getStatusText(status)}
-                            >
-                              <Icon className="w-4 h-4" />
-                            </button>
-                          );
-                        })}
+                      <div className="flex flex-col space-y-2">
+                        <div className="flex space-x-2">
+                          {['present', 'late', 'absent', 'excused'].map((status) => {
+                            const Icon = getStatusIcon(status);
+                            return (
+                              <button
+                                key={status}
+                                onClick={() => updateStudentStatus(student.id, status)}
+                                className={`p-2 rounded-lg border-2 transition-colors ${
+                                  student.status === status
+                                    ? getStatusColor(status)
+                                    : 'border-gray-200 text-gray-400 hover:border-gray-300'
+                                }`}
+                                title={getStatusText(status)}
+                              >
+                                <Icon className="w-4 h-4" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {/* Campo de observaciones */}
+                        <div className="w-64">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              placeholder="Agregar observación..."
+                              value={student.notes || ''}
+                              onChange={(e) => updateStudentNotes(student.id, e.target.value)}
+                              className="w-full px-3 py-2 pl-8 pr-8 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <Edit className="absolute left-2.5 top-2.5 w-3 h-3 text-gray-400" />
+                            {student.notes && (
+                              <button
+                                onClick={() => updateStudentNotes(student.id, '')}
+                                className="absolute right-2.5 top-2.5 text-gray-400 hover:text-red-500"
+                                title="Limpiar observación"
+                              >
+                                <X className="w-3 h-3" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     ) : (
                       <div className={`flex items-center space-x-2 px-3 py-2 rounded-full border ${getStatusColor(student.status)}`}>
