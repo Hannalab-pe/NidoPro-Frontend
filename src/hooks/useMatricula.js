@@ -179,6 +179,7 @@ export const useMatricula = () => {
     // Operaciones CRUD
     loadMatriculas,
     createStudent,
+    matricularEstudiante: createStudent, // Alias para compatibilidad
     updateStudent,
     deleteStudent,
     toggleStudentStatus,

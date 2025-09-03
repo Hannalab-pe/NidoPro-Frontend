@@ -5,6 +5,7 @@ import ModalAgregarMatricula from './modales/ModalAgregarMatricula';
 import ModalVerMatricula from './modales/ModalVerMatricula';
 import ModalEditarMatricula from './modales/ModalEditarMatricula';
 import ModalEliminarMatricula from './modales/ModalEliminarMatricula';
+import ModalErrorBoundary from '../../../components/common/ModalErrorBoundary';
 import { useMatricula } from '../../../hooks/useMatricula';
 
 const Matricula = () => {
@@ -126,11 +127,13 @@ const Matricula = () => {
       />
 
       {/* Modales */}
-      <ModalAgregarMatricula
-        isOpen={showAddModal}
-        onClose={handleCloseModals}
-        onSave={handleSaveSuccess}
-      />
+      <ModalErrorBoundary onClose={handleCloseModals}>
+        <ModalAgregarMatricula
+          isOpen={showAddModal}
+          onClose={handleCloseModals}
+          onSave={handleSaveSuccess}
+        />
+      </ModalErrorBoundary>
 
       <ModalVerMatricula
         isOpen={showViewModal}

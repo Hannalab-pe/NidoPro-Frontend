@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { useMatricula } from '../../../../hooks/useMatricula';
 import { useAulasAsignacion } from '../../../../hooks/useAulasAsignacion';
 import { useApoderados } from '../../../../hooks/useApoderados';
+import { useGrados } from '../../../../hooks/useGrados';
 import FormField from '../../../../components/common/FormField';
 
 const schema = yup.object({
@@ -76,8 +77,29 @@ const schema = yup.object({
 
 const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   const { matricularEstudiante, loading } = useMatricula();
-  const { aulas, loadingAulas, fetchAulasPorGrado } = useAulasAsignacion();
+  
+  // Usar el hook con manejo de errores
+  let aulasHookData;
+  try {
+    aulasHookData = useAulasAsignacion();
+  } catch (error) {
+    console.error('❌ Error al inicializar useAulasAsignacion:', error);
+    aulasHookData = {
+      aulas: [],
+      loadingAulas: false,
+      fetchAulasPorGrado: () => Promise.resolve()
+    };
+  }
+  
+  const { aulas, loadingAulas, fetchAulasPorGrado } = aulasHookData;
   const { apoderados, loadingApoderados, searchApoderados } = useApoderados();
+  const { grados, isLoading: loadingGrados, isError: errorGrados } = useGrados();
+
+  // Debug: Ver qué grados estamos obteniendo
+  useEffect(() => {
+    console.log('🎓 Grados obtenidos:', grados);
+    console.log('📊 Estado de grados - Loading:', loadingGrados, 'Error:', errorGrados);
+  }, [grados, loadingGrados, errorGrados]);
   
   const [voucherImage, setVoucherImage] = useState(null);
   const [voucherFile, setVoucherFile] = useState(null);
@@ -89,7 +111,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
-      metodoPago: 'Transferencia',
+      metodoPago: 'Transferencia bancaria',
       estudianteTipoDoc: 'DNI',
       apoderadoTipoDoc: 'DNI',
       tipoAsignacionAula: 'manual',
@@ -101,26 +123,53 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   const tipoAsignacionAula = watch('tipoAsignacionAula');
 
   // Opciones predefinidas
-  const grados = [
-    { id: 1, nombre: '3 años' },
-    { id: 2, nombre: '4 años' },
-    { id: 3, nombre: '5 años' }
+  const metodosPago = [
+    'Efectivo', 
+    'Transferencia bancaria', 
+    'Depósito bancario', 
+    'Tarjeta de crédito', 
+    'Tarjeta de débito', 
+    'Pago móvil'
   ];
-
-  const metodosPago = ['Transferencia', 'Depósito', 'Efectivo', 'Tarjeta'];
   const tiposDocumento = ['DNI', 'Carnet de Extranjería', 'Pasaporte'];
 
   // Efectos
   useEffect(() => {
-    if (selectedGrado) {
-      fetchAulasPorGrado(selectedGrado);
-    }
+    const handleGradoChange = async () => {
+      console.log('🔄 useEffect activado - selectedGrado:', selectedGrado);
+      console.log('🔄 fetchAulasPorGrado disponible:', typeof fetchAulasPorGrado);
+      
+      if (selectedGrado && fetchAulasPorGrado) {
+        try {
+          console.log('🎓 Iniciando carga de aulas para grado:', selectedGrado);
+          await fetchAulasPorGrado(selectedGrado);
+          console.log('✅ Aulas cargadas exitosamente');
+        } catch (error) {
+          console.error('❌ Error al cargar aulas para grado:', error);
+          console.error('❌ Stack trace:', error.stack);
+          toast.error('Error al cargar aulas para el grado seleccionado');
+        }
+      } else {
+        console.log('ℹ️ No se ejecutó fetchAulasPorGrado - selectedGrado:', selectedGrado, 'función:', !!fetchAulasPorGrado);
+      }
+    };
+
+    handleGradoChange();
   }, [selectedGrado, fetchAulasPorGrado]);
 
   useEffect(() => {
-    if (searchTerm.length >= 2) {
-      searchApoderados(searchTerm);
-    }
+    const handleSearchApoderados = async () => {
+      if (searchTerm.length >= 2 && searchApoderados) {
+        try {
+          await searchApoderados(searchTerm);
+        } catch (error) {
+          console.error('❌ Error al buscar apoderados:', error);
+          toast.error('Error al buscar apoderados');
+        }
+      }
+    };
+
+    handleSearchApoderados();
   }, [searchTerm, searchApoderados]);
 
   // Funciones de manejo
@@ -185,46 +234,62 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
       }
 
       const matriculaData = {
-        // Información de matrícula
-        costoMatricula: parseFloat(data.costoMatricula),
+        // Datos básicos requeridos
+        costoMatricula: data.costoMatricula.toString(),
         fechaIngreso: data.fechaIngreso,
-        idGrado: parseInt(data.idGrado),
+        idGrado: data.idGrado,
         metodoPago: data.metodoPago,
-        voucherUrl,
         
-        // Información del estudiante
-        estudiante: {
-          nombre: data.estudianteNombre,
-          apellido: data.estudianteApellido,
-          tipoDocumento: data.estudianteTipoDoc,
-          numeroDocumento: data.estudianteDocumento,
-          contactoEmergencia: data.contactoEmergencia,
-          numeroEmergencia: data.nroEmergencia,
-          observaciones: data.observaciones
+        // Solo incluir idApoderado si existe y no es undefined
+        ...(selectedApoderado?.id && { idApoderado: selectedApoderado.id }),
+        
+        // Datos del apoderado (para crear nuevo o actualizar)
+        apoderadoData: {
+          nombre: selectedApoderado ? selectedApoderado.nombre : data.apoderadoNombre,
+          apellido: selectedApoderado ? selectedApoderado.apellido : data.apoderadoApellido,
+          tipoDocumentoIdentidad: selectedApoderado ? (selectedApoderado.tipoDocumento || 'DNI') : (data.apoderadoTipoDoc || 'DNI'),
+          documentoIdentidad: selectedApoderado ? selectedApoderado.documentoIdentidad : data.apoderadoDocumento,
+          numero: selectedApoderado ? selectedApoderado.numero : data.apoderadoTelefono,
+          correo: selectedApoderado ? selectedApoderado.correo : data.apoderadoCorreo,
+          direccion: selectedApoderado ? selectedApoderado.direccion : data.apoderadoDireccion
         },
         
-        // Información del apoderado
-        apoderado: selectedApoderado ? {
-          id: selectedApoderado.id
-        } : {
-          nombre: data.apoderadoNombre,
-          apellido: data.apoderadoApellido,
-          tipoDocumento: data.apoderadoTipoDoc,
-          numeroDocumento: data.apoderadoDocumento,
-          telefono: data.apoderadoTelefono,
-          correo: data.apoderadoCorreo,
-          direccion: data.apoderadoDireccion
+        // Datos del estudiante (para crear nuevo) - usando UUID real del rol ESTUDIANTE
+        estudianteData: {
+          nombre: data.estudianteNombre,
+          apellido: data.estudianteApellido,
+          tipoDocumento: data.estudianteTipoDoc || 'DNI',
+          nroDocumento: data.estudianteDocumento,
+          contactoEmergencia: data.contactoEmergencia,
+          nroEmergencia: data.nroEmergencia,
+          observaciones: data.observaciones || '',
+          idRol: "35225955-5aeb-4df0-8014-1cdfbce9b41e" // UUID real del rol ESTUDIANTE
         },
         
         // Asignación de aula
-        asignacionAula: {
-          tipo: data.tipoAsignacionAula,
-          idAulaEspecifica: data.tipoAsignacionAula === 'manual' ? parseInt(data.idAulaEspecifica) : null,
+        tipoAsignacionAula: data.tipoAsignacionAula,
+        ...(data.tipoAsignacionAula === 'manual' && data.idAulaEspecifica && {
+          idAulaEspecifica: data.idAulaEspecifica
+        }),
+        ...(data.motivoPreferencia && {
           motivoPreferencia: data.motivoPreferencia
-        }
+        }),
+        
+        // Voucher si existe
+        ...(voucherUrl && { voucherImg: voucherUrl })
       };
 
-      await matricularEstudiante(matriculaData);
+      console.log('📋 Datos preparados para backend:', matriculaData);
+      console.log('🔍 apoderadoData.tipoDocumentoIdentidad:', matriculaData.apoderadoData.tipoDocumentoIdentidad);
+      console.log('🔍 estudianteData.idRol:', matriculaData.estudianteData.idRol);
+      console.log('🔍 Campos undefined:', Object.entries(matriculaData).filter(([key, value]) => value === undefined));
+
+      // Limpiar campos undefined antes del envío
+      const cleanMatriculaData = JSON.parse(JSON.stringify(matriculaData, (key, value) => 
+        value === undefined ? null : value
+      ));
+
+      await matricularEstudiante(cleanMatriculaData);
       
       toast.success('Estudiante matriculado exitosamente');
       handleClose();
@@ -332,11 +397,14 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                           <select
                             {...register('idGrado')}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={loadingGrados}
                           >
-                            <option value="">Seleccionar grado</option>
+                            <option value="">
+                              {loadingGrados ? 'Cargando grados...' : 'Seleccionar grado'}
+                            </option>
                             {grados.map((grado) => (
-                              <option key={grado.id} value={grado.id}>
-                                {grado.nombre}
+                              <option key={grado.idGrado || grado.id} value={grado.idGrado || grado.id}>
+                                {grado.nombre || grado.grado}
                               </option>
                             ))}
                           </select>

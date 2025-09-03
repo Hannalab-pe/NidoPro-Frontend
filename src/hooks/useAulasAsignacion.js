@@ -156,6 +156,28 @@ export const useAulasAsignacion = () => {
     return aulas;
   };
 
+  // Función para obtener aulas por grado
+  const fetchAulasPorGrado = async (idGrado) => {
+    try {
+      console.log('🎯 Obteniendo aulas para grado:', idGrado);
+      
+      // Si el idGrado no está definido, no hacer nada
+      if (!idGrado) {
+        console.log('⚠️ No se proporcionó idGrado');
+        return;
+      }
+
+      // Por ahora, simplemente refrescar las aulas existentes
+      // En el futuro se puede implementar un filtro por grado en el backend
+      await refetchAulas();
+      
+      console.log('✅ Aulas refrescadas para grado:', idGrado);
+    } catch (error) {
+      console.error('❌ Error al obtener aulas por grado:', error);
+      toast.error('Error al cargar aulas para el grado seleccionado');
+    }
+  };
+
   // Log para verificar qué se está retornando
   console.log('🔍 Hook retornando - aulas:', aulas, 'loadingAulas:', loadingAulas);
 
@@ -180,6 +202,7 @@ export const useAulasAsignacion = () => {
     // Funciones
     refetchAulas,
     refetchAsignaciones,
+    fetchAulasPorGrado,
     asignarAulaADocente,
     getAsignacionesByTrabajador,
     
