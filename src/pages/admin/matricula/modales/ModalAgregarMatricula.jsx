@@ -1,6 +1,6 @@
 import React, { useState, useEffect, Fragment } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { X, UserPlus, DollarSign, User, Users, School, Baby, Upload, Save, Loader2, Search, UserCheck } from 'lucide-react';
@@ -35,10 +35,17 @@ const schema = yup.object({
   estudianteDocumento: yup.string()
     .required('El número de documento es requerido')
     .min(8, 'El documento debe tener al menos 8 caracteres'),
-  contactoEmergencia: yup.string()
-    .required('El contacto de emergencia es requerido'),
-  nroEmergencia: yup.string()
-    .required('El número de emergencia es requerido'),
+  contactosEmergencia: yup.array().of(
+    yup.object({
+      nombre: yup.string().required('Nombre de contacto requerido'),
+      apellido: yup.string().required('Apellido de contacto requerido'),
+      telefono: yup.string().required('Teléfono requerido'),
+      email: yup.string().email('Email inválido').required('Email requerido'),
+      tipoContacto: yup.string().required('Tipo de contacto requerido'),
+      esPrincipal: yup.boolean(),
+      prioridad: yup.number().min(1).required('Prioridad requerida'),
+    })
+  ).min(1, 'Debe agregar al menos un contacto de emergencia'),
   
   // Información del Apoderado
   apoderadoNombre: yup.string()
@@ -108,15 +115,21 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   const [showApoderadoSearch, setShowApoderadoSearch] = useState(false);
   const [selectedApoderado, setSelectedApoderado] = useState(null);
 
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue, control } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       metodoPago: 'Transferencia bancaria',
       estudianteTipoDoc: 'DNI',
       apoderadoTipoDoc: 'DNI',
       tipoAsignacionAula: 'manual',
-      fechaIngreso: new Date().toISOString().split('T')[0]
+      fechaIngreso: new Date().toISOString().split('T')[0],
+      contactosEmergencia: [{ nombre: '', apellido: '', telefono: '', email: '', tipoContacto: '', esPrincipal: true, prioridad: 1 }]
     }
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: 'contactosEmergencia'
   });
 
   const selectedGrado = watch('idGrado');
@@ -260,14 +273,13 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
           apellido: data.estudianteApellido,
           tipoDocumento: data.estudianteTipoDoc || 'DNI',
           nroDocumento: data.estudianteDocumento,
-          contactoEmergencia: data.contactoEmergencia,
-          nroEmergencia: data.nroEmergencia,
+          contactosEmergencia: data.contactosEmergencia,
           observaciones: data.observaciones || '',
           idRol: "35225955-5aeb-4df0-8014-1cdfbce9b41e" // UUID real del rol ESTUDIANTE
         },
         
-        // Asignación de aula
-        tipoAsignacionAula: data.tipoAsignacionAula,
+  // Asignación de aula
+  tipoAsignacionAula: data.tipoAsignacionAula,
         ...(data.tipoAsignacionAula === 'manual' && data.idAulaEspecifica && {
           idAulaEspecifica: data.idAulaEspecifica
         }),
@@ -275,8 +287,8 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
           motivoPreferencia: data.motivoPreferencia
         }),
         
-        // Voucher si existe
-        ...(voucherUrl && { voucherImg: voucherUrl })
+  // Voucher si existe
+  ...(voucherUrl && { voucherImg: voucherUrl })
       };
 
       console.log('📋 Datos preparados para backend:', matriculaData);
@@ -552,32 +564,134 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                             placeholder="Ej: 87654321"
                           />
                         </FormField>
+                      </div>
 
-                        <FormField
-                          label="Contacto de Emergencia"
-                          error={errors.contactoEmergencia?.message}
-                          required
+                      {/* Contactos de emergencia dinámicos */}
+                      <div className="mt-6">
+                        <label className="block text-sm font-medium text-gray-700 mb-3">
+                          Contactos de Emergencia *
+                        </label>
+                        {fields.map((field, idx) => (
+                          <div key={field.id} className="rounded-lg p-4 mb-3 bg-gray-50">
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                              <FormField
+                                label="Nombre"
+                                error={errors.contactosEmergencia?.[idx]?.nombre?.message}
+                                required
+                              >
+                                <input 
+                                  type="text" 
+                                  placeholder="Nombre" 
+                                  {...register(`contactosEmergencia.${idx}.nombre`)} 
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
+                              </FormField>
+                              <FormField
+                                label="Apellido"
+                                error={errors.contactosEmergencia?.[idx]?.apellido?.message}
+                                required
+                              >
+                                <input 
+                                  type="text" 
+                                  placeholder="Apellido" 
+                                  {...register(`contactosEmergencia.${idx}.apellido`)} 
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
+                              </FormField>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                              <FormField
+                                label="Teléfono"
+                                error={errors.contactosEmergencia?.[idx]?.telefono?.message}
+                                required
+                              >
+                                <input 
+                                  type="text" 
+                                  placeholder="Teléfono" 
+                                  {...register(`contactosEmergencia.${idx}.telefono`)} 
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
+                              </FormField>
+                              <FormField
+                                label="Email"
+                                error={errors.contactosEmergencia?.[idx]?.email?.message}
+                                required
+                              >
+                                <input 
+                                  type="email" 
+                                  placeholder="Email" 
+                                  {...register(`contactosEmergencia.${idx}.email`)} 
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
+                              </FormField>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3 mb-3">
+                              <FormField
+                                label="Tipo de contacto"
+                                error={errors.contactosEmergencia?.[idx]?.tipoContacto?.message}
+                                required
+                              >
+                                <input 
+                                  type="text" 
+                                  placeholder="Ej: Madre, Padre, Tío" 
+                                  {...register(`contactosEmergencia.${idx}.tipoContacto`)} 
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                />
+                              </FormField>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2">
+                                  <input 
+                                    type="checkbox" 
+                                    {...register(`contactosEmergencia.${idx}.esPrincipal`)} 
+                                    className="rounded"
+                                  />
+                                  <span className="text-sm">Contacto principal</span>
+                                </label>
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm">Prioridad:</label>
+                                  <input 
+                                    type="number" 
+                                    min={1} 
+                                    {...register(`contactosEmergencia.${idx}.prioridad`)} 
+                                    className="w-16 px-2 py-1 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                                  />
+                                </div>
+                              </div>
+                              {fields.length > 1 && (
+                                <button 
+                                  type="button" 
+                                  className="text-red-500 hover:text-red-700 text-sm px-3 py-1 border border-red-500 rounded hover:bg-red-50 transition-colors" 
+                                  onClick={() => remove(idx)}
+                                >
+                                  Eliminar
+                                </button>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                        <button 
+                          type="button" 
+                          className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2" 
+                          onClick={() => append({ 
+                            nombre: '', 
+                            apellido: '', 
+                            telefono: '', 
+                            email: '', 
+                            tipoContacto: '', 
+                            esPrincipal: false, 
+                            prioridad: fields.length + 1 
+                          })}
                         >
-                          <input
-                            {...register('contactoEmergencia')}
-                            type="text"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ej: Ana García"
-                          />
-                        </FormField>
-
-                        <FormField
-                          label="Número de Emergencia"
-                          error={errors.nroEmergencia?.message}
-                          required
-                        >
-                          <input
-                            {...register('nroEmergencia')}
-                            type="tel"
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            placeholder="Ej: 987654321"
-                          />
-                        </FormField>
+                          <UserPlus className="w-4 h-4" />
+                          Agregar contacto
+                        </button>
+                        {errors.contactosEmergencia && (
+                          <p className="text-red-500 text-sm mt-2">
+                            {errors.contactosEmergencia.message}
+                          </p>
+                        )}
                       </div>
                       
                       {/* Observaciones */}

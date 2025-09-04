@@ -73,23 +73,13 @@ const Matricula = () => {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">
             <div className="flex items-center">
               <Users className="w-8 h-8 text-blue-600" />
               <div className="ml-3">
                 <p className="text-sm font-medium text-blue-600">Total Matrículas</p>
                 <p className="text-2xl font-bold text-blue-900">{stats.total}</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-green-50 p-4 rounded-lg">
-            <div className="flex items-center">
-              <UserPlus className="w-8 h-8 text-green-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-green-600">Estudiantes Activos</p>
-                <p className="text-2xl font-bold text-green-900">{stats.active}</p>
               </div>
             </div>
           </div>
@@ -104,15 +94,6 @@ const Matricula = () => {
             </div>
           </div>
           
-          <div className="bg-orange-50 p-4 rounded-lg">
-            <div className="flex items-center">
-              <Calendar className="w-8 h-8 text-orange-600" />
-              <div className="ml-3">
-                <p className="text-sm font-medium text-orange-600">Recientes</p>
-                <p className="text-2xl font-bold text-orange-900">{stats.recentEnrollments}</p>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
