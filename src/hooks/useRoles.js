@@ -114,11 +114,28 @@ export const useRoles = () => {
     refetchOnWindowFocus: false,
   });
 
+  // Helper para obtener rol por nombre
+  const getRoleByName = (roleName) => {
+    return roles.find(rol => rol.nombre === roleName || rol.rol === roleName);
+  };
+
+  // Helper para obtener ID de rol estudiante
+  const getEstudianteRoleId = () => {
+    const estudianteRole = getRoleByName('ESTUDIANTE');
+    if (estudianteRole) {
+      return estudianteRole.idRol || estudianteRole.id;
+    }
+    // Fallback UUID real del rol ESTUDIANTE
+    return '35225955-5aeb-4df0-8014-1cdfbce9b41e';
+  };
+
   return {
     roles,
     isLoading,
     isError,
     error,
-    refetch
+    refetch,
+    getRoleByName,
+    getEstudianteRoleId
   };
 };

@@ -29,7 +29,11 @@ import Matricula from '../admin/matricula/Matricula';
 import Trabajadores from '../admin/trabajadores/Trabajadores';
 import Padres from '../admin/padres/Padres';
 import Clases from '../admin/aulas/Aulas';
-import Finanzas from '../admin/finanzas/Finanzas';
+import GestionFinanciera from '../admin/finanzas/GestionFinanciera';
+import MovimientosCaja from '../admin/finanzas/movimientos/MovimientosCaja';
+import PagosPensiones from '../admin/finanzas/pensiones/PagosPensiones';
+import PagosMatriculas from '../admin/finanzas/matriculas/PagosMatriculas';
+import PagosPlanillas from '../admin/finanzas/planillas/PagosPlanillas';
 import Reportes from '../admin/reportes/Reportes';
 import Configuraciones from "../admin/configuraciones/Configuracion";
 import Usuarios from '../admin/usuarios/Usuarios';
@@ -38,7 +42,20 @@ import Planificaciones from '../admin/planificaciones/Planificaciones';
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [financeComponent, setFinanceComponent] = useState("GestionFinanciera");
   const { logout, user } = useAuthStore();
+
+  // Effect para escuchar eventos de cambio de vista en finanzas
+  React.useEffect(() => {
+    const handleFinanceViewChange = (event) => {
+      setFinanceComponent(event.detail.component);
+    };
+
+    window.addEventListener('changeFinanceView', handleFinanceViewChange);
+    return () => {
+      window.removeEventListener('changeFinanceView', handleFinanceViewChange);
+    };
+  }, []);
 
   const menuItems = [
     { id: "overview", label: "Resumen General", icon: BarChart3},
@@ -91,6 +108,26 @@ const AdminDashboard = () => {
   const handleMenuItemClick = (sectionId) => {
     setActiveSection(sectionId);
     setIsMobileMenuOpen(false);
+    // Resetear el componente de finanzas al cambiar de sección
+    if (sectionId === "finances") {
+      setFinanceComponent("GestionFinanciera");
+    }
+  };
+
+  // Función para renderizar el componente de finanzas según el estado
+  const renderFinanceComponent = () => {
+    switch (financeComponent) {
+      case 'MovimientosCaja':
+        return <MovimientosCaja />;
+      case 'PagosPensiones':
+        return <PagosPensiones />;
+      case 'PagosMatriculas':
+        return <PagosMatriculas />;
+      case 'PagosPlanillas':
+        return <PagosPlanillas />;
+      default:
+        return <GestionFinanciera />;
+    }
   };
 
   return (
@@ -114,7 +151,7 @@ const AdminDashboard = () => {
             <span className="text-xl font-bold text-white">Nido Pro</span>
           </div>
           <button
-            className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+            className="lg:hidden p-2 text-white hover:text-gray-300"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <X className="w-6 h-6" />
@@ -185,7 +222,7 @@ const AdminDashboard = () => {
           <div className="flex items-center justify-between">
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+              className="lg:hidden p-2 text-white hover:text-gray-300"
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu className="w-6 h-6" />
@@ -196,7 +233,7 @@ const AdminDashboard = () => {
                 Panel de Administración
               </h1>
               <p className="text-sm text-white mt-1 hidden sm:block">
-                {user?.fullName || user?.nombre || user?.username} | {new Date().toLocaleDateString('es-ES', { 
+                {new Date().toLocaleDateString('es-ES', { 
                   weekday: 'long', 
                   year: 'numeric', 
                   month: 'long', 
@@ -221,6 +258,7 @@ const AdminDashboard = () => {
         <div className="p-4 lg:p-6 h-full overflow-y-auto">
           {activeSection === "overview" && (
             <div className="space-y-6 lg:space-y-8">
+              <h1 className="text-2xl font-bold mb-6 text-gray-700">Bienvenido, {user?.nombre || ''}</h1>
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, index) => {
@@ -288,7 +326,7 @@ const AdminDashboard = () => {
           {activeSection === "trabajadores" && <Trabajadores />}
           {activeSection === "parents" && <Padres />}
           {activeSection === "classes" && <Clases />}
-          {activeSection === "finances" && <Finanzas />}
+          {activeSection === "finances" && renderFinanceComponent()}
           {activeSection === "reports" && <Reportes />}
           {activeSection === "users" && <Usuarios />}
           {activeSection === "settings" && <Configuraciones />}

@@ -67,16 +67,20 @@ export const studentsColumns = [
   },
   {
     Header: 'Estado',
-    accessor: 'estaActivo',
+    accessor: 'idUsuario.estaActivo',
     type: 'status',
     sortable: true,
-    Cell: ({ value }) => (
-      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-        value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-      }`}>
-        {value ? 'Activo' : 'Inactivo'}
-      </span>
-    )
+    Cell: ({ value, row }) => {
+      // Obtener el estado desde idUsuario.estaActivo o directamente desde estaActivo
+      const isActive = value !== undefined ? value : row.idUsuario?.estaActivo;
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+          isActive ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+        }`}>
+          {isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      );
+    }
   }
 ];
 
