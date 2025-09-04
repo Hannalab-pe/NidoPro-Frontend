@@ -45,7 +45,7 @@ const ParentDashboard = () => {
 
   // Datos del hijo/estudiante
   const studentData = {
-    name: "Ana María García",
+    name: `${user?.nombre || ''} ${user?.apellido || ''}`,
     grade: "5to Grado A",
     photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1755701581/estudiantes/zoslqzw97fnfnuxfhcmj.gif",
     age: 10,
