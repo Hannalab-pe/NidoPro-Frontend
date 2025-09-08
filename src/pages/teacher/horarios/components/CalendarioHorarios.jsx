@@ -42,9 +42,8 @@ const CalendarioHorarios = ({
       const mobile = window.innerWidth < 768; // md breakpoint
       setIsMobile(mobile);
       
-      // En móvil, solo cambiar a día si la vista actual es semana
-      // La vista de mes se mantiene en móvil ya que es más útil
-      if (mobile && currentView === 'week') {
+      // En móvil, cambiar a vista de día por defecto para mejor experiencia
+      if (mobile) {
         setCurrentView('day');
         onView && onView('day');
       } else if (!mobile && view) {
@@ -151,13 +150,11 @@ const CalendarioHorarios = ({
     events: eventos,
     startAccessor: 'start',
     endAccessor: 'end',
-    style: { height: isMobile ? 'calc(100vh - 120px)' : 800 }, // Altura responsive - pantalla completa en móvil
+    style: { height: isMobile ? 'calc(100vh - 200px)' : 800 }, // Altura responsive - más espacio para controles en móvil
     view: currentView, // Usar vista responsive
     onView: (newView) => {
-      if (!isMobile) {
-        setCurrentView(newView);
-        onView && onView(newView);
-      }
+      setCurrentView(newView);
+      onView && onView(newView);
     },
     date,
     onNavigate,
@@ -166,7 +163,9 @@ const CalendarioHorarios = ({
     selectable: true,
     eventPropGetter: eventStyleGetter,
     components: {
-      event: EventComponent
+      event: EventComponent,
+      // Ocultar toolbar nativo en móvil para usar controles personalizados
+      toolbar: isMobile ? () => null : undefined
     },
     formats: {
       timeGutterFormat,
@@ -196,6 +195,89 @@ const CalendarioHorarios = ({
 
   return (
     <div className={`bg-white ${isMobile ? 'h-full' : 'rounded-xl shadow-sm border border-gray-100'} ${isMobile ? 'p-0' : 'p-8'}`}>
+      {/* Controles personalizados para móvil */}
+      {isMobile && (
+        <div className="bg-white border-b border-gray-200 p-4 sticky top-0 z-10">
+          {/* Navegación de fecha */}
+          <div className="flex items-center justify-between mb-4">
+            <button
+              onClick={() => onNavigate && onNavigate(moment(date).subtract(1, currentView === 'day' ? 'day' : currentView === 'week' ? 'week' : 'month').toDate())}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            
+            <div className="text-center">
+              <h3 className="font-semibold text-gray-900">
+                {currentView === 'day' && moment(date).format('dddd, DD MMMM YYYY')}
+                {currentView === 'week' && `Semana del ${moment(date).startOf('week').format('DD')} al ${moment(date).endOf('week').format('DD MMMM YYYY')}`}
+                {currentView === 'month' && moment(date).format('MMMM YYYY')}
+              </h3>
+              <button
+                onClick={() => onNavigate && onNavigate(new Date())}
+                className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                Ir a hoy
+              </button>
+            </div>
+            
+            <button
+              onClick={() => onNavigate && onNavigate(moment(date).add(1, currentView === 'day' ? 'day' : currentView === 'week' ? 'week' : 'month').toDate())}
+              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
+          
+          {/* Selector de vista */}
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => {
+                setCurrentView('day');
+                onView && onView('day');
+              }}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                currentView === 'day'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Día
+            </button>
+            <button
+              onClick={() => {
+                setCurrentView('week');
+                onView && onView('week');
+              }}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                currentView === 'week'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Semana
+            </button>
+            <button
+              onClick={() => {
+                setCurrentView('month');
+                onView && onView('month');
+              }}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                currentView === 'month'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Mes
+            </button>
+          </div>
+        </div>
+      )}
+      
       {isLoading ? (
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
