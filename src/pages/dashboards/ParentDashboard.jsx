@@ -27,6 +27,7 @@ import EstadoEmocional from "../parent/estadoemocional/EstadoEmocional";
 import Sociabilidad from "../parent/sociabilidad/Sociabilidad";
 import Aprendizaje from "../parent/aprendizaje/Aprendizaje";
 import ParentAIChat from '../parent/iachat/ParentAIChat';
+import Anotaciones from '../parent/anotaciones/Anotaciones';
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -40,6 +41,7 @@ const ParentDashboard = () => {
     { id: "suggestions", label: "Sugerencias", icon: MessageSquare },
     { id: "attendance", label: "Asistencia", icon: Calendar },
     { id: "learning", label: "Aprendizaje", icon: Brain },
+    { id: "anotaciones", label: "Anotaciones", icon: Bell },
     { id: "iachat", label: "Asistente IA", icon: MessageSquare }
   ];
 
@@ -265,6 +267,8 @@ const ParentDashboard = () => {
         return <Sociabilidad />;
       case "learning":
         return <Aprendizaje />;
+      case "anotaciones":
+        return <Anotaciones />;
       case "iachat":
         return <ParentAIChat />;
       default:

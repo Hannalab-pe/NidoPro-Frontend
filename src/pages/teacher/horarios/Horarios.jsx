@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
-  ChevronLeft, 
-  ChevronRight, 
   Plus, 
   Edit, 
   Trash2,
@@ -14,13 +12,64 @@ import {
   Filter,
   Download,
   Share2,
-  MoreVertical
+  MoreVertical,
+  Eye,
+  CalendarDays
 } from 'lucide-react';
+import CalendarioHorarios from './components/CalendarioHorarios';
+import ModalAgregarActividad from './modales/ModalAgregarActividad';
 
 const Horarios = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedView, setSelectedView] = useState('week'); // week, month, day
   const [selectedDay, setSelectedDay] = useState(new Date());
+  const [showCalendar, setShowCalendar] = useState(true); // Para alternar entre vista calendario y tabla
+  const [selectedEvent, setSelectedEvent] = useState(null); // Evento seleccionado
+  const [isModalOpen, setIsModalOpen] = useState(false); // Modal de nueva actividad
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Hook para detectar tamaño de pantalla
+  useEffect(() => {
+    const checkScreenSize = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      
+      // En móvil, forzar vista de día
+      if (mobile && selectedView !== 'day') {
+        setSelectedView('day');
+      }
+    };
+
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, [selectedView]);
+
+  // Handlers para el calendario
+  const handleSelectEvent = (event) => {
+    setSelectedEvent(event);
+    console.log('Evento seleccionado:', event);
+  };
+
+  const handleSelectSlot = (slotInfo) => {
+    console.log('Slot seleccionado:', slotInfo);
+    // Aquí puedes abrir un modal para crear nueva clase
+  };
+
+  const handleEventCreated = (newEvent) => {
+    console.log('Nueva actividad creada:', newEvent);
+    // Aquí podrías actualizar el estado local si es necesario
+    // Por ahora, el refetch de datos debería ser suficiente
+  };
+
+  const handleViewChange = (view) => {
+    setSelectedView(view);
+  };
+
+  const handleNavigate = (date) => {
+    setCurrentWeek(date);
+  };
 
   // Datos fake del cronograma
   const HorariosData = [
@@ -180,81 +229,39 @@ const Horarios = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className={`${isMobile ? 'h-screen flex flex-col' : 'space-y-6'} ${isMobile ? '' : ''}`}>
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+      <div className={`flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0 ${isMobile ? 'px-4 py-3 bg-white border-b flex-shrink-0' : ''}`}>
         
         
         <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <Download className="w-4 h-4" />
-            <span>Exportar</span>
-          </button>
-          <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <Share2 className="w-4 h-4" />
-            <span>Compartir</span>
-          </button>
-          <button className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-            <Plus className="w-4 h-4" />
+
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className={`flex items-center space-x-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors ${
+              isMobile ? 'px-3 py-2 text-sm' : 'px-4 py-2'
+            }`}
+          >
+            <Plus className={`${isMobile ? 'w-3 h-3' : 'w-4 h-4'}`} />
             <span>Nueva Actividad</span>
           </button>
         </div>
       </div>
 
-      {/* Controls */}
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
-          {/* Week Navigation */}
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigateWeek(-1)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            
-            <div className="text-center">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {formatWeekRange(currentWeek)}
-              </h2>
-              <p className="text-sm text-gray-500">Semana actual</p>
-            </div>
-            
-            <button
-              onClick={() => navigateWeek(1)}
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-          </div>
 
-          {/* View Options */}
-          <div className="flex items-center space-x-2">
-            <div className="flex bg-gray-100 rounded-lg p-1">
-              {['day', 'week', 'month'].map((view) => (
-                <button
-                  key={view}
-                  onClick={() => setSelectedView(view)}
-                  className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                    selectedView === view
-                      ? 'bg-white text-green-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  {view === 'day' ? 'Día' : view === 'week' ? 'Semana' : 'Mes'}
-                </button>
-              ))}
-            </div>
-            
-            <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-              <Filter className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Weekly View */}
-      {selectedView === 'week' && (
+      {/* Vista de Calendario */}
+      <div className={`${isMobile ? 'flex-1 overflow-hidden' : ''}`}>
+        {showCalendar ? (
+          <CalendarioHorarios
+            onSelectEvent={handleSelectEvent}
+            onSelectSlot={handleSelectSlot}
+            view={selectedView}
+            onView={handleViewChange}
+            date={currentWeek}
+            onNavigate={handleNavigate}
+            isMobile={isMobile}
+          />
+        ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="grid grid-cols-6 border-b border-gray-200">
             {/* Time column header */}
@@ -346,114 +353,19 @@ const Horarios = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Day View */}
-      {selectedView === 'day' && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="text-center mb-6">
-            <h3 className="text-xl font-semibold text-gray-900">
-              {selectedDay.toLocaleDateString('es-ES', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-            </h3>
-          </div>
-          
-          <div className="space-y-4">
-            {getEventsForDay('monday').map((event) => {
-              const IconComponent = getTypeIcon(event.type);
-              return (
-                <div key={event.id} className="flex items-center p-4 border border-gray-200 rounded-lg hover:shadow-sm transition-shadow">
-                  <div 
-                    className="w-4 h-16 rounded-l-lg"
-                    style={{ backgroundColor: event.color }}
-                  />
-                  <div className="flex-1 ml-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
-                        <IconComponent className="w-5 h-5 text-gray-600" />
-                        <h4 className="font-semibold text-gray-900">{event.title}</h4>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <button className="p-1 text-gray-400 hover:text-green-600">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-red-600">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4 mt-1 text-sm text-gray-600">
-                      <span className="flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{event.startTime} - {event.endTime}</span>
-                      </span>
-                      {event.classroom && (
-                        <span className="flex items-center space-x-1">
-                          <MapPin className="w-4 h-4" />
-                          <span>{event.classroom}</span>
-                        </span>
-                      )}
-                      {event.students && (
-                        <span className="flex items-center space-x-1">
-                          <Users className="w-4 h-4" />
-                          <span>{event.students} estudiantes</span>
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100">Clases Esta Semana</p>
-              <p className="text-2xl font-bold">12</p>
-            </div>
-            <BookOpen className="w-8 h-8 text-blue-200" />
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100">Horas Programadas</p>
-              <p className="text-2xl font-bold">24</p>
-            </div>
-            <Clock className="w-8 h-8 text-green-200" />
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100">Reuniones</p>
-              <p className="text-2xl font-bold">3</p>
-            </div>
-            <Users className="w-8 h-8 text-purple-200" />
-          </div>
-        </div>
-        
-        <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-orange-100">Evaluaciones</p>
-              <p className="text-2xl font-bold">2</p>
-            </div>
-            <Edit className="w-8 h-8 text-orange-200" />
-          </div>
-        </div>
-      </div>
+
+
+      {/* Modal para agregar actividad */}
+      <ModalAgregarActividad
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        selectedDate={null}
+        onEventCreated={handleEventCreated}
+      />
     </div>
   );
 };

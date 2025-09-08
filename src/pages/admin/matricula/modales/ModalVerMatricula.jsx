@@ -453,37 +453,7 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
                 </div>
 
                 {/* Secciones que ocupan todo el ancho */}
-                <div className="mt-6 space-y-6">
-                  {/* IDs de Referencia */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <FileText className="w-5 h-5 mr-2 text-gray-600" />
-                      IDs de Referencia del Sistema
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                      <InfoField
-                        label="ID de Matrícula"
-                        value={matricula.idMatricula || 'No asignado'}
-                        icon={FileText}
-                      />
-                      <InfoField
-                        label="ID del Estudiante"
-                        value={estudiante.idEstudiante || 'No asignado'}
-                        icon={User}
-                      />
-                      <InfoField
-                        label="ID del Apoderado"
-                        value={apoderado.idApoderado || 'No asignado'}
-                        icon={Users}
-                      />
-                      <InfoField
-                        label="ID del Grado"
-                        value={grado.idGrado || 'No asignado'}
-                        icon={GraduationCap}
-                      />
-                    </div>
-                  </div>
-                </div>
+
 
                 {/* Botón de cerrar */}
                 <div className="flex justify-end pt-6 border-t mt-6">
