@@ -181,6 +181,43 @@ export const asistenciaService = {
       console.error('❌ Error al filtrar asignaciones por docente:', error);
       return [];
     }
+  },
+
+  /**
+   * Registrar asistencia masiva para un aula completa
+   * @param {Object} asistenciaData - Datos de asistencia masiva
+   * @param {string} asistenciaData.fecha - Fecha en formato YYYY-MM-DD
+   * @param {string} asistenciaData.hora - Hora en formato HH:mm:ss
+   * @param {string} asistenciaData.idAula - ID del aula
+   * @param {Array} asistenciaData.asistencias - Array de asistencias individuales
+   * @returns {Promise} Respuesta del servidor
+   */
+  registrarAsistenciaMasiva: async (asistenciaData) => {
+    try {
+      const response = await api.post('/asistencia', asistenciaData);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al registrar asistencia masiva:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Error al registrar asistencia masiva');
+    }
+  },
+
+  /**
+   * Obtener asistencias por aula y fecha
+   * @param {string} idAula - ID del aula
+   * @param {string} fecha - Fecha en formato YYYY-MM-DD
+   * @returns {Promise} Lista de asistencias del aula en la fecha especificada
+   */
+  getAsistenciasPorAulaYFecha: async (idAula, fecha) => {
+    try {
+      const response = await api.get(`/asistencia/aula/${idAula}`, {
+        params: { fecha }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al obtener asistencias por aula y fecha:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Error al obtener asistencias');
+    }
   }
 };
 
