@@ -1,4 +1,4 @@
-import React, { Fragment, useEffect } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -29,10 +29,6 @@ const validationSchema = yup.object({
   // Datos del estudiante (solo campos editables que existen)
   nombreEstudiante: yup.string().required('El nombre del estudiante es requerido').trim(),
   apellidoEstudiante: yup.string().required('El apellido del estudiante es requerido').trim(),
-  nroDocumentoEstudiante: yup.string().required('El documento del estudiante es requerido').trim(),
-  tipoDocumentoEstudiante: yup.string().required('El tipo de documento es requerido'),
-  contactoEmergencia: yup.string().required('El contacto de emergencia es requerido').trim(),
-  nroEmergencia: yup.string().required('El número de emergencia es requerido').trim(),
   observacionesEstudiante: yup.string().trim(),
   
   // Datos del apoderado
@@ -44,9 +40,15 @@ const validationSchema = yup.object({
     .required('El email del apoderado es requerido'),
   direccionApoderado: yup.string().trim(),
   
+  // Contactos de emergencia
+  nombreContacto: yup.string().required('El nombre del contacto de emergencia es requerido').trim(),
+  apellidoContacto: yup.string().required('El apellido del contacto de emergencia es requerido').trim(),
+  telefonoContacto: yup.string().required('El teléfono de emergencia es requerido').trim(),
+  emailContacto: yup.string().email('El email del contacto no es válido').trim(),
+  tipoContacto: yup.string().required('El tipo de contacto es requerido'),
+  
   // Datos de matrícula
   costoMatricula: yup.number().required('El costo es requerido').positive('El costo debe ser positivo'),
-  metodoPago: yup.string().required('El método de pago es requerido'),
   fechaIngreso: yup.date().required('La fecha de ingreso es requerida')
 });
 
@@ -68,6 +70,8 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
   }
 
   const queryClient = useQueryClient();
+  const [matriculaCompleta, setMatriculaCompleta] = useState(null);
+  const [loadingContactos, setLoadingContactos] = useState(false);
 
   // Mutation para actualizar estudiante
   const updateEstudianteMutation = useMutation({
@@ -99,26 +103,66 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
     resolver: yupResolver(validationSchema)
   });
 
-  // Cargar datos de la matrícula cuando se abre el modal
+  // Cargar datos completos de la matrícula cuando se abre el modal
   useEffect(() => {
-    if (matricula && isOpen) {
-      // Extraer entidades relacionadas de la estructura real
-      const estudiante = matricula.idEstudiante || {};
-      const apoderado = matricula.idApoderado || {};
-      const grado = matricula.idGrado || {};
+    const cargarMatriculaCompleta = async () => {
+      if (matricula && isOpen && matricula.idEstudiante?.idEstudiante) {
+        setLoadingContactos(true);
+        try {
+          console.log('🔍 Cargando matrícula completa para estudiante:', matricula.idEstudiante.idEstudiante);
+          
+          // Intentar obtener la matrícula completa con contactos
+          const matriculaConContactos = await matriculaService.getMatriculaByEstudianteId(matricula.idEstudiante.idEstudiante);
+          
+          console.log('✅ Matrícula completa obtenida:', matriculaConContactos);
+          setMatriculaCompleta(matriculaConContactos);
+          
+        } catch (error) {
+          console.error('❌ Error al cargar matrícula completa:', error);
+          // Si falla, usar la matrícula original
+          setMatriculaCompleta(matricula);
+        } finally {
+          setLoadingContactos(false);
+        }
+      } else {
+        // Si no tenemos ID de estudiante, usar directamente la matrícula original
+        setMatriculaCompleta(matricula);
+        setLoadingContactos(false);
+      }
+    };
 
-      const formattedFechaIngreso = matricula.fechaIngreso 
-        ? new Date(matricula.fechaIngreso).toISOString().split('T')[0]
+    cargarMatriculaCompleta();
+  }, [matricula, isOpen]);
+
+  // Cargar datos del formulario cuando tenemos la matrícula completa
+  useEffect(() => {
+    if (matriculaCompleta && isOpen) {
+      console.log('📋 Cargando datos en el formulario...');
+      console.log('📋 Matrícula completa:', matriculaCompleta);
+      
+      // Extraer entidades relacionadas de la estructura real
+      const estudiante = matriculaCompleta.idEstudiante || {};
+      const apoderado = matriculaCompleta.idApoderado || {};
+      const contactosEmergencia = estudiante.contactosEmergencia || [];
+      const contactoPrincipal = contactosEmergencia.find(c => c.esPrincipal) || contactosEmergencia[0] || {};
+
+      console.log('👤 Estudiante:', estudiante);
+      console.log('👨‍👩‍👧‍👦 Contactos emergencia:', contactosEmergencia);
+      console.log('📞 Contacto principal:', contactoPrincipal);
+
+      // Si no hay contactos, mostrar mensaje informativo
+      if (contactosEmergencia.length === 0) {
+        console.log('⚠️ No hay contactos de emergencia registrados. El usuario podrá agregar información.');
+      }
+
+      const formattedFechaIngreso = matriculaCompleta.fechaIngreso 
+        ? new Date(matriculaCompleta.fechaIngreso).toISOString().split('T')[0]
         : '';
 
-      reset({
-        // Datos del estudiante - solo los que existen en la estructura real
+      const formData = {
+        // Datos del estudiante - solo campos editables
         nombreEstudiante: estudiante.nombre || '',
         apellidoEstudiante: estudiante.apellido || '',
-        nroDocumentoEstudiante: estudiante.nroDocumento || '',
-        tipoDocumentoEstudiante: estudiante.tipoDocumento || 'DNI',
-        contactoEmergencia: estudiante.contactoEmergencia || '',
-        nroEmergencia: estudiante.nroEmergencia || '',
         observacionesEstudiante: estudiante.observaciones || '',
         
         // Datos del apoderado - solo los que existen
@@ -128,28 +172,38 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
         correoApoderado: apoderado.correo || '',
         direccionApoderado: apoderado.direccion || '',
         
+        // Contacto de emergencia principal - campos vacíos si no hay datos
+        nombreContacto: contactoPrincipal.nombre || '',
+        apellidoContacto: contactoPrincipal.apellido || '',
+        telefonoContacto: contactoPrincipal.telefono || '',
+        emailContacto: contactoPrincipal.email || '',
+        tipoContacto: contactoPrincipal.tipoContacto || '',
+        
         // Datos de matrícula
-        costoMatricula: matricula.costoMatricula || '',
-        metodoPago: matricula.metodoPago || '',
+        costoMatricula: matriculaCompleta.costoMatricula || '',
         fechaIngreso: formattedFechaIngreso
-      });
+      };
+
+      console.log('📝 Datos del formulario:', formData);
+      reset(formData);
     }
-  }, [matricula, isOpen, reset]);
+  }, [matriculaCompleta, isOpen, reset]);
 
   const onSubmit = async (data) => {
     try {
-      // Extraer IDs del estudiante y apoderado
-      const estudianteId = matricula.idEstudiante?.idEstudiante || matricula.idEstudiante?.id;
-      const apoderadoId = matricula.idApoderado?.idApoderado || matricula.idApoderado?.id;
+      // Usar la matrícula completa si está disponible, sino la original
+      const matriculaToUse = matriculaCompleta || matricula;
       
-      // Preparar datos del estudiante para actualización
+      // Extraer IDs del estudiante y apoderado
+      const estudianteId = matriculaToUse.idEstudiante?.idEstudiante || matriculaToUse.idEstudiante?.id;
+      const apoderadoId = matriculaToUse.idApoderado?.idApoderado || matriculaToUse.idApoderado?.id;
+      
+      console.log('📝 Actualizando con IDs:', { estudianteId, apoderadoId });
+      
+      // Preparar datos del estudiante para actualización (solo campos editables)
       const estudianteData = {
         nombre: data.nombreEstudiante,
         apellido: data.apellidoEstudiante,
-        nroDocumento: data.nroDocumentoEstudiante,
-        tipoDocumento: data.tipoDocumentoEstudiante,
-        contactoEmergencia: data.contactoEmergencia,
-        nroEmergencia: data.nroEmergencia,
         observaciones: data.observacionesEstudiante
       };
       
@@ -161,6 +215,25 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
         correo: data.correoApoderado,
         direccion: data.direccionApoderado
       };
+
+      // Preparar datos del contacto de emergencia
+      const contactosEmergencia = matriculaToUse.idEstudiante?.contactosEmergencia || [];
+      const contactoPrincipal = contactosEmergencia.find(c => c.esPrincipal) || contactosEmergencia[0];
+      
+      if (contactoPrincipal) {
+        const contactoData = {
+          nombre: data.nombreContacto,
+          apellido: data.apellidoContacto,
+          telefono: data.telefonoContacto,
+          email: data.emailContacto,
+          tipoContacto: data.tipoContacto
+        };
+        
+        console.log('📞 Datos del contacto a actualizar:', contactoData);
+        
+        // TODO: Actualizar contacto de emergencia cuando esté disponible el endpoint
+        // await matriculaService.updateContactoEmergencia(contactoPrincipal.idContactoEmergencia, contactoData);
+      }
 
       // Ejecutar las actualizaciones en paralelo
       const promises = [];
@@ -187,6 +260,7 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
       onSave(); // Llamar callback de éxito
       
     } catch (error) {
+      console.error('❌ Error al actualizar:', error);
       toast.error('Error al actualizar la información', {
         description: error.message || 'Ocurrió un error inesperado'
       });
@@ -224,7 +298,7 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
@@ -249,234 +323,310 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
                 </div>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                  {/* Foto del estudiante */}
+                  {/* Layout en 2 columnas para pantallas grandes */}
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    
+                    {/* Columna Izquierda */}
+                    <div className="space-y-6">
+                      {/* Información Personal del Estudiante */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
+                          <User className="w-5 h-5 mr-2 text-blue-600" />
+                          Información Personal del Estudiante
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            label="Nombre"
+                            error={errors.nombreEstudiante?.message}
+                            required
+                          >
+                            <input
+                              {...register('nombreEstudiante')}
+                              type="text"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Ingrese el nombre"
+                            />
+                          </FormField>
 
-                  {/* Información Personal del Estudiante */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
-                      <User className="w-5 h-5 mr-2 text-blue-600" />
-                      Información Personal del Estudiante
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        label="Nombre"
-                        error={errors.nombreEstudiante?.message}
-                        required
-                      >
-                        <input
-                          {...register('nombreEstudiante')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Ingrese el nombre"
-                        />
-                      </FormField>
+                          <FormField
+                            label="Apellido"
+                            error={errors.apellidoEstudiante?.message}
+                            required
+                          >
+                            <input
+                              {...register('apellidoEstudiante')}
+                              type="text"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Ingrese el apellido"
+                            />
+                          </FormField>
 
-                      <FormField
-                        label="Apellido"
-                        error={errors.apellidoEstudiante?.message}
-                        required
-                      >
-                        <input
-                          {...register('apellidoEstudiante')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Ingrese el apellido"
-                        />
-                      </FormField>
+                          <FormField
+                            label="Documento de Identidad"
+                            className="md:col-span-2"
+                          >
+                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
+                              {matricula?.idEstudiante?.nroDocumento || 'No especificado'} (No editable)
+                            </div>
+                          </FormField>
 
-                      <FormField
-                        label="Tipo de Documento"
-                        error={errors.tipoDocumentoEstudiante?.message}
-                        required
-                      >
-                        <select
-                          {...register('tipoDocumentoEstudiante')}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="DNI">DNI</option>
-                          <option value="Pasaporte">Pasaporte</option>
-                          <option value="Carnet de Extranjería">Carnet de Extranjería</option>
-                        </select>
-                      </FormField>
+                          <FormField
+                            label="Observaciones del Estudiante"
+                            error={errors.observacionesEstudiante?.message}
+                            className="md:col-span-2"
+                          >
+                            <textarea
+                              {...register('observacionesEstudiante')}
+                              rows={3}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Observaciones sobre el estudiante"
+                            />
+                          </FormField>
+                        </div>
+                      </div>
 
-                      <FormField
-                        label="Número de Documento"
-                        error={errors.nroDocumentoEstudiante?.message}
-                        required
-                      >
-                        <input
-                          {...register('nroDocumentoEstudiante')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Ingrese el número de documento"
-                        />
-                      </FormField>
+                      {/* Información del Apoderado */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
+                          <Users className="w-5 h-5 mr-2 text-green-600" />
+                          Información del Apoderado
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            label="Nombre"
+                            error={errors.nombreApoderado?.message}
+                            required
+                          >
+                            <input
+                              {...register('nombreApoderado')}
+                              type="text"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Nombre del apoderado"
+                            />
+                          </FormField>
 
-                      <FormField
-                        label="Contacto de Emergencia"
-                        error={errors.contactoEmergencia?.message}
-                        required
-                      >
-                        <input
-                          {...register('contactoEmergencia')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Nombre del contacto de emergencia"
-                        />
-                      </FormField>
+                          <FormField
+                            label="Apellido"
+                            error={errors.apellidoApoderado?.message}
+                            required
+                          >
+                            <input
+                              {...register('apellidoApoderado')}
+                              type="text"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Apellido del apoderado"
+                            />
+                          </FormField>
 
-                      <FormField
-                        label="Número de Emergencia"
-                        error={errors.nroEmergencia?.message}
-                        required
-                      >
-                        <input
-                          {...register('nroEmergencia')}
-                          type="tel"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Teléfono de emergencia"
-                        />
-                      </FormField>
+                          <FormField
+                            label="Teléfono"
+                            error={errors.numeroApoderado?.message}
+                            required
+                          >
+                            <input
+                              {...register('numeroApoderado')}
+                              type="tel"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Teléfono del apoderado"
+                            />
+                          </FormField>
 
-                      <FormField
-                        label="Observaciones del Estudiante"
-                        error={errors.observacionesEstudiante?.message}
-                        className="md:col-span-2"
-                      >
-                        <textarea
-                          {...register('observacionesEstudiante')}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Observaciones sobre el estudiante"
-                        />
-                      </FormField>
+                          <FormField
+                            label="Email"
+                            error={errors.correoApoderado?.message}
+                            required
+                          >
+                            <input
+                              {...register('correoApoderado')}
+                              type="email"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="apoderado@ejemplo.com"
+                            />
+                          </FormField>
+
+                          <FormField
+                            label="Documento de Identidad"
+                            className="md:col-span-1"
+                          >
+                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
+                              {matricula?.idApoderado?.documentoIdentidad || 'No especificado'} (No editable)
+                            </div>
+                          </FormField>
+
+                          <FormField
+                            label="Dirección"
+                            error={errors.direccionApoderado?.message}
+                            className="md:col-span-2"
+                          >
+                            <input
+                              {...register('direccionApoderado')}
+                              type="text"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="Dirección del apoderado"
+                            />
+                          </FormField>
+                        </div>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Información del Apoderado */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
-                      <Users className="w-5 h-5 mr-2 text-green-600" />
-                      Información del Apoderado
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        label="Nombre"
-                        error={errors.nombreApoderado?.message}
-                        required
-                      >
-                        <input
-                          {...register('nombreApoderado')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Nombre del apoderado"
-                        />
-                      </FormField>
+                    {/* Columna Derecha */}
+                    <div className="space-y-6">
+                      {/* Contacto de Emergencia */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
+                          <Phone className="w-5 h-5 mr-2 text-red-600" />
+                          Contacto de Emergencia Principal
+                          {loadingContactos && (
+                            <Loader2 className="w-4 h-4 ml-2 animate-spin text-blue-500" />
+                          )}
+                        </h3>
+                        
+                        {loadingContactos ? (
+                          <div className="text-center py-8">
+                            <Loader2 className="w-8 h-8 animate-spin text-blue-500 mx-auto" />
+                            <p className="text-gray-500 mt-2">Cargando contactos de emergencia...</p>
+                          </div>
+                        ) : (
+                          <div>
+                            {/* Mensaje informativo si no hay contactos en la base de datos */}
+                            {(!matriculaCompleta?.idEstudiante?.contactosEmergencia || matriculaCompleta.idEstudiante.contactosEmergencia.length === 0) && (
+                              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="text-sm text-yellow-800">
+                                  ⚠️ <strong>No hay contactos de emergencia registrados.</strong> 
+                                  Puedes agregar la información aquí y se guardará cuando actualices la matrícula.
+                                </p>
+                              </div>
+                            )}
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                label="Nombre"
+                                error={errors.nombreContacto?.message}
+                                required
+                              >
+                                <input
+                                  {...register('nombreContacto')}
+                                  type="text"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Nombre del contacto"
+                                />
+                              </FormField>
 
-                      <FormField
-                        label="Apellido"
-                        error={errors.apellidoApoderado?.message}
-                        required
-                      >
-                        <input
-                          {...register('apellidoApoderado')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Apellido del apoderado"
-                        />
-                      </FormField>
+                              <FormField
+                                label="Apellido"
+                                error={errors.apellidoContacto?.message}
+                                required
+                              >
+                                <input
+                                  {...register('apellidoContacto')}
+                                  type="text"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Apellido del contacto"
+                                />
+                              </FormField>
 
-                      <FormField
-                        label="Teléfono"
-                        error={errors.numeroApoderado?.message}
-                        required
-                      >
-                        <input
-                          {...register('numeroApoderado')}
-                          type="tel"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Teléfono del apoderado"
-                        />
-                      </FormField>
+                              <FormField
+                                label="Teléfono"
+                                error={errors.telefonoContacto?.message}
+                                required
+                              >
+                                <input
+                                  {...register('telefonoContacto')}
+                                  type="tel"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="Teléfono de emergencia"
+                                />
+                              </FormField>
 
-                      <FormField
-                        label="Email"
-                        error={errors.correoApoderado?.message}
-                        required
-                      >
-                        <input
-                          {...register('correoApoderado')}
-                          type="email"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="apoderado@ejemplo.com"
-                        />
-                      </FormField>
+                              <FormField
+                                label="Email"
+                                error={errors.emailContacto?.message}
+                              >
+                                <input
+                                  {...register('emailContacto')}
+                                  type="email"
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                  placeholder="email@ejemplo.com"
+                                />
+                              </FormField>
 
-                      <FormField
-                        label="Dirección"
-                        error={errors.direccionApoderado?.message}
-                        className="md:col-span-2"
-                      >
-                        <input
-                          {...register('direccionApoderado')}
-                          type="text"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="Dirección del apoderado"
-                        />
-                      </FormField>
-                    </div>
-                  </div>
+                              <FormField
+                                label="Tipo de Contacto"
+                                error={errors.tipoContacto?.message}
+                                required
+                                className="md:col-span-2"
+                              >
+                                <select
+                                  {...register('tipoContacto')}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                  <option value="">Seleccione tipo</option>
+                                  <option value="Madre">Madre</option>
+                                  <option value="Padre">Padre</option>
+                                  <option value="Abuelo">Abuelo</option>
+                                  <option value="Abuela">Abuela</option>
+                                  <option value="Tío">Tío</option>
+                                  <option value="Tía">Tía</option>
+                                  <option value="Hermano">Hermano</option>
+                                  <option value="Hermana">Hermana</option>
+                                  <option value="Otro familiar">Otro familiar</option>
+                                </select>
+                              </FormField>
+                            </div>
+                          </div>
+                        )}
+                      </div>
 
-                  {/* Información de Matrícula */}
-                  <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
-                      <GraduationCap className="w-5 h-5 mr-2 text-purple-600" />
-                      Información de Matrícula
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <FormField
-                        label="Fecha de Ingreso"
-                        error={errors.fechaIngreso?.message}
-                        required
-                      >
-                        <input
-                          {...register('fechaIngreso')}
-                          type="date"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                      </FormField>
+                      {/* Información de Matrícula */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
+                          <GraduationCap className="w-5 h-5 mr-2 text-purple-600" />
+                          Información de Matrícula
+                        </h3>
+                        <div className="grid grid-cols-1 gap-4">
+                          <FormField
+                            label="Fecha de Ingreso"
+                            error={errors.fechaIngreso?.message}
+                            required
+                          >
+                            <input
+                              {...register('fechaIngreso')}
+                              type="date"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </FormField>
 
-                      <FormField
-                        label="Costo de Matrícula"
-                        error={errors.costoMatricula?.message}
-                        required
-                      >
-                        <input
-                          {...register('costoMatricula')}
-                          type="number"
-                          step="0.01"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          placeholder="0.00"
-                        />
-                      </FormField>
+                          <FormField
+                            label="Costo de Matrícula (S/)"
+                            error={errors.costoMatricula?.message}
+                            required
+                          >
+                            <input
+                              {...register('costoMatricula')}
+                              type="number"
+                              step="0.01"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              placeholder="0.00"
+                            />
+                          </FormField>
 
-                      <FormField
-                        label="Método de Pago"
-                        error={errors.metodoPago?.message}
-                        required
-                        className="md:col-span-2"
-                      >
-                        <select
-                          {...register('metodoPago')}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                          <option value="">Seleccione método</option>
-                          <option value="Efectivo">Efectivo</option>
-                          <option value="Transferencia bancaria">Transferencia bancaria</option>
-                          <option value="Tarjeta de crédito">Tarjeta de crédito</option>
-                          <option value="Tarjeta de débito">Tarjeta de débito</option>
-                        </select>
-                      </FormField>
+                          <FormField
+                            label="Grado"
+                          >
+                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
+                              {matricula?.idGrado?.grado || 'No especificado'} (No editable)
+                            </div>
+                          </FormField>
+
+                          <FormField
+                            label="Aula Asignada"
+                          >
+                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
+                              Sección {matricula?.matriculaAula?.aula?.seccion || 'No asignada'} (No editable)
+                            </div>
+                          </FormField>
+                        </div>
+                      </div>
                     </div>
                   </div>
 

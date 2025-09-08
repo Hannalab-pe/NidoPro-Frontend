@@ -45,7 +45,6 @@ export const useApoderados = () => {
   const fetchApoderados = useCallback(async () => {
     setLoading(true);
     try {
-      console.log('👨‍👩‍👧‍👦 Cargando apoderados...');
       const response = await apoderadoService.getApoderados(filters);
       
       // Extraer datos según la estructura de respuesta del backend

@@ -92,11 +92,10 @@ export const useTrabajadores = (initialFilters = {}) => {
     return deleteMutation.mutateAsync(id);
   }, [deleteMutation]);
 
-  const toggleTrabajadorStatus = useCallback(async (trabajador) => {
-    return toggleStatusMutation.mutateAsync({ trabajador });
-  }, [toggleStatusMutation]);
-
-  // Funciones de filtrado y búsqueda
+  const toggleTrabajadorStatus = useCallback(async (trabajador) => {
+    console.log('🔄 Hook useTrabajadores - toggleTrabajadorStatus llamado con:', trabajador);
+    return toggleStatusMutation.mutateAsync({ trabajador });
+  }, [toggleStatusMutation]);  // Funciones de filtrado y búsqueda
   const updateFilters = useCallback((newFilters) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
   }, []);

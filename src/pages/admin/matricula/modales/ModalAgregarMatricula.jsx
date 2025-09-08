@@ -10,6 +10,12 @@ import { useAulasAsignacion } from '../../../../hooks/useAulasAsignacion';
 import { useApoderados } from '../../../../hooks/useApoderados';
 import { useGrados } from '../../../../hooks/useGrados';
 import FormField from '../../../../components/common/FormField';
+import { 
+  validateAndCleanContactos, 
+  ensurePrimaryContact, 
+  validateMatriculaData,
+  generateDataSummary 
+} from '../../../../utils/matriculaValidation';
 
 const schema = yup.object({
   // Información de Matrícula
@@ -37,15 +43,33 @@ const schema = yup.object({
     .min(8, 'El documento debe tener al menos 8 caracteres'),
   contactosEmergencia: yup.array().of(
     yup.object({
-      nombre: yup.string().required('Nombre de contacto requerido'),
-      apellido: yup.string().required('Apellido de contacto requerido'),
-      telefono: yup.string().required('Teléfono requerido'),
-      email: yup.string().email('Email inválido').required('Email requerido'),
-      tipoContacto: yup.string().required('Tipo de contacto requerido'),
+      nombre: yup.string()
+        .required('Nombre de contacto requerido')
+        .min(2, 'El nombre debe tener al menos 2 caracteres')
+        .max(50, 'El nombre no puede superar los 50 caracteres'),
+      apellido: yup.string()
+        .required('Apellido de contacto requerido')
+        .min(2, 'El apellido debe tener al menos 2 caracteres')
+        .max(50, 'El apellido no puede superar los 50 caracteres'),
+      telefono: yup.string()
+        .required('Teléfono requerido')
+        .min(9, 'El teléfono debe tener al menos 9 dígitos')
+        .max(15, 'El teléfono no puede superar los 15 dígitos'),
+      email: yup.string()
+        .email('Email inválido')
+        .required('Email requerido')
+        .max(100, 'El email no puede superar los 100 caracteres'),
+      tipoContacto: yup.string()
+        .required('Tipo de contacto requerido')
+        .min(2, 'El tipo de contacto debe tener al menos 2 caracteres')
+        .max(30, 'El tipo de contacto no puede superar los 30 caracteres'),
       esPrincipal: yup.boolean(),
-      prioridad: yup.number().min(1).required('Prioridad requerida'),
+      prioridad: yup.number()
+        .min(1, 'La prioridad debe ser al menos 1')
+        .max(10, 'La prioridad no puede superar 10')
+        .required('Prioridad requerida'),
     })
-  ).min(1, 'Debe agregar al menos un contacto de emergencia'),
+  ).min(1, 'Debe agregar al menos un contacto de emergencia').required('Los contactos de emergencia son requeridos'),
   
   // Información del Apoderado
   apoderadoNombre: yup.string()
@@ -222,6 +246,8 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
 
   const onSubmit = async (data) => {
     try {
+ 
+      
       let voucherUrl = null;
 
       if (voucherFile) {
@@ -246,6 +272,21 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         setUploadingVoucher(false);
       }
 
+      // Procesar y validar contactos de emergencia usando las utilidades
+      console.log('🔍 Contactos originales del formulario:', data.contactosEmergencia);
+      
+      let contactosEmergenciaLimpios = validateAndCleanContactos(data.contactosEmergencia || []);
+      contactosEmergenciaLimpios = ensurePrimaryContact(contactosEmergenciaLimpios);
+
+      console.log('🧹 Contactos de emergencia después de validación:', contactosEmergenciaLimpios);
+
+      if (contactosEmergenciaLimpios.length === 0) {
+        toast.error('Error de validación', {
+          description: 'Debe agregar al menos un contacto de emergencia válido'
+        });
+        return;
+      }
+
       const matriculaData = {
         // Datos básicos requeridos
         costoMatricula: data.costoMatricula.toString(),
@@ -253,8 +294,9 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         idGrado: data.idGrado,
         metodoPago: data.metodoPago,
         
-        // Solo incluir idApoderado si existe y no es undefined
-        ...(selectedApoderado?.id && { idApoderado: selectedApoderado.id }),
+        // Incluir idApoderado e idEstudiante explícitamente como null si no existen
+        idApoderado: selectedApoderado?.id || null,
+        idEstudiante: null,
         
         // Datos del apoderado (para crear nuevo o actualizar)
         apoderadoData: {
@@ -264,42 +306,81 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
           documentoIdentidad: selectedApoderado ? selectedApoderado.documentoIdentidad : data.apoderadoDocumento,
           numero: selectedApoderado ? selectedApoderado.numero : data.apoderadoTelefono,
           correo: selectedApoderado ? selectedApoderado.correo : data.apoderadoCorreo,
-          direccion: selectedApoderado ? selectedApoderado.direccion : data.apoderadoDireccion
+          direccion: selectedApoderado ? selectedApoderado.direccion : data.apoderadoDireccion,
+          esPrincipal: true,
+          tipoApoderado: "Padre" // Cambiado para coincidir con el Swagger
         },
         
         // Datos del estudiante (para crear nuevo) - usando UUID real del rol ESTUDIANTE
         estudianteData: {
-          nombre: data.estudianteNombre,
-          apellido: data.estudianteApellido,
+          nombre: data.estudianteNombre?.trim() || '',
+          apellido: data.estudianteApellido?.trim() || '',
           tipoDocumento: data.estudianteTipoDoc || 'DNI',
-          nroDocumento: data.estudianteDocumento,
-          contactosEmergencia: data.contactosEmergencia,
-          observaciones: data.observaciones || '',
-          idRol: "35225955-5aeb-4df0-8014-1cdfbce9b41e" // UUID real del rol ESTUDIANTE
+          nroDocumento: data.estudianteDocumento?.trim() || '',
+          contactosEmergencia: contactosEmergenciaLimpios,
+          observaciones: data.observaciones?.trim() || '',
+          idRol: "35225955-5aeb-4df0-8014-1cdfbce9b41e", // UUID real del rol ESTUDIANTE
+          imagen_estudiante: null
         },
         
-  // Asignación de aula
-  tipoAsignacionAula: data.tipoAsignacionAula,
-        ...(data.tipoAsignacionAula === 'manual' && data.idAulaEspecifica && {
-          idAulaEspecifica: data.idAulaEspecifica
-        }),
-        ...(data.motivoPreferencia && {
-          motivoPreferencia: data.motivoPreferencia
-        }),
+        // Asignación de aula
+        tipoAsignacionAula: data.tipoAsignacionAula,
+        idAulaEspecifica: data.tipoAsignacionAula === 'manual' && data.idAulaEspecifica ? data.idAulaEspecifica : null,
         
-  // Voucher si existe
-  ...(voucherUrl && { voucherImg: voucherUrl })
+        // Motivo de preferencia
+        motivoPreferencia: data.motivoPreferencia || null,
+        
+        // Voucher
+        voucherImg: voucherUrl || ""
       };
 
-      console.log('📋 Datos preparados para backend:', matriculaData);
-      console.log('🔍 apoderadoData.tipoDocumentoIdentidad:', matriculaData.apoderadoData.tipoDocumentoIdentidad);
-      console.log('🔍 estudianteData.idRol:', matriculaData.estudianteData.idRol);
-      console.log('🔍 Campos undefined:', Object.entries(matriculaData).filter(([key, value]) => value === undefined));
+      console.log('📋 Datos preparados para backend:', generateDataSummary(matriculaData));
+      
+      // Validar datos completos antes del envío
+      const validation = validateMatriculaData(matriculaData);
+      if (!validation.isValid) {
+        console.error('❌ Errores de validación:', validation.errors);
+        toast.error('Error de validación', {
+          description: validation.errors[0] // Mostrar el primer error
+        });
+        return;
+      }
+      
+      // Debug específico para contactos de emergencia
+      console.log('🚨 VERIFICACIÓN CONTACTOS DE EMERGENCIA:');
+      console.log('🚨 data.contactosEmergencia original:', data.contactosEmergencia);
+      console.log('🚨 contactosEmergenciaLimpios:', contactosEmergenciaLimpios);
+      console.log('🚨 matriculaData.estudianteData.contactosEmergencia:', matriculaData.estudianteData.contactosEmergencia);
+      console.log('🚨 Tipo de contactos:', typeof matriculaData.estudianteData.contactosEmergencia);
+      console.log('🚨 Es array?:', Array.isArray(matriculaData.estudianteData.contactosEmergencia));
+      console.log('🚨 Cantidad:', matriculaData.estudianteData.contactosEmergencia?.length);
+
+      // Validar que hay al menos un contacto de emergencia
+      if (!matriculaData.estudianteData.contactosEmergencia || matriculaData.estudianteData.contactosEmergencia.length === 0) {
+        toast.error('Error de validación', {
+          description: 'Debe agregar al menos un contacto de emergencia válido'
+        });
+        return;
+      }
+
+      // Validar que cada contacto tiene los datos mínimos requeridos
+      for (let i = 0; i < matriculaData.estudianteData.contactosEmergencia.length; i++) {
+        const contacto = matriculaData.estudianteData.contactosEmergencia[i];
+        if (!contacto.nombre || !contacto.apellido || !contacto.telefono || !contacto.email) {
+          toast.error('Error de validación', {
+            description: `El contacto ${i + 1} debe tener nombre, apellido, teléfono y email`
+          });
+          return;
+        }
+      }
 
       // Limpiar campos undefined antes del envío
       const cleanMatriculaData = JSON.parse(JSON.stringify(matriculaData, (key, value) => 
         value === undefined ? null : value
       ));
+      
+      console.log('🧹 Datos limpiados para envío:', cleanMatriculaData);
+      console.log('🧹 Contactos después de limpiar:', cleanMatriculaData.estudianteData?.contactosEmergencia);
 
       await matricularEstudiante(cleanMatriculaData);
       
@@ -307,8 +388,22 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
       handleClose();
       if (refetch) refetch();
     } catch (error) {
-      console.error('Error al matricular:', error);
-      toast.error(error.message || 'Error al matricular estudiante');
+      console.error('❌ Error completo al matricular:', error);
+      console.error('❌ Stack trace:', error.stack);
+      
+      // Mostrar error más específico
+      let errorMessage = 'Error al matricular estudiante';
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      toast.error('Error al matricular estudiante', {
+        description: errorMessage
+      });
       setUploadingVoucher(false);
     }
   };
@@ -442,17 +537,14 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
 
                       {/* Voucher de Pago */}
                       <div className="mt-6">
-                        <FormField
-                          label="Voucher de Pago"
-                          className="mb-4"
-                        >
+                        <FormField label="Voucher de Pago" className="mb-4">
                           <div className="relative w-full">
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors">
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors hover:cursor-pointer h-84 flex flex-col items-center justify-center">
                               {voucherImage ? (
                                 <div className="relative">
-                                  <img 
-                                    src={voucherImage} 
-                                    alt="Voucher" 
+                                  <img
+                                    src={voucherImage}
+                                    alt="Voucher"
                                     className="max-h-32 mx-auto rounded-lg object-contain"
                                   />
                                   <button
@@ -467,7 +559,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                                   </button>
                                 </div>
                               ) : (
-                                <div className="py-4">
+                                <>
                                   <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
                                   <p className="text-sm text-gray-600 mb-2">
                                     Subir voucher de pago
@@ -489,11 +581,11 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                                   />
                                   <label
                                     htmlFor="voucher-upload"
-                                    className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors inline-block"
+                                    className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors w-50"
                                   >
                                     Seleccionar archivo
                                   </label>
-                                </div>
+                                </>
                               )}
                             </div>
                           </div>
