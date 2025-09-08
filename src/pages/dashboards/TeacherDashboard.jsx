@@ -23,7 +23,8 @@ import {
   Menu,
   X,
   Baby,
-  FileText
+  FileText,
+  BookOpen
 } from "lucide-react";
 
 // Importar los componentes que creamos
@@ -37,6 +38,7 @@ import { MisEstudiantes } from "../teacher/misestudiantes";
 import MisAulas from "../teacher/misaulas/MisAulas";
 import Clases from "../teacher/clases/Clases";
 import TeacherPlanificaciones from '../teacher/planificaciones/TeacherPlanificaciones';
+import { Tareas } from '../teacher/tareas';
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -48,6 +50,7 @@ const TeacherDashboard = () => {
     { id: "ai-chat", label: "Asistente IA", icon: MessageCircle },
     { id: "schedule", label: "Cronograma", icon: Calendar },
     { id: "attendance", label: "Asistencias", icon: ClipboardList },
+    { id: "tareas", label: "Tareas", icon: BookOpen },
     { id: "notes", label: "Anotaciones", icon: StickyNote },
     { id: "games", label: "Juegos", icon: Gamepad2 },
     { id: "students", label: "Mis Alumnos", icon: Users },
@@ -432,6 +435,7 @@ const TeacherDashboard = () => {
           {activeSection === "ai-chat" && <AIChat />}
           {activeSection === "schedule" && <Horarios />}
           {activeSection === "attendance" && <Asistencias />}
+          {activeSection === "tareas" && <Tareas />}
           {activeSection === "notes" && <Notas />}
           {activeSection === "games" && <Juegos />}
           {activeSection === "students" && <MisEstudiantes />}

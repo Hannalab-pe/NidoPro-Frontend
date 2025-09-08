@@ -29,14 +29,22 @@ export const useAulasTrabajador = (idTrabajador) => {
  * Hook para obtener estudiantes de un aula específica
  */
 export const useEstudiantesAula = (idAula) => {
+  console.log('🔧 Hook estudiantes ejecutado:', { idAula, enabled: !!idAula });
+  
   return useQuery({
     queryKey: ['estudiantes-aula', idAula],
-    queryFn: () => estudianteService.getEstudiantesPorAula(idAula),
+    queryFn: () => {
+      console.log('⚡ Ejecutando petición de estudiantes:', { idAula });
+      return estudianteService.getEstudiantesPorAula(idAula);
+    },
     enabled: !!idAula,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000, // 10 minutos
+    staleTime: 0, // Reducir a 0 para forzar peticiones frescas
+    cacheTime: 5 * 60 * 1000, // 5 minutos
     onSuccess: (data) => {
-      console.log('👥 Estudiantes del aula cargados:', data);
+      console.log('👥 Estudiantes cargados:', { 
+        total: data?.estudiantes?.length || data?.data?.length || 0,
+        aula: idAula 
+      });
     },
     onError: (error) => {
       console.error('❌ Error al cargar estudiantes del aula:', error);
@@ -49,18 +57,65 @@ export const useEstudiantesAula = (idAula) => {
  * Hook para obtener asistencias existentes por aula y fecha
  */
 export const useAsistenciasPorAulaYFecha = (idAula, fecha) => {
+  console.log('🔧 Hook asistencias ejecutado:', { idAula, fecha, enabled: !!(idAula && fecha) });
+  
   return useQuery({
     queryKey: ['asistencias-aula-fecha', idAula, fecha],
-    queryFn: () => asistenciaService.getAsistenciasPorAulaYFecha(idAula, fecha),
+    queryFn: () => {
+      console.log('⚡ Ejecutando petición de asistencias:', { idAula, fecha });
+      return asistenciaService.getAsistenciasPorAulaYFecha(idAula, fecha);
+    },
     enabled: !!(idAula && fecha),
-    staleTime: 2 * 60 * 1000, // 2 minutos
-    cacheTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 0, // Reducir a 0 para forzar peticiones frescas
+    cacheTime: 2 * 60 * 1000, // 2 minutos
+    onSuccess: (data) => {
+      console.log('✅ Asistencias cargadas:', { 
+        total: data?.info?.totalRegistros || 0,
+        fecha: data?.info?.fecha,
+        aula: data?.info?.aula
+      });
+    },
     onError: (error) => {
       console.error('❌ Error al cargar asistencias existentes:', error);
       // No mostrar toast de error si simplemente no hay datos para esa fecha
       if (!error.message.includes('No se encontraron')) {
         toast.error('Error al cargar asistencias existentes');
       }
+    }
+  });
+};
+
+/**
+ * Hook para obtener historial de asistencias de un estudiante
+ */
+export const useHistorialAsistenciasEstudiante = (idEstudiante) => {
+  console.log('🔧 [HOOK] useHistorialAsistenciasEstudiante ejecutándose');
+  console.log('📝 [HOOK] ID Estudiante recibido:', idEstudiante);
+  console.log('✅ [HOOK] Hook habilitado:', !!idEstudiante);
+  
+  return useQuery({
+    queryKey: ['historial-asistencias-estudiante', idEstudiante],
+    queryFn: () => {
+      console.log('⚡ [HOOK] Ejecutando queryFn con ID:', idEstudiante);
+      return asistenciaService.getHistorialAsistenciasEstudiante(idEstudiante);
+    },
+    enabled: !!idEstudiante,
+    staleTime: 2 * 60 * 1000, // 2 minutos
+    cacheTime: 5 * 60 * 1000, // 5 minutos
+    onSuccess: (data) => {
+      console.log('✅ [HOOK] Datos recibidos exitosamente:');
+      console.log('📊 [HOOK] Data completa:', data);
+      console.log('📋 [HOOK] Estructura:', {
+        hasInfo: !!data?.info,
+        hasData: !!data?.info?.data,
+        dataLength: data?.info?.data?.length || 0,
+        totalRegistros: data?.info?.totalRegistros || 0,
+        samples: data?.info?.data?.slice(0, 2) || []
+      });
+    },
+    onError: (error) => {
+      console.error('❌ [HOOK] Error al cargar historial de asistencias:', error);
+      toast.error('Error al cargar el historial de asistencias');
     }
   });
 };
