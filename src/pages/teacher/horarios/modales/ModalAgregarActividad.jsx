@@ -68,9 +68,14 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
   const { aulas: allAulas, loading: loadingAllAulas } = useAulasHook();
   
   // Hook para aulas específicas del trabajador (solo para docentes)
-  const { data: aulasTrabajador = [], isLoading: loadingAulasTrabajador } = useAulasByTrabajador(
+  const { data: aulasTrabajador = [], isLoading: loadingAulasTrabajador, error: errorAulasTrabajador } = useAulasByTrabajador(
     trabajadorId,
-    { enabled: isDocente && !!trabajadorId }
+    { 
+      enabled: isDocente && !!trabajadorId,
+      refetchOnMount: true,
+      refetchOnWindowFocus: false,
+      staleTime: 0, // Forzar refetch cada vez
+    }
   );
   
   // Determinar qué aulas usar y el estado de loading
@@ -97,6 +102,28 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
     length: aulas?.length,
     type: typeof aulas 
   });
+  
+  // Debug adicional para errores
+  if (errorAulasTrabajador) {
+    console.error('❌ Error en aulasTrabajador:', errorAulasTrabajador);
+  }
+  console.log('🔍 aulasTrabajador detallado:', {
+    data: aulasTrabajador,
+    isArray: Array.isArray(aulasTrabajador),
+    keys: Object.keys(aulasTrabajador || {}),
+    type: typeof aulasTrabajador,
+    firstItem: aulasTrabajador?.[0],
+    length: aulasTrabajador?.length
+  });
+  
+  // Debug específico para aulas procesadas
+  console.log('🏫 Aulas finales para select:', aulas.map(aula => ({
+    id: aula.id_aula || aula.idAula || aula.id,
+    nombre: aula.nombre,
+    seccion: aula.seccion,
+    grado: aula.grado,
+    original: aula
+  })));
 
   const {
     register,
@@ -122,6 +149,8 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
   // Mutation para crear actividad
   const createActivityMutation = useMutation({
     mutationFn: async (activityData) => {
+      console.log('🚀 Enviando petición con datos:', activityData);
+      
       const response = await fetch('http://localhost:3002/api/v1/cronograma', {
         method: 'POST',
         headers: {
@@ -131,11 +160,21 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
         body: JSON.stringify(activityData)
       });
 
+      console.log('📥 Respuesta del servidor:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
+
       if (!response.ok) {
-        throw new Error('Error al crear la actividad');
+        const errorText = await response.text();
+        console.error('❌ Error del servidor:', errorText);
+        throw new Error(`Error al crear la actividad: ${response.status} - ${errorText}`);
       }
 
-      return response.json();
+      const result = await response.json();
+      console.log('✅ Respuesta exitosa:', result);
+      return result;
     },
     onSuccess: (data) => {
       toast.success('Actividad creada exitosamente');
@@ -212,6 +251,9 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
         idAula: data.idAula,
         idTrabajador: data.idTrabajador
       };
+
+      console.log('📤 Datos que se van a enviar al backend:', backendData);
+      console.log('📤 Datos del formulario completos:', data);
 
       await createActivityMutation.mutateAsync(backendData);
     } catch (error) {
@@ -368,7 +410,7 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
                           </option>
                           {Array.isArray(aulas) && aulas.length > 0 ? (
                             aulas.map((aula) => (
-                              <option key={aula.idAula || aula.id} value={aula.idAula || aula.id}>
+                              <option key={aula.idAula || aula.id_aula || aula.id} value={aula.idAula || aula.id_aula || aula.id}>
                                 {aula.nombre || `Aula ${aula.seccion || aula.numero || aula.id}`} 
                                 {aula.seccion && ` - Sección ${aula.seccion}`}
                                 {(aula.capacidad || aula.capacidadMaxima) && ` (Cap: ${aula.capacidad || aula.capacidadMaxima})`}

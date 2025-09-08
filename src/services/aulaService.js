@@ -16,6 +16,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('🔐 Token enviado en request:', token ? 'Token presente' : 'Sin token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -248,10 +249,29 @@ export const aulaService = {
       console.log('📤 Obteniendo aulas para trabajador:', idTrabajador);
       
       const response = await api.get(`/trabajador/aulas/${idTrabajador}`);
-      console.log('📥 Respuesta de aulas por trabajador:', response.data);
+      console.log('📥 Respuesta completa de aulas por trabajador:', response.data);
       
-      // Extraer datos del objeto info.data si existe
-      return response.data?.info?.data || response.data?.info || response.data || [];
+      // La respuesta tiene la estructura: { success: true, message: "...", aulas: [...] }
+      if (response.data?.success && response.data?.aulas) {
+        console.log('✅ Aulas encontradas:', response.data.aulas);
+        return response.data.aulas;
+      }
+      
+      // Fallbacks para otras estructuras posibles
+      if (response.data?.info?.data) {
+        return response.data.info.data;
+      }
+      
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      console.log('⚠️ No se encontraron aulas en la respuesta');
+      return [];
     } catch (error) {
       console.error('Error al obtener aulas por trabajador:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener aulas del trabajador');

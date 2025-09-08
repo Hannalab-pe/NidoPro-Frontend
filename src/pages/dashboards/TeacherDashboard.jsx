@@ -45,7 +45,6 @@ const TeacherDashboard = () => {
 
   const menuItems = [
     { id: "overview", label: "Panel Principal", icon: BarChart3 },
-    { id: "goals", label: "Mis Metas", icon: Target },
     { id: "ai-chat", label: "Asistente IA", icon: MessageCircle },
     { id: "schedule", label: "Cronograma", icon: Calendar },
     { id: "attendance", label: "Asistencias", icon: ClipboardList },

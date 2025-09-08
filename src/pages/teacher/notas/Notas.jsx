@@ -18,10 +18,13 @@ import {
   MessageSquare,
   BookOpen,
   Award,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 import { ModalAgregarNota } from './modales';
-import { useAnotaciones } from '../../../hooks/useAnotaciones';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { useAnotacionesByTrabajador } from '../../../hooks/queries/useAnotacionesQueries';
+import { AnotacionCard } from './components';
 
 const Notas = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -30,8 +33,37 @@ const Notas = () => {
   const [editingNote, setEditingNote] = useState(null);
   const [showModalAgregar, setShowModalAgregar] = useState(false);
 
-  // Hook para manejar anotaciones
-  const { anotaciones, loading: loadingAnotaciones, refetchAnotaciones } = useAnotaciones();
+  // Hooks para datos
+  const { user } = useAuthStore();
+  const trabajadorId = user?.entidadId || localStorage.getItem('entidadId');
+  
+  // Hook para obtener anotaciones del trabajador
+  const { 
+    data: anotaciones = [], 
+    isLoading: loadingAnotaciones, 
+    error: errorAnotaciones,
+    refetch: refetchAnotaciones 
+  } = useAnotacionesByTrabajador(
+    trabajadorId,
+    { 
+      enabled: !!trabajadorId,
+      refetchOnMount: true 
+    }
+  );
+
+  // Debug logs
+  console.log('📝 Datos del trabajador:', {
+    user,
+    trabajadorId,
+    entidadIdFromUser: user?.entidadId,
+    entidadIdFromStorage: localStorage.getItem('entidadId')
+  });
+  console.log('📝 Anotaciones obtenidas:', anotaciones);
+  console.log('📝 Estado de loading:', loadingAnotaciones);
+  
+  if (errorAnotaciones) {
+    console.error('❌ Error al cargar anotaciones:', errorAnotaciones);
+  }
 
   const [newNote, setNewNote] = useState({
     student: '',
@@ -156,13 +188,34 @@ const Notas = () => {
     }
   };
 
-  const filteredNotes = notes.filter(note => {
-    const matchesCategory = selectedCategory === 'all' || note.category === selectedCategory;
-    const matchesSearch = note.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.student.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         note.content.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
+  // Filtros para las anotaciones
+  const filteredAnotaciones = anotaciones.filter(anotacion => {
+    const matchesSearch = searchTerm === '' || 
+      anotacion.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      anotacion.observacion?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      `${anotacion.estudiante?.nombre} ${anotacion.estudiante?.apellido}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      anotacion.curso?.nombreCurso?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Por ahora no filtramos por categoría ya que el backend no devuelve categorías específicas
+    // Podrías agregar esta lógica si tienes un campo de categoría en el backend
+    return matchesSearch;
   });
+
+  // Handlers para las acciones
+  const handleEditAnotacion = (anotacion) => {
+    setEditingNote(anotacion);
+    // Aquí podrías abrir un modal de edición
+    console.log('Editar anotación:', anotacion);
+  };
+
+  const handleDeleteAnotacion = (anotacion) => {
+    // Aquí podrías mostrar un modal de confirmación
+    console.log('Eliminar anotación:', anotacion);
+  };
+
+  const handleRefresh = () => {
+    refetchAnotaciones();
+  };
 
   const handleCreateNote = () => {
     if (newNote.title && newNote.content && newNote.student) {
@@ -210,35 +263,29 @@ const Notas = () => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setShowModalAgregar(true)}
+            className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Nueva Anotación</span>
+          </button>
 
-        
-        <button
-          onClick={() => setShowModalAgregar(true)}
-          className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Nueva Anotación</span>
-        </button>
+          <button
+            onClick={handleRefresh}
+            disabled={loadingAnotaciones}
+            className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors disabled:opacity-50 border border-gray-300"
+            title="Actualizar anotaciones"
+          >
+            <RefreshCw className={`w-4 h-4 ${loadingAnotaciones ? 'animate-spin' : ''}`} />
+            <span>Actualizar</span>
+          </button>
+        </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {categories.filter(cat => cat.id !== 'all').map((category) => {
-          const count = notes.filter(note => note.category === category.id).length;
-          const IconComponent = category.icon;
-          return (
-            <div key={category.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">{category.name}</p>
-                  <p className="text-2xl font-bold text-gray-900">{count}</p>
-                </div>
-                <IconComponent className="w-8 h-8" style={{ color: category.color }} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
+
 
       {/* Filters */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
@@ -270,8 +317,15 @@ const Notas = () => {
             </select>
           </div>
 
-          <div className="text-sm text-gray-600">
-            {filteredNotes.length} anotaciones encontradas
+          <div className="text-sm text-gray-600 flex items-center gap-4">
+            <span>{filteredAnotaciones.length} anotaciones encontradas</span>
+            
+            {loadingAnotaciones && (
+              <div className="flex items-center gap-2 text-blue-600">
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                <span>Cargando...</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -402,105 +456,62 @@ const Notas = () => {
         </div>
       )}
 
-      {/* Notes List */}
-      <div className="space-y-4">
-        {filteredNotes.map((note) => {
-          const CategoryIcon = getCategoryIcon(note.category);
-          const StatusIcon = getStatusIcon(note.status);
-          
-          return (
-            <div key={note.id} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <div 
-                    className="p-2 rounded-lg"
-                    style={{ backgroundColor: `${getCategoryColor(note.category)}15`, color: getCategoryColor(note.category) }}
-                  >
-                    <CategoryIcon className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{note.title}</h3>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600">
-                      <span className="flex items-center space-x-1">
-                        <User className="w-3 h-3" />
-                        <span>{note.student}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <Calendar className="w-3 h-3" />
-                        <span>{formatDate(note.date)}</span>
-                      </span>
-                      <div className="flex items-center space-x-1">
-                        <div 
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: getPriorityColor(note.priority) }}
-                        />
-                        <span>Prioridad {priorities.find(p => p.id === note.priority)?.name}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+      {/* Anotaciones List - Formato Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {filteredAnotaciones.map((anotacion) => (
+          <AnotacionCard
+            key={anotacion.idAnotacionAlumno}
+            anotacion={anotacion}
+            onEdit={handleEditAnotacion}
+            onDelete={handleDeleteAnotacion}
+          />
+        ))}
+      </div>
 
-                <div className="flex items-center space-x-2">
-                  <StatusIcon 
-                    className="w-5 h-5"
-                    style={{ color: note.status === 'completed' ? '#10B981' : note.status === 'pending' ? '#F59E0B' : '#EF4444' }}
-                  />
-                  <button 
-                    onClick={() => setEditingNote(note)}
-                    className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteNote(note.id)}
-                    className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <p className="text-gray-700 mb-4 leading-relaxed">{note.content}</p>
-
-              {note.tags && note.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {note.tags.map((tag, index) => (
-                    <span 
-                      key={index}
-                      className="inline-flex items-center px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full"
-                    >
-                      <Tag className="w-3 h-3 mr-1" />
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
-
-        {filteredNotes.length === 0 && (
-          <div className="text-center py-12">
-            <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron anotaciones</h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || selectedCategory !== 'all' 
+      {/* Empty State */}
+      {filteredAnotaciones.length === 0 && !loadingAnotaciones && (
+        <div className="text-center py-12">
+          <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {errorAnotaciones ? 'Error al cargar anotaciones' : 'No se encontraron anotaciones'}
+          </h3>
+          <p className="text-gray-600 mb-4">
+            {errorAnotaciones 
+              ? 'Hubo un problema al cargar las anotaciones. Intenta actualizar.'
+              : searchTerm 
                 ? 'Prueba ajustando los filtros de búsqueda'
                 : 'Comienza creando tu primera anotación'
-              }
-            </p>
-            {!searchTerm && selectedCategory === 'all' && (
-              <button
-                onClick={() => setShowModalAgregar(true)}
-                className="inline-flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Crear Primera Anotación</span>
-              </button>
-            )}
-          </div>
-        )}
-      </div>
+            }
+          </p>
+          {!searchTerm && !errorAnotaciones && (
+            <button
+              onClick={() => setShowModalAgregar(true)}
+              className="inline-flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Crear Primera Anotación</span>
+            </button>
+          )}
+          {errorAnotaciones && (
+            <button
+              onClick={handleRefresh}
+              className="inline-flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              <RefreshCw className="w-4 h-4" />
+              <span>Intentar de Nuevo</span>
+            </button>
+          )}
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loadingAnotaciones && filteredAnotaciones.length === 0 && (
+        <div className="text-center py-12">
+          <RefreshCw className="w-12 h-12 text-gray-300 mx-auto mb-4 animate-spin" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando anotaciones...</h3>
+          <p className="text-gray-600">Obteniendo todas las anotaciones del profesor</p>
+        </div>
+      )}
 
       {/* Modal para agregar nueva anotación */}
       <ModalAgregarNota 

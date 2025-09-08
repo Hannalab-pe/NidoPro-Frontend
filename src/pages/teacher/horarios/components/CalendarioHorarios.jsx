@@ -5,13 +5,22 @@ import 'moment/locale/es'; // Importar español
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import ModalAgregarActividad from '../modales/ModalAgregarActividad';
 import ModalDetalleEvento from '../modales/ModalDetalleEvento';
-import { useCronogramaHook } from '../../../../hooks/useCronograma';
 
 // Configurar moment en español
 moment.locale('es');
 const localizer = momentLocalizer(moment);
 
-const CalendarioHorarios = ({ onSelectEvent, onSelectSlot, view, onView, date, onNavigate, isMobile: propIsMobile }) => {
+const CalendarioHorarios = ({ 
+  events = [], 
+  isLoading = false,
+  onSelectEvent, 
+  onSelectSlot, 
+  view, 
+  onView, 
+  date, 
+  onNavigate, 
+  isMobile: propIsMobile 
+}) => {
   // Estado para los modales
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -33,8 +42,9 @@ const CalendarioHorarios = ({ onSelectEvent, onSelectSlot, view, onView, date, o
       const mobile = window.innerWidth < 768; // md breakpoint
       setIsMobile(mobile);
       
-      // En móvil, forzar vista de día
-      if (mobile && currentView !== 'day') {
+      // En móvil, solo cambiar a día si la vista actual es semana
+      // La vista de mes se mantiene en móvil ya que es más útil
+      if (mobile && currentView === 'week') {
         setCurrentView('day');
         onView && onView('day');
       } else if (!mobile && view) {
@@ -55,36 +65,21 @@ const CalendarioHorarios = ({ onSelectEvent, onSelectSlot, view, onView, date, o
     }
   }, [view, isMobile]);
 
-  // Hook para obtener cronogramas
-  const { cronogramas, loading: loadingCronogramas, refreshCronogramas } = useCronogramaHook();
-
-  // Debug: ver cronogramas obtenidos
-  console.log('📅 Cronogramas obtenidos:', cronogramas);
+  // Debug: ver eventos recibidos
+  console.log('📅 Eventos recibidos en calendario:', events);
+  console.log('⏳ Loading state:', isLoading);
   
-  // Convertir cronogramas a eventos del calendario
+  // Usar eventos directamente desde props
   const eventos = useMemo(() => {
-    if (!cronogramas || !Array.isArray(cronogramas)) return [];
+    if (!events || !Array.isArray(events)) return [];
     
-    return cronogramas.map(cronograma => {
-      // Para cronogramas solo tenemos fecha, no hora específica
-      // Vamos a usar 08:00 como hora de inicio por defecto y 09:00 como fin
-      const fechaInicio = new Date(`${cronograma.fechaInicio}T08:00:00`);
-      const fechaFin = new Date(`${cronograma.fechaFin}T09:00:00`);
-
-      return {
-        id: cronograma.idCronograma,
-        title: cronograma.nombreActividad,
-        start: fechaInicio,
-        end: fechaFin,
-        resource: {
-          descripcion: cronograma.descripcion,
-          nombreActividad: cronograma.nombreActividad,
-          backgroundColor: '#10B981', // Verde para cronogramas
-          borderColor: '#10B981'
-        }
-      };
-    });
-  }, [cronogramas]);
+    return events.map(evento => ({
+      ...evento,
+      // Asegurar que las fechas sean objetos Date válidos
+      start: evento.start instanceof Date ? evento.start : new Date(evento.start),
+      end: evento.end instanceof Date ? evento.end : new Date(evento.end),
+    }));
+  }, [events]);
 
   // Personalizar la apariencia de los eventos
   const eventStyleGetter = (event) => {
@@ -122,8 +117,8 @@ const CalendarioHorarios = ({ onSelectEvent, onSelectSlot, view, onView, date, o
 
   const handleEventCreated = (newEvent) => {
     console.log('Nuevo evento creado:', newEvent);
-    // Refrescar los cronogramas para mostrar el nuevo evento
-    refreshCronogramas();
+    // El refetch se maneja desde el componente padre
+    // No necesitamos hacer nada aquí ya que los datos vienen de props
   };
 
   // Personalizar el formato de los eventos
@@ -201,7 +196,7 @@ const CalendarioHorarios = ({ onSelectEvent, onSelectSlot, view, onView, date, o
 
   return (
     <div className={`bg-white ${isMobile ? 'h-full' : 'rounded-xl shadow-sm border border-gray-100'} ${isMobile ? 'p-0' : 'p-8'}`}>
-      {loadingCronogramas ? (
+      {isLoading ? (
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>

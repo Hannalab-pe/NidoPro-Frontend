@@ -486,6 +486,21 @@ export const trabajadorService = {
       console.error('❌ Error al importar profesores:', error);
       throw new Error(error.response?.data?.message || 'Error al importar profesores');
     }
+  },
+
+  /**
+   * Obtener aulas asignadas a un trabajador
+   * @param {string} idTrabajador - ID del trabajador
+   * @returns {Promise} Lista de aulas asignadas al trabajador
+   */
+  getAulasPorTrabajador: async (idTrabajador) => {
+    try {
+      const response = await api.get(`/trabajador/aulas/${idTrabajador}`);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al obtener aulas por trabajador:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Error al obtener aulas del trabajador');
+    }
   }
 };
 
