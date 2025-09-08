@@ -24,7 +24,7 @@ import { useCronogramaDocente } from '../../../hooks/queries/useCronogramaQuerie
 
 const Horarios = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [selectedView, setSelectedView] = useState('month'); // month por defecto en lugar de week
+  const [selectedView, setSelectedView] = useState('month'); // month por defecto en desktop
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(true); // Para alternar entre vista calendario y tabla
   const [selectedEvent, setSelectedEvent] = useState(null); // Evento seleccionado
@@ -93,9 +93,14 @@ const Horarios = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       
-      // En móvil, mantener la vista de mes por defecto, solo cambiar a día si era semana
-      if (mobile && selectedView === 'week') {
+      // En móvil, cambiar a vista de día para mejor experiencia
+      if (mobile) {
         setSelectedView('day');
+      } else {
+        // En desktop, mantener vista de mes como predeterminada
+        if (selectedView === 'day' && !mobile) {
+          setSelectedView('month');
+        }
       }
     };
 
