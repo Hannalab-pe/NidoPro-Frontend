@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   Calendar, 
-  CheckCircle, 
-  XCircle, 
   Clock, 
   AlertTriangle,
   Search,
@@ -17,34 +15,30 @@ import {
   Save,
   X,
   School,
-  Loader2
+  Loader2,
+  BookOpen,
+  RefreshCw,
+  Plus
 } from 'lucide-react';
-import { useAsistenciaDocente } from '../../../hooks/useAsistenciaDocente';
-import { asistenciaService } from '../../../services/asistenciaService';
+import { useAsistenciaProfesor, useEstudiantesAula, useAsistenciasPorAulaYFecha } from '../../../hooks/queries/useAsistenciaQueries';
 import { toast } from 'sonner';
 
 const Asistencia = () => {
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+  // Inicializar fecha una sola vez al montar el componente
+  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [selectedAula, setSelectedAula] = useState(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [asistencias, setAsistencias] = useState({});
 
-  // Hook para obtener las aulas asignadas al docente
+  // Hook principal para gestión de asistencia
   const { 
-    aulasDocente, 
-    loadingAsignaciones, 
-    errorAsignaciones,
-    useEstudiantesAula,
-    getInfoAula,
-    tieneAulasAsignadas
-  } = useAsistenciaDocente();
-
-  console.log('🔍 Datos del hook:', {
-    aulasDocente,
-    loadingAsignaciones,
-    errorAsignaciones,
-    tieneAulasAsignadas: typeof tieneAulasAsignadas
-  });
+    aulas, 
+    loadingAulas, 
+    errorAulas,
+    registrarAsistencia,
+    loadingRegistro,
+    tieneAulas
+  } = useAsistenciaProfesor();
 
   // Hook para obtener estudiantes del aula seleccionada
   const { 
@@ -52,259 +46,231 @@ const Asistencia = () => {
     isLoading: loadingEstudiantes, 
     error: errorEstudiantes,
     refetch: refetchEstudiantes
-  } = useEstudiantesAula(selectedAula?.idAula);
+  } = useEstudiantesAula(selectedAula?.id_aula || selectedAula?.idAula);
+
+  // Hook para obtener asistencias existentes por aula y fecha
+  const {
+    data: asistenciasExistentes,
+    isLoading: loadingAsistenciasExistentes,
+    error: errorAsistenciasExistentes,
+    refetch: refetchAsistenciasExistentes
+  } = useAsistenciasPorAulaYFecha(
+    selectedAula?.id_aula || selectedAula?.idAula, 
+    selectedDate
+  );
 
   // Seleccionar la primera aula disponible por defecto
   useEffect(() => {
-    if (aulasDocente.length > 0 && !selectedAula) {
-      setSelectedAula(aulasDocente[0]);
+    if (aulas.length > 0 && !selectedAula) {
+      setSelectedAula(aulas[0]);
     }
-  }, [aulasDocente, selectedAula]);
+  }, [aulas, selectedAula]);
 
-  // Estado para manejar la asistencia de estudiantes
-  const [students, setStudents] = useState([]);
+  // Procesar datos de estudiantes y asistencias
+  const estudiantes = estudiantesData?.estudiantes || estudiantesData?.data || [];
+  const asistenciasRegistradas = asistenciasExistentes?.info?.data || asistenciasExistentes?.asistencias || asistenciasExistentes?.data || [];
+  const tieneAsistenciasRegistradas = asistenciasRegistradas.length > 0;
 
-  // Efecto para cargar y procesar los datos de estudiantes
+  // Inicializar asistencias cuando se cargan estudiantes o asistencias existentes
   useEffect(() => {
-    if (estudiantesData) {
-      console.log('📚 Datos de estudiantes recibidos:', estudiantesData);
+    if (estudiantes.length > 0) {
+      const asistenciasIniciales = {};
       
-      // Extraer el array de estudiantes de la respuesta de la API
-      const estudiantes = estudiantesData?.info?.data || estudiantesData?.data || [];
-      
-      console.log('👥 Array de estudiantes:', estudiantes);
-      
-      if (Array.isArray(estudiantes)) {
-        console.log('👤 Estructura del primer estudiante:', estudiantes[0]);
-        console.log('🔍 Campos disponibles:', Object.keys(estudiantes[0] || {}));
+      estudiantes.forEach(estudiante => {
+        const idEstudiante = estudiante.id_estudiante || estudiante.idEstudiante;
         
-        const processedStudents = estudiantes.map(estudiante => {
-          console.log('📝 Procesando estudiante:', estudiante);
+        // Buscar si ya tiene asistencia registrada para esta fecha
+        // El formato del endpoint es: { asistio, observaciones, idEstudiante }
+        const asistenciaExistente = asistenciasRegistradas.find(
+          asist => (asist.idEstudiante || asist.id_estudiante) === idEstudiante
+        );
+        
+        if (asistenciaExistente) {
+          // Convertir el formato del backend al formato local
+          if (asistenciaExistente.asistio === true) {
+            // Si asistió, verificar las observaciones para determinar el estado exacto
+            if (asistenciaExistente.observaciones === 'Presente') {
+              asistenciasIniciales[idEstudiante] = 'presente';
+            } else if (asistenciaExistente.observaciones === 'Tardanza') {
+              asistenciasIniciales[idEstudiante] = 'tardanza';
+            } else if (asistenciaExistente.observaciones === 'Justificado') {
+              asistenciasIniciales[idEstudiante] = 'justificado';
+            } else {
+              asistenciasIniciales[idEstudiante] = 'presente'; // Default para asistio=true
+            }
+          } else {
+            asistenciasIniciales[idEstudiante] = 'ausente';
+          }
+        } else {
+          asistenciasIniciales[idEstudiante] = '';
+        }
+      });
+      
+      setAsistencias(asistenciasIniciales);
+    }
+  }, [estudiantes.length, selectedAula?.id_aula, selectedDate]); // Dependencias más estables
+
+  // Refrescar asistencias cuando cambie la fecha o el aula (SIN refetchAsistenciasExistentes en dependencias)
+  useEffect(() => {
+    if (selectedAula && selectedDate) {
+      refetchAsistenciasExistentes();
+    }
+  }, [selectedAula?.id_aula, selectedDate]); // Solo ID del aula y fecha
+
+  const handleAsistenciaChange = (estudianteId, estado) => {
+    setAsistencias(prev => ({
+      ...prev,
+      [estudianteId]: estado
+    }));
+  };
+
+  const handleGuardarAsistencias = async () => {
+    if (!selectedAula) {
+      toast.error('Selecciona un aula primero');
+      return;
+    }
+
+    // Obtener la hora actual en formato HH:MM:SS
+    const ahora = new Date();
+    const hora = ahora.toTimeString().split(' ')[0]; // Formato "HH:MM:SS"
+
+    // Preparar datos para el registro masivo - HORA VA EN EL NIVEL SUPERIOR
+    const asistenciasData = {
+      fecha: selectedDate,
+      hora: hora, // ← HORA VA AQUÍ, NO EN CADA ASISTENCIA
+      idAula: selectedAula.id_aula || selectedAula.idAula,
+      asistencias: Object.entries(asistencias)
+        .filter(([_, estado]) => estado !== '') // Solo enviar asistencias que tienen estado
+        .map(([estudianteId, estado]) => {
+          // Convertir el estado local al formato del backend
+          let asistio = true;
+          let observaciones = 'Presente';
           
-          // Los datos del estudiante están en matricula.idEstudiante
-          const datosEstudiante = estudiante.matricula?.idEstudiante;
-          
-          if (!datosEstudiante) {
-            console.warn('⚠️ No se encontraron datos de estudiante en:', estudiante);
-            return null;
+          switch (estado) {
+            case 'presente':
+              asistio = true;
+              observaciones = 'Presente';
+              break;
+            case 'ausente':
+              asistio = false;
+              observaciones = 'Ausente';
+              break;
+            case 'tardanza':
+              asistio = true;
+              observaciones = 'Tardanza';
+              break;
+            case 'justificado':
+              asistio = true;
+              observaciones = 'Justificado';
+              break;
           }
           
-          // Extraer nombres del objeto anidado
-          const nombre = datosEstudiante.nombre || '';
-          const apellido = datosEstudiante.apellido || '';
-          const nombreCompleto = `${nombre} ${apellido}`.trim();
-          
-          console.log('🏷️ Nombres extraídos:', { nombre, apellido, nombreCompleto });
-          
           return {
-            id: datosEstudiante.idEstudiante,
-            name: nombreCompleto || 'Nombre no disponible',
-            photo: datosEstudiante.fotoUrl || datosEstudiante.foto || '/default-avatar.png',
-            status: 'present', // Valor por defecto, se puede actualizar con datos de asistencia
-            arrivalTime: '',
-            notes: '',
-            attendanceHistory: {
-              thisWeek: 0,
-              thisMonth: 0,
-              total: 0
-            }
+            idEstudiante: estudianteId,
+            asistio: asistio,
+            observaciones: observaciones
+            // ← SIN CAMPO HORA AQUÍ
           };
-        }).filter(Boolean); // Filtrar elementos null
-        
-        console.log('✅ Estudiantes procesados:', processedStudents);
-        setStudents(processedStudents);
-      } else {
-        console.warn('⚠️ Los datos de estudiantes no son un array:', estudiantes);
-        setStudents([]);
-      }
-    }
-  }, [estudiantesData]);
+        })
+    };
 
-  // Función para obtener las iniciales del nombre
-  const getInitials = (name) => {
-    if (!name) return '?';
-    const words = name.trim().split(' ');
-    if (words.length === 1) {
-      return words[0].charAt(0).toUpperCase();
+    if (asistenciasData.asistencias.length === 0) {
+      toast.error('No hay asistencias para registrar');
+      return;
     }
-    return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+
+    try {
+      await registrarAsistencia(asistenciasData);
+      toast.success(`Asistencias guardadas correctamente para ${asistenciasData.asistencias.length} estudiantes`);
+      
+      // Refrescar datos después del registro
+      await refetchAsistenciasExistentes();
+    } catch (error) {
+      toast.error('Error al guardar las asistencias');
+    }
   };
 
-  // Función para generar color de avatar basado en el nombre
-  const getAvatarColor = (name) => {
-    if (!name) return 'bg-gray-500';
-    const colors = [
-      'bg-blue-500',
-      'bg-green-500', 
-      'bg-purple-500',
-      'bg-pink-500',
-      'bg-yellow-500',
-      'bg-indigo-500',
-      'bg-red-500',
-      'bg-teal-500'
-    ];
-    const index = name.length % colors.length;
-    return colors[index];
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'present':
+  const getEstadoColor = (estado) => {
+    switch (estado) {
+      case 'presente':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'late':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'absent':
+      case 'ausente':
         return 'bg-red-100 text-red-800 border-red-200';
-      case 'excused':
+      case 'tardanza':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'justificado':
         return 'bg-blue-100 text-blue-800 border-blue-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-gray-100 text-gray-600 border-gray-200';
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case 'present':
-        return CheckCircle;
-      case 'late':
-        return Clock;
-      case 'absent':
-        return XCircle;
-      case 'excused':
-        return AlertTriangle;
+  const getEstadoIcon = (estado) => {
+    switch (estado) {
+      case 'presente':
+        return <UserCheck className="w-4 h-4" />;
+      case 'ausente':
+        return <UserX className="w-4 h-4" />;
+      case 'tardanza':
+        return <Clock className="w-4 h-4" />;
+      case 'justificado':
+        return <BookOpen className="w-4 h-4" />;
       default:
-        return Users;
+        return null;
     }
   };
 
-  const getStatusText = (status) => {
-    switch (status) {
-      case 'present':
-        return 'Presente';
-      case 'late':
-        return 'Tardanza';
-      case 'absent':
-        return 'Ausente';
-      case 'excused':
-        return 'Justificado';
-      default:
-        return 'Sin definir';
-    }
-  };
-
-  const updateStudentStatus = (studentId, newStatus) => {
-    setStudents(students.map(student =>
-      student.id === studentId
-        ? { ...student, status: newStatus, arrivalTime: newStatus === 'late' ? new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) : '' }
-        : student
-    ));
-  };
-
-  const updateStudentNotes = (studentId, notes) => {
-    setStudents(students.map(student =>
-      student.id === studentId
-        ? { ...student, notes }
-        : student
-    ));
-  };
-
-  // Función para preparar y enviar datos de asistencia
-  const guardarAsistencia = async () => {
-    try {
-      if (!selectedAula) {
-        toast.error('Debe seleccionar un aula');
-        return;
-      }
-
-      // Preparar datos según el formato requerido por la API
-      const asistenciaData = {
-        fecha: selectedDate,
-        hora: new Date().toTimeString().split(' ')[0], // Hora actual en formato HH:MM:SS
-        idAula: selectedAula.idAula,
-        asistencias: students.map(student => ({
-          idEstudiante: student.id,
-          asistio: student.status === 'present' || student.status === 'late' || student.status === 'excused',
-          observaciones: student.notes || getStatusText(student.status)
-        }))
-      };
-
-      console.log('📤 Enviando asistencia:', asistenciaData);
-
-      // Llamar al servicio para registrar asistencia
-      await asistenciaService.registrarAsistencia(asistenciaData);
-      
-      toast.success('Asistencia registrada exitosamente');
-      setIsEditing(false);
-      
-    } catch (error) {
-      console.error('❌ Error al guardar asistencia:', error);
-      toast.error(error.message || 'Error al guardar asistencia');
-    }
-  };
-
-  // Filtros de estudiantes basados en búsqueda
-  const filteredStudents = students.filter(student =>
-    student.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filtrar estudiantes por término de búsqueda
+  const estudiantesFiltrados = estudiantes.filter(estudiante =>
+    `${estudiante.nombres} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
 
-  console.log('🔍 Estados de renderizado:', {
-    students: students.length,
-    filteredStudents: filteredStudents.length,
-    searchTerm,
-    loadingEstudiantes,
-    errorEstudiantes,
-    selectedAula: selectedAula?.idAula
-  });
-
-  const attendanceStats = {
-    present: students.filter(s => s.status === 'present').length,
-    late: students.filter(s => s.status === 'late').length,
-    absent: students.filter(s => s.status === 'absent').length,
-    excused: students.filter(s => s.status === 'excused').length,
-    total: students.length
+  // Estadísticas
+  const estadisticas = {
+    total: estudiantesFiltrados.length,
+    presentes: Object.values(asistencias).filter(estado => estado === 'presente').length,
+    ausentes: Object.values(asistencias).filter(estado => estado === 'ausente').length,
+    tardanzas: Object.values(asistencias).filter(estado => estado === 'tardanza').length,
+    justificados: Object.values(asistencias).filter(estado => estado === 'justificado').length,
+    pendientes: Object.values(asistencias).filter(estado => estado === '').length
   };
 
-  const attendancePercentage = Math.round(((attendanceStats.present + attendanceStats.late + attendanceStats.excused) / attendanceStats.total) * 100);
+  const porcentajeAsistencia = estadisticas.total > 0 
+    ? ((estadisticas.presentes + estadisticas.tardanzas) / estadisticas.total * 100).toFixed(1)
+    : 0;
 
-  // Estado de carga inicial
-  if (loadingAsignaciones) {
+  if (loadingAulas) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="flex items-center space-x-3">
-          <Loader2 className="w-6 h-6 animate-spin text-green-600" />
-          <span className="text-gray-600">Cargando aulas asignadas...</span>
+        <div className="flex items-center space-x-2">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <span className="text-gray-600">Cargando aulas...</span>
         </div>
       </div>
     );
   }
 
-  // Error al cargar asignaciones
-  if (errorAsignaciones) {
+  if (errorAulas) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-        <div className="flex items-center space-x-3">
-          <XCircle className="w-6 h-6 text-red-600" />
-          <div>
-            <h3 className="text-red-800 font-medium">Error al cargar aulas</h3>
-            <p className="text-red-600 text-sm">No se pudieron cargar las aulas asignadas. Por favor, inténtelo de nuevo.</p>
-          </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600 mb-4">Error al cargar las aulas</p>
+          <p className="text-sm text-red-600">{errorAulas}</p>
         </div>
       </div>
     );
   }
 
-  // Sin aulas asignadas
-  if (aulasDocente.length === 0 && !loadingAsignaciones) {
+  if (!tieneAulas) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <div className="flex items-center space-x-3">
-          <School className="w-6 h-6 text-yellow-600" />
-          <div>
-            <h3 className="text-yellow-800 font-medium">Sin aulas asignadas</h3>
-            <p className="text-yellow-600 text-sm">
-              No tienes aulas asignadas para poder gestionar asistencia. Contacta con el administrador.
-            </p>
-          </div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <School className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 mb-2">No tienes aulas asignadas</p>
+          <p className="text-sm text-gray-500">Contacta al administrador para asignar aulas</p>
         </div>
       </div>
     );
@@ -313,332 +279,317 @@ const Asistencia = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-4 sm:space-y-0">
-        <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <Download className="w-4 h-4" />
-            <span>Exportar</span>
-          </button>
-          <button className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">
-            <BarChart3 className="w-4 h-4" />
-            <span>Reportes</span>
-          </button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Registro de Asistencia</h1>
+        <p className="text-gray-600">Gestiona la asistencia de estudiantes por aula y fecha</p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Presentes</p>
-              <p className="text-2xl font-bold text-green-600">{attendanceStats.present}</p>
-            </div>
-            <UserCheck className="w-8 h-8 text-green-500" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Tardanzas</p>
-              <p className="text-2xl font-bold text-yellow-600">{attendanceStats.late}</p>
-            </div>
-            <Clock className="w-8 h-8 text-yellow-500" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Ausentes</p>
-              <p className="text-2xl font-bold text-red-600">{attendanceStats.absent}</p>
-            </div>
-            <UserX className="w-8 h-8 text-red-500" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Justificados</p>
-              <p className="text-2xl font-bold text-blue-600">{attendanceStats.excused}</p>
-            </div>
-            <AlertTriangle className="w-8 h-8 text-blue-500" />
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-gray-900">{attendanceStats.total}</p>
-              <p className="text-xs text-gray-500">{isNaN(attendancePercentage) ? 0 : attendancePercentage}% asistencia</p>
-            </div>
-            <Users className="w-8 h-8 text-gray-500" />
-          </div>
-        </div>
-      </div>
-
-      {/* Controls */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="flex flex-wrap gap-4 items-center">
-            {/* Date Selector */}
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4 text-gray-500" />
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-
-            {/* Aula Selector */}
+      {/* Controles */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Selector de Aula */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Aula
+            </label>
             <select
-              value={selectedAula?.idAula || ''}
+              value={selectedAula?.id_aula || selectedAula?.idAula || ''}
               onChange={(e) => {
-                const aula = aulasDocente.find(a => a.idAula === parseInt(e.target.value));
+                const aula = aulas.find(a => (a.id_aula || a.idAula) === e.target.value);
                 setSelectedAula(aula);
               }}
-              disabled={loadingAsignaciones || aulasDocente.length === 0}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {loadingAsignaciones ? (
-                <option value="">Cargando aulas...</option>
-              ) : aulasDocente.length === 0 ? (
-                <option value="">Sin aulas asignadas</option>
-              ) : (
-                aulasDocente.map((aula) => (
-                  <option key={aula.idAula} value={aula.idAula}>
-                    {getInfoAula(aula).nombre}
-                  </option>
-                ))
-              )}
+              <option value="">Seleccionar aula</option>
+              {aulas.map((aula) => (
+                <option key={aula.id_aula || aula.idAula} value={aula.id_aula || aula.idAula}>
+                  {aula.nombre} - {aula.grado}
+                </option>
+              ))}
             </select>
+          </div>
 
-            {/* Search */}
+          {/* Selector de Fecha */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Fecha
+            </label>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          {/* Búsqueda */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Buscar estudiante
+            </label>
             <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <input
                 type="text"
-                placeholder="Buscar estudiante..."
+                placeholder="Nombre del estudiante..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
+        </div>
 
-          <div className="flex space-x-2">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={guardarAsistencia}
-                  className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Save className="w-4 h-4" />
-                  <span>Guardar</span>
-                </button>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  <X className="w-4 h-4" />
-                  <span>Cancelar</span>
-                </button>
-              </>
+        {/* Botones de acción */}
+        <div className="flex justify-between items-center mt-4 pt-4 border-t">
+          <button
+            onClick={() => {
+              if (selectedAula) {
+                refetchEstudiantes();
+                refetchAsistenciasExistentes();
+              }
+            }}
+            className="flex items-center space-x-2 px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span>Actualizar</span>
+          </button>
+
+          <button
+            onClick={handleGuardarAsistencias}
+            disabled={loadingRegistro || !selectedAula || estudiantesFiltrados.length === 0}
+            className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loadingRegistro ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Editar Asistencia</span>
-              </button>
+              <Save className="w-4 h-4" />
+            )}
+            <span>Guardar Asistencias</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Estadísticas */}
+      {selectedAula && estudiantesFiltrados.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Total</p>
+                <p className="text-2xl font-bold text-gray-900">{estadisticas.total}</p>
+              </div>
+              <Users className="h-8 w-8 text-gray-600" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600">Presentes</p>
+                <p className="text-2xl font-bold text-green-700">{estadisticas.presentes}</p>
+              </div>
+              <UserCheck className="h-8 w-8 text-green-600" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600">Ausentes</p>
+                <p className="text-2xl font-bold text-red-700">{estadisticas.ausentes}</p>
+              </div>
+              <UserX className="h-8 w-8 text-red-600" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-yellow-600">Tardanzas</p>
+                <p className="text-2xl font-bold text-yellow-700">{estadisticas.tardanzas}</p>
+              </div>
+              <Clock className="h-8 w-8 text-yellow-600" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600">Justificados</p>
+                <p className="text-2xl font-bold text-blue-700">{estadisticas.justificados}</p>
+              </div>
+              <BookOpen className="h-8 w-8 text-blue-600" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600">% Asistencia</p>
+                <p className="text-2xl font-bold text-purple-700">{porcentajeAsistencia}%</p>
+              </div>
+              <TrendingUp className="h-8 w-8 text-purple-600" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lista de estudiantes */}
+      {selectedAula && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="p-6 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Estudiantes - {selectedAula.nombre}
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Fecha: {new Date(selectedDate).toLocaleDateString('es-ES', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}
+                </p>
+              </div>
+              
+              {tieneAsistenciasRegistradas && (
+                <div className="flex items-center space-x-2 text-sm text-green-600">
+                  <UserCheck className="w-4 h-4" />
+                  <span>Asistencias ya registradas</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="p-6">
+            {loadingEstudiantes || loadingAsistenciasExistentes ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                  <span className="text-gray-600">Cargando estudiantes...</span>
+                </div>
+              </div>
+            ) : errorEstudiantes ? (
+              <div className="text-center py-8">
+                <AlertTriangle className="w-8 h-8 text-red-500 mx-auto mb-2" />
+                <p className="text-gray-600">Error al cargar estudiantes</p>
+                <p className="text-sm text-red-600">{errorEstudiantes}</p>
+              </div>
+            ) : estudiantesFiltrados.length === 0 ? (
+              <div className="text-center py-8">
+                <Users className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-gray-600">
+                  {searchTerm ? 'No se encontraron estudiantes' : 'No hay estudiantes en esta aula'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {estudiantesFiltrados.map((estudiante, index) => {
+                  const idEstudiante = estudiante.id_estudiante || estudiante.idEstudiante;
+                  const estadoActual = asistencias[idEstudiante] || '';
+                  
+                  return (
+                    <div
+                      key={idEstudiante}
+                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50"
+                    >
+                      <div className="flex items-center space-x-4">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-sm font-semibold text-blue-600">
+                            {index + 1}
+                          </span>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-medium text-gray-900">
+                            {estudiante.nombres} {estudiante.apellido_paterno} {estudiante.apellido_materno}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            Código: {estudiante.codigo_estudiante || 'N/A'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        {/* Estado actual */}
+                        {estadoActual && (
+                          <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${getEstadoColor(estadoActual)}`}>
+                            {getEstadoIcon(estadoActual)}
+                            <span className="capitalize">{estadoActual}</span>
+                          </div>
+                        )}
+
+                        {/* Botones de estado */}
+                        <div className="flex space-x-1">
+                          <button
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'presente')}
+                            className={`p-2 rounded-md transition-colors ${
+                              estadoActual === 'presente'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-gray-100 hover:bg-green-100 text-gray-600 hover:text-green-600'
+                            }`}
+                            title="Presente"
+                          >
+                            <UserCheck className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'ausente')}
+                            className={`p-2 rounded-md transition-colors ${
+                              estadoActual === 'ausente'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600'
+                            }`}
+                            title="Ausente"
+                          >
+                            <UserX className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'tardanza')}
+                            className={`p-2 rounded-md transition-colors ${
+                              estadoActual === 'tardanza'
+                                ? 'bg-yellow-600 text-white'
+                                : 'bg-gray-100 hover:bg-yellow-100 text-gray-600 hover:text-yellow-600'
+                            }`}
+                            title="Tardanza"
+                          >
+                            <Clock className="w-4 h-4" />
+                          </button>
+
+                          <button
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'justificado')}
+                            className={`p-2 rounded-md transition-colors ${
+                              estadoActual === 'justificado'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-600'
+                            }`}
+                            title="Justificado"
+                          >
+                            <BookOpen className="w-4 h-4" />
+                          </button>
+
+                          {estadoActual && (
+                            <button
+                              onClick={() => handleAsistenciaChange(idEstudiante, '')}
+                              className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
+                              title="Limpiar"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
-      </div>
-
-      {/* Students List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Lista de Estudiantes - {selectedAula ? getInfoAula(selectedAula).nombre : 'Seleccione un aula'}
-          </h3>
-          <p className="text-sm text-gray-600">
-            {new Date(selectedDate).toLocaleDateString('es-ES', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}
-          </p>
-        </div>
-
-        <div className="divide-y divide-gray-200">
-          {(() => {
-            console.log('🎯 Condiciones de renderizado:', {
-              loadingEstudiantes,
-              errorEstudiantes: !!errorEstudiantes,
-              filteredStudentsLength: filteredStudents.length,
-              searchTerm,
-              condition: loadingEstudiantes ? 'loading' : 
-                        errorEstudiantes ? 'error' : 
-                        filteredStudents.length === 0 ? 'empty' : 'render'
-            });
-            
-            if (loadingEstudiantes) {
-              return (
-                <div className="p-12 text-center">
-                  <div className="flex items-center justify-center space-x-3">
-                    <Loader2 className="w-6 h-6 animate-spin text-green-600" />
-                    <span className="text-gray-600">Cargando estudiantes...</span>
-                  </div>
-                </div>
-              );
-            }
-            
-            if (errorEstudiantes) {
-              return (
-                <div className="p-12 text-center">
-                  <div className="flex flex-col items-center space-y-3">
-                    <XCircle className="w-8 h-8 text-red-500" />
-                    <span className="text-red-600">Error al cargar estudiantes</span>
-                    <button
-                      onClick={() => refetchEstudiantes()}
-                      className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Reintentar
-                    </button>
-                  </div>
-                </div>
-              );
-            }
-            
-            if (filteredStudents.length === 0) {
-              return (
-                <div className="p-12 text-center">
-                  <Users className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-                  <span className="text-gray-500">
-                    {searchTerm ? 'No se encontraron estudiantes' : 'No hay estudiantes en esta aula'}
-                  </span>
-                </div>
-              );
-            }
-            
-            return filteredStudents.map((student, index) => {
-            const StatusIcon = getStatusIcon(student.status);
-            return (
-              <div key={student.id || `student-${index}`} className="p-6 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    {/* Avatar con iniciales */}
-                    <div className={`w-12 h-12 rounded-full border-2 border-gray-200 flex items-center justify-center text-white font-semibold ${getAvatarColor(student.name)}`}>
-                      {getInitials(student.name)}
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-900">{student.name}</h4>
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        {student.arrivalTime && (
-                          <span className="flex items-center space-x-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{student.arrivalTime}</span>
-                          </span>
-                        )}
-                        <span className="text-xs">
-                          Esta semana: {student.attendanceHistory.thisWeek}/5
-                        </span>
-                        <span className="text-xs">
-                          Este mes: {student.attendanceHistory.thisMonth}/20
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center space-x-4">
-                    {isEditing ? (
-                      <div className="flex items-center space-x-2">
-                        <select
-                          value={student.status}
-                          onChange={(e) => updateStudentStatus(student.id, e.target.value)}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        >
-                          <option value="present">Presente</option>
-                          <option value="late">Tardanza</option>
-                          <option value="absent">Ausente</option>
-                          <option value="excused">Justificado</option>
-                        </select>
-                        <input
-                          type="text"
-                          placeholder="Observaciones..."
-                          value={student.notes}
-                          onChange={(e) => updateStudentNotes(student.id, e.target.value)}
-                          className="px-3 py-1 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-3">
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(student.status)}`}>
-                          <StatusIcon className="w-4 h-4 inline mr-1" />
-                          {getStatusText(student.status)}
-                        </span>
-                        {student.notes && (
-                          <span className="text-sm text-gray-500 italic">
-                            {student.notes}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          });
-          })()}
-        </div>
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
-          <div className="space-y-3">
-            <button className="w-full flex items-center space-x-3 px-4 py-3 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
-              <CheckCircle className="w-5 h-5 text-green-600" />
-              <span className="text-green-700">Marcar todos como presentes</span>
-            </button>
-            <button className="w-full flex items-center space-x-3 px-4 py-3 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
-              <Clock className="w-5 h-5 text-yellow-600" />
-              <span className="text-yellow-700">Marcar tardanzas grupales</span>
-            </button>
-            <button className="w-full flex items-center space-x-3 px-4 py-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
-              <Download className="w-5 h-5 text-blue-600" />
-              <span className="text-blue-700">Exportar asistencia del día</span>
-            </button>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen Semanal</h3>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Promedio de asistencia</span>
-              <span className="font-semibold text-green-600">92%</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Tardanzas frecuentes</span>
-              <span className="font-semibold text-yellow-600">3 estudiantes</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600">Ausencias sin justificar</span>
-              <span className="font-semibold text-red-600">1 caso</span>
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

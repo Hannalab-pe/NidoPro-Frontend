@@ -18,15 +18,74 @@ import {
 } from 'lucide-react';
 import CalendarioHorarios from './components/CalendarioHorarios';
 import ModalAgregarActividad from './modales/ModalAgregarActividad';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { useAulasByTrabajador } from '../../../hooks/queries/useAulasQueries';
+import { useCronogramaDocente } from '../../../hooks/queries/useCronogramaQueries';
 
 const Horarios = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
-  const [selectedView, setSelectedView] = useState('week'); // week, month, day
+  const [selectedView, setSelectedView] = useState('month'); // month por defecto en lugar de week
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(true); // Para alternar entre vista calendario y tabla
   const [selectedEvent, setSelectedEvent] = useState(null); // Evento seleccionado
   const [isModalOpen, setIsModalOpen] = useState(false); // Modal de nueva actividad
   const [isMobile, setIsMobile] = useState(false);
+
+  // Hooks para datos
+  const { user } = useAuthStore();
+  const trabajadorId = user?.entidadId || localStorage.getItem('entidadId');
+  
+  // Debug del trabajadorId
+  console.log('👤 Datos de usuario completos:', {
+    user,
+    trabajadorId,
+    entidadIdFromUser: user?.entidadId,
+    entidadIdFromStorage: localStorage.getItem('entidadId'),
+    rol: user?.rol
+  });
+  
+  // Obtener aulas asignadas al docente
+  const { 
+    data: aulasTrabajador = [], 
+    isLoading: loadingAulas, 
+    error: errorAulas,
+    isError: hasErrorAulas 
+  } = useAulasByTrabajador(
+    trabajadorId,
+    { 
+      enabled: !!trabajadorId,
+      refetchOnMount: true,
+      staleTime: 0, // Forzar refetch
+    }
+  );
+  
+  // Debug adicional para errores de aulas
+  if (hasErrorAulas) {
+    console.error('❌ Error al cargar aulas del trabajador:', errorAulas);
+  }
+  console.log('🔍 Query de aulas - Estado:', {
+    trabajadorId,
+    enabled: !!trabajadorId,
+    aulasTrabajador,
+    loadingAulas,
+    hasErrorAulas,
+    errorAulas
+  });
+  
+  // Obtener cronograma de todas las aulas asignadas
+  const { data: cronogramaData = [], isLoading: loadingCronograma, error: errorCronograma } = useCronogramaDocente(
+    aulasTrabajador,
+    { enabled: aulasTrabajador.length > 0 }
+  );
+
+  // Debug logs
+  console.log('🏫 Aulas del trabajador:', aulasTrabajador);
+  console.log('📅 Cronograma obtenido:', cronogramaData);
+  console.log('⏳ Estados de loading:', { loadingAulas, loadingCronograma });
+  
+  if (errorCronograma) {
+    console.error('❌ Error en cronograma:', errorCronograma);
+  }
 
   // Hook para detectar tamaño de pantalla
   useEffect(() => {
@@ -34,8 +93,8 @@ const Horarios = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
       
-      // En móvil, forzar vista de día
-      if (mobile && selectedView !== 'day') {
+      // En móvil, mantener la vista de mes por defecto, solo cambiar a día si era semana
+      if (mobile && selectedView === 'week') {
         setSelectedView('day');
       }
     };
@@ -71,8 +130,67 @@ const Horarios = () => {
     setCurrentWeek(date);
   };
 
-  // Datos fake del cronograma
-  const HorariosData = [
+  // Función para transformar datos del cronograma al formato del calendario
+  const transformarCronogramaParaCalendario = (cronogramaDatos) => {
+    if (!Array.isArray(cronogramaDatos)) {
+      return [];
+    }
+
+    return cronogramaDatos.map((actividad, index) => {
+      // Los datos del backend usan nombres con guiones bajos
+      const fechaInicio = new Date(actividad.fecha_inicio);
+      const fechaFin = new Date(actividad.fecha_fin);
+      
+      // Si las fechas no tienen hora específica, agregar horas por defecto
+      if (fechaInicio.getHours() === 0 && fechaInicio.getMinutes() === 0) {
+        fechaInicio.setHours(8, 0); // 8:00 AM por defecto
+        fechaFin.setHours(9, 30); // 9:30 AM por defecto
+      }
+      
+      return {
+        id: actividad.id_cronograma || index,
+        title: actividad.nombre_actividad || actividad.title || 'Actividad sin nombre',
+        start: fechaInicio,
+        end: fechaFin,
+        resource: {
+          tipo: actividad.tipo || 'actividad',
+          descripcion: actividad.descripcion || '',
+          idCronograma: actividad.id_cronograma,
+          seccion: actividad.seccion,
+          grado: actividad.grado,
+          nombreTrabajador: actividad.nombre_trabajador,
+          apellidoTrabajador: actividad.apellido_trabajador,
+          estado: actividad.estado || 'activo'
+        },
+        // Colores según tipo de actividad
+        backgroundColor: getColorPorTipo(actividad.tipo || 'actividad'),
+        borderColor: getColorPorTipo(actividad.tipo || 'actividad'),
+      };
+    });
+  };
+
+  // Función para asignar colores según el tipo de actividad
+  const getColorPorTipo = (tipo) => {
+    const colores = {
+      clase: '#3B82F6',      // Azul
+      reunion: '#F59E0B',    // Amarillo
+      evaluacion: '#EF4444', // Rojo
+      actividad: '#10B981',  // Verde
+      capacitacion: '#8B5CF6', // Púrpura
+      default: '#6B7280'     // Gris
+    };
+    
+    return colores[tipo?.toLowerCase()] || colores.default;
+  };
+
+  // Datos del cronograma procesados para el calendario
+  const eventosCalendario = transformarCronogramaParaCalendario(cronogramaData);
+
+  // Loading state combinado
+  const isLoading = loadingAulas || loadingCronograma;
+
+  // Datos fake del cronograma (mantener como fallback)
+  const HorariosDataFallback = [
     {
       id: 1,
       title: "Matemáticas - 5to A",
@@ -110,57 +228,6 @@ const Horarios = () => {
       participants: "Padres 5to A",
       color: "#F59E0B",
       type: "meeting"
-    },
-    {
-      id: 4,
-      title: "Matemáticas - 5to B",
-      subject: "Matemáticas",
-      grade: "5to B",
-      startTime: "08:00",
-      endTime: "09:30",
-      day: "tuesday",
-      classroom: "Aula 202",
-      students: 28,
-      color: "#3B82F6",
-      type: "class"
-    },
-    {
-      id: 5,
-      title: "Capacitación Docente",
-      subject: "Desarrollo Profesional",
-      startTime: "15:00",
-      endTime: "17:00",
-      day: "tuesday",
-      classroom: "Auditorio",
-      participants: "Docentes",
-      color: "#8B5CF6",
-      type: "training"
-    },
-    {
-      id: 6,
-      title: "Ciencias Naturales - 5to B",
-      subject: "Ciencias",
-      grade: "5to B",
-      startTime: "10:00",
-      endTime: "11:30",
-      day: "wednesday",
-      classroom: "Lab. Ciencias",
-      students: 28,
-      color: "#10B981",
-      type: "class"
-    },
-    {
-      id: 7,
-      title: "Evaluación Trimestral",
-      subject: "Evaluación",
-      grade: "5to A y B",
-      startTime: "08:00",
-      endTime: "11:00",
-      day: "friday",
-      classroom: "Aula 201",
-      students: 53,
-      color: "#EF4444",
-      type: "exam"
     }
   ];
 
@@ -253,6 +320,8 @@ const Horarios = () => {
       <div className={`${isMobile ? 'flex-1 overflow-hidden' : ''}`}>
         {showCalendar ? (
           <CalendarioHorarios
+            events={eventosCalendario}
+            isLoading={isLoading}
             onSelectEvent={handleSelectEvent}
             onSelectSlot={handleSelectSlot}
             view={selectedView}

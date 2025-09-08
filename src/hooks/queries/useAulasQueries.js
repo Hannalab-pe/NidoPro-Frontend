@@ -219,9 +219,12 @@ export const useAulasByTrabajador = (idTrabajador, options = {}) => {
     queryKey: AULAS_QUERY_KEYS.byTrabajador(idTrabajador),
     queryFn: async () => {
       try {
-        return await aulaService.getAulasByTrabajador(idTrabajador);
+        console.log('🔍 Ejecutando query para trabajador:', idTrabajador);
+        const resultado = await aulaService.getAulasByTrabajador(idTrabajador);
+        console.log('✅ Resultado final del hook:', resultado);
+        return resultado;
       } catch (error) {
-        console.error('Error en useAulasByTrabajador:', error);
+        console.error('❌ Error en useAulasByTrabajador:', error);
         
         // En desarrollo, devolver datos mock si el backend no está disponible
         if (process.env.NODE_ENV === 'development') {
