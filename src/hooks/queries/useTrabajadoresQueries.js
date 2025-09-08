@@ -160,11 +160,20 @@ export const useToggleTrabajadorStatus = () => {
 
   return useMutation({
     mutationFn: ({ trabajador }) => {
-      const newStatus = !trabajador.estaActivo;
-      return trabajadorService.updateTrabajador(trabajador.id, { 
-        ...trabajador, 
-        estaActivo: newStatus 
-      });
+      console.log('🔄 Toggleando estado del trabajador:', trabajador);
+      
+      // Obtener el ID correcto del trabajador (puede ser idTrabajador o id)
+      const trabajadorId = trabajador.idTrabajador || trabajador.id;
+      
+      if (!trabajadorId) {
+        console.error('❌ No se encontró ID del trabajador:', trabajador);
+        throw new Error('ID del trabajador no encontrado');
+      }
+      
+      console.log('🔄 ID del trabajador para toggle:', trabajadorId);
+      
+      // Usar la función correcta del servicio que llama al DELETE endpoint
+      return trabajadorService.toggleTrabajadorStatus(trabajadorId);
     },
     onMutate: ({ trabajador }) => {
       const action = trabajador.estaActivo ? 'desactivando' : 'activando';
@@ -173,15 +182,18 @@ export const useToggleTrabajadorStatus = () => {
       });
       return { loadingToast, trabajador };
     },
-    onSuccess: (updatedTrabajador, variables, context) => {
+    onSuccess: (response, variables, context) => {
       // Invalidar listas y detalle específico
       queryClient.invalidateQueries({ queryKey: trabajadoresKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: trabajadoresKeys.detail(variables.trabajador.id) });
+      queryClient.invalidateQueries({ queryKey: trabajadoresKeys.detail(variables.trabajador.idTrabajador || variables.trabajador.id) });
       
-      const status = updatedTrabajador.estaActivo ? 'activado' : 'desactivado';
+      // Determinar el estado según la respuesta del backend
+      const wasActive = context.trabajador.estaActivo;
+      const status = wasActive ? 'desactivado' : 'activado';
+      
       toast.success(`Trabajador ${status} exitosamente`, {
         id: context.loadingToast,
-        description: `${updatedTrabajador.nombre} ${updatedTrabajador.apellido} ha sido ${status}`
+        description: `${context.trabajador.nombre} ${context.trabajador.apellido} ha sido ${status}`
       });
       
       console.log(`✅ Trabajador ${status} y cache invalidado`);

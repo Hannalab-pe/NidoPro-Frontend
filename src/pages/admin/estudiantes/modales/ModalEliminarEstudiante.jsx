@@ -24,8 +24,18 @@ const ModalEliminarEstudiante = ({ isOpen, onClose, estudiante }) => {
     if (isConfirmDisabled) return;
     
     try {
+      // Obtener el ID correcto del estudiante (puede ser idEstudiante o id)
+      const estudianteId = estudiante.idEstudiante || estudiante.id;
+      
+      if (!estudianteId) {
+        console.error('❌ No se encontró ID del estudiante:', estudiante);
+        throw new Error('ID del estudiante no encontrado');
+      }
+      
+      console.log('🔄 ID del estudiante para eliminar:', estudianteId);
+      
       // El hook se encarga de todo el proceso (delete + toast + update state)
-      await deleteStudent(estudiante.id);
+      await deleteStudent(estudianteId);
       
       // Limpiar y cerrar modal después del éxito
       handleClose();

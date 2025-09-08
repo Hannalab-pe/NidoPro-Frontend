@@ -2,7 +2,9 @@
 import axios from 'axios';
 
 // Base URL del API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
+
+console.log('🌐 API Base URL configurada:', API_BASE_URL);
 
 // Configuración de axios
 const api = axios.create({
@@ -22,7 +24,14 @@ api.interceptors.request.use(
     } else {
       console.log('⚠️ No se encontró token en localStorage');
     }
-    console.log('📤 Request config:', config);
+    console.log('📤 Request config:', {
+      method: config.method?.toUpperCase(),
+      url: config.url,
+      baseURL: config.baseURL,
+      fullURL: `${config.baseURL}${config.url}`,
+      headers: config.headers,
+      data: config.data ? 'Data present' : 'No data'
+    });
     return config;
   },
   (error) => {
@@ -51,14 +60,12 @@ api.interceptors.response.use(
  */
 export const matriculaService = {
   /**
-   * Obtener todas las matrículas
+   * Obtener todas las matrículas con información completa
    * @param {Object} params - Parámetros de filtrado y paginación
-   * @returns {Promise<Object>} Lista de matrículas
+   * @returns {Promise<Object>} Lista de matrículas con estudiantes y apoderados
    */
   async getMatriculas(params = {}) {
     try {
-      console.log('📚 Obteniendo matrículas...');
-      
       // Construir query string
       const queryParams = new URLSearchParams();
       
@@ -69,10 +76,38 @@ export const matriculaService = {
       if (params.status) queryParams.append('status', params.status);
       
       const queryString = queryParams.toString();
-      const url = queryString ? `/matricula?${queryString}` : '/matricula';
+      // Usar el nuevo endpoint que incluye toda la información
+      const url = queryString ? `/matricula/estudiantes-con-apoderados?${queryString}` : '/matricula/estudiantes-con-apoderados';
       
       const response = await api.get(url);
-      console.log('✅ Matrículas obtenidas exitosamente:', response.data);
+      
+      // Verificar estructura de la respuesta
+      if (response.data) {
+        // Intentar extraer datos de diferentes estructuras posibles
+        let matriculas = [];
+        
+        if (Array.isArray(response.data)) {
+          matriculas = response.data;
+        } else if (response.data.data && Array.isArray(response.data.data)) {
+          matriculas = response.data.data;
+        } else if (response.data.info && Array.isArray(response.data.info)) {
+          matriculas = response.data.info;
+        } else if (response.data.info && response.data.info.data && Array.isArray(response.data.info.data)) {
+          matriculas = response.data.info.data;
+        } else if (response.data.matriculas && Array.isArray(response.data.matriculas)) {
+          matriculas = response.data.matriculas;
+        }
+        
+        // Devolver la estructura esperada por el hook
+        const result = {
+          data: matriculas,
+          total: matriculas.length,
+          success: true
+        };
+        
+        return result;
+      }
+      
       return response.data;
     } catch (error) {
       console.error('❌ Error al obtener matrículas:', error);
@@ -81,17 +116,65 @@ export const matriculaService = {
   },
 
   /**
-   * Obtener un estudiante por ID
+   * Obtener un estudiante por ID con contactos de emergencia completos
    * @param {string|number} id - ID del estudiante
-   * @returns {Promise<Object>} Datos del estudiante
+   * @returns {Promise<Object>} Datos del estudiante con contactos
    */
   async getStudentById(id) {
     try {
+      console.log('📚 Obteniendo estudiante completo por ID:', id);
       const response = await api.get(`/estudiante/${id}`);
+      console.log('✅ Estudiante obtenido:', response.data);
       return response.data;
     } catch (error) {
-      console.error('Error al obtener estudiante:', error);
+      console.error('❌ Error al obtener estudiante:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener estudiante');
+    }
+  },
+
+  /**
+   * Obtener matrícula completa por ID del estudiante
+   * @param {string|number} estudianteId - ID del estudiante
+   * @returns {Promise<Object>} Datos completos de la matrícula
+   */
+  async getMatriculaByEstudianteId(estudianteId) {
+    try {
+      console.log('📚 Obteniendo matrícula completa por ID de estudiante:', estudianteId);
+      
+      // Primero obtener todas las matrículas
+      const response = await api.get('/matricula/estudiantes-con-apoderados');
+      const matriculas = response.data?.info?.data || response.data?.data || response.data || [];
+      
+      // Encontrar la matrícula específica del estudiante
+      const matricula = matriculas.find(m => 
+        m.idEstudiante?.idEstudiante === estudianteId || 
+        m.idEstudiante?.id === estudianteId
+      );
+      
+      if (!matricula) {
+        throw new Error('Matrícula no encontrada para este estudiante');
+      }
+
+      console.log('✅ Matrícula completa obtenida:', matricula);
+      
+      // Si no tiene contactos de emergencia, hacer llamada adicional
+      if (!matricula.idEstudiante?.contactosEmergencia || matricula.idEstudiante.contactosEmergencia.length === 0) {
+        console.log('📞 Contactos vacíos, obteniendo información completa del estudiante...');
+        try {
+          const estudianteCompleto = await this.getStudentById(estudianteId);
+          if (estudianteCompleto.estudiante?.contactosEmergencia) {
+            matricula.idEstudiante.contactosEmergencia = estudianteCompleto.estudiante.contactosEmergencia;
+            console.log('✅ Contactos de emergencia agregados:', matricula.idEstudiante.contactosEmergencia);
+          }
+        } catch (contactError) {
+          console.warn('⚠️ No se pudieron obtener contactos de emergencia:', contactError);
+        }
+      }
+      
+      return matricula;
+    } catch (error) {
+      console.error('❌ Error al obtener matrícula completa:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener matrícula completa');
     }
   },
 
@@ -102,35 +185,17 @@ export const matriculaService = {
    */
   async createStudent(matriculaData) {
     try {
-      console.log('📤 Enviando datos de matrícula al backend:', matriculaData);
+      // Solo loggear lo esencial
+      console.log('📤 ENVIANDO AL BACKEND - Contactos:', matriculaData.estudianteData?.contactosEmergencia);
       
       // Validar estructura de datos requerida
       if (!matriculaData.apoderadoData || !matriculaData.estudianteData) {
         throw new Error('Faltan datos del apoderado o estudiante');
       }
 
-      // Validar campos obligatorios
-      const requiredMatriculaFields = ['costoMatricula', 'fechaIngreso', 'idGrado'];
-      const requiredApoderadoFields = ['nombre', 'apellido', 'tipoDocumentoIdentidad', 'documentoIdentidad'];
-      const requiredEstudianteFields = ['nombre', 'apellido', 'nroDocumento', 'idRol'];
-
-      const missingMatriculaFields = requiredMatriculaFields.filter(field => !matriculaData[field]);
-      const missingApoderadoFields = requiredApoderadoFields.filter(field => !matriculaData.apoderadoData[field]);
-      const missingEstudianteFields = requiredEstudianteFields.filter(field => !matriculaData.estudianteData[field]);
-
-      const allMissingFields = [
-        ...missingMatriculaFields.map(f => `matrícula.${f}`),
-        ...missingApoderadoFields.map(f => `apoderado.${f}`),
-        ...missingEstudianteFields.map(f => `estudiante.${f}`)
-      ];
-
-      if (allMissingFields.length > 0) {
-        throw new Error(`Campos requeridos faltantes: ${allMissingFields.join(', ')}`);
-      }
-
       // Enviar datos estructurados al backend
       const response = await api.post('/matricula', matriculaData);
-      console.log('✅ Matrícula creada exitosamente:', response.data);
+      console.log('✅ RESPUESTA DEL BACKEND - Contactos recibidos:', response.data?.estudiante?.contactosEmergencia || response.data?.data?.estudiante?.contactosEmergencia);
       return response.data;
     } catch (error) {
       console.error('❌ Error al crear matrícula:', error);
@@ -163,12 +228,95 @@ export const matriculaService = {
   async createMatricula(matriculaData) {
     try {
       console.log('📤 Creando nueva matrícula:', matriculaData);
+      
+      // Debug específico para contactos de emergencia
+      if (matriculaData.estudianteData?.contactosEmergencia) {
+        console.log('🚨 CONTACTOS DE EMERGENCIA enviados:', matriculaData.estudianteData.contactosEmergencia);
+        console.log('🚨 Cantidad de contactos:', matriculaData.estudianteData.contactosEmergencia.length);
+        
+        // Validar estructura de cada contacto
+        matriculaData.estudianteData.contactosEmergencia.forEach((contacto, index) => {
+          console.log(`🚨 Contacto ${index + 1}:`, {
+            nombre: contacto.nombre,
+            apellido: contacto.apellido,
+            telefono: contacto.telefono,
+            email: contacto.email,
+            tipoContacto: contacto.tipoContacto,
+            esPrincipal: contacto.esPrincipal,
+            prioridad: contacto.prioridad
+          });
+        });
+      }
+
+      // Validar datos antes del envío
+      if (!matriculaData.estudianteData) {
+        throw new Error('Faltan datos del estudiante');
+      }
+
+      if (!matriculaData.apoderadoData) {
+        throw new Error('Faltan datos del apoderado');
+      }
+
+      if (!matriculaData.estudianteData.contactosEmergencia || !Array.isArray(matriculaData.estudianteData.contactosEmergencia)) {
+        throw new Error('Los contactos de emergencia son requeridos y deben ser un array');
+      }
+
+      if (matriculaData.estudianteData.contactosEmergencia.length === 0) {
+        throw new Error('Debe proporcionar al menos un contacto de emergencia');
+      }
+
+      // Validar cada contacto
+      matriculaData.estudianteData.contactosEmergencia.forEach((contacto, index) => {
+        if (!contacto.nombre || !contacto.apellido || !contacto.telefono || !contacto.email) {
+          throw new Error(`El contacto ${index + 1} debe tener nombre, apellido, teléfono y email`);
+        }
+      });
+
+      console.log('📋 Datos finales a enviar al backend:', JSON.stringify(matriculaData, null, 2));
+      console.log('🌐 Enviando POST a:', `${API_BASE_URL}/matricula`);
+      
       const response = await api.post('/matricula', matriculaData);
       console.log('✅ Matrícula creada exitosamente:', response.data);
+      
+      // Verificar si los contactos están en la respuesta - buscar en todas las estructuras posibles
+      console.log('🔍 Buscando contactos en la respuesta...');
+      
+      const responseData = response.data;
+      
+      // Buscar en diferentes estructuras posibles
+      let contactosEncontrados = null;
+      
+      if (responseData?.info?.data?.idEstudiante?.contactosEmergencia) {
+        contactosEncontrados = responseData.info.data.idEstudiante.contactosEmergencia;
+        console.log('✅ Contactos encontrados en info.data.idEstudiante:', contactosEncontrados);
+      } else if (responseData?.data?.idEstudiante?.contactosEmergencia) {
+        contactosEncontrados = responseData.data.idEstudiante.contactosEmergencia;
+        console.log('✅ Contactos encontrados en data.idEstudiante:', contactosEncontrados);
+      } else if (responseData?.info?.data?.estudiante?.contactosEmergencia) {
+        contactosEncontrados = responseData.info.data.estudiante.contactosEmergencia;
+        console.log('✅ Contactos encontrados en info.data.estudiante:', contactosEncontrados);
+      } else if (responseData?.data?.estudiante?.contactosEmergencia) {
+        contactosEncontrados = responseData.data.estudiante.contactosEmergencia;
+        console.log('✅ Contactos encontrados en data.estudiante:', contactosEncontrados);
+      } else {
+        console.log('⚠️ No se encontraron contactos en la respuesta del backend');
+        console.log('🔍 Estructura completa de respuesta:', JSON.stringify(responseData, null, 2));
+      }
+      
       return response.data;
     } catch (error) {
       console.error('❌ Error al crear matrícula:', error);
-      throw new Error(error.response?.data?.message || 'Error al crear matrícula');
+      console.error('💥 Detalles del error del servidor:', error.response?.data);
+      console.error('💥 Status del error:', error.response?.status);
+      console.error('💥 Headers del error:', error.response?.headers);
+      
+      // Mostrar el mensaje específico del backend si existe
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          error.message || 
+                          'Error al crear matrícula';
+      
+      throw new Error(errorMessage);
     }
   },
 

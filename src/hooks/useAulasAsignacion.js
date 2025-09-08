@@ -7,7 +7,6 @@ import { asignacionAulaService } from '../services/asignacionAulaService';
  * Hook personalizado para gestión de aulas y asignaciones
  */
 export const useAulasAsignacion = () => {
-  console.log('🔄 Inicializando hook useAulasAsignacion...');
   const queryClient = useQueryClient();
 
   // Query para obtener todas las aulas disponibles
@@ -22,13 +21,8 @@ export const useAulasAsignacion = () => {
     staleTime: 5 * 60 * 1000, // 5 minutos
     cacheTime: 10 * 60 * 1000, // 10 minutos
     onSuccess: (data) => {
-      console.log('🏫 Aulas cargadas exitosamente:', data);
-      console.log('🏫 Total de aulas:', data?.length || 0);
-      console.log('🏫 Tipo de datos recibidos:', typeof data);
-      console.log('🏫 Es array?:', Array.isArray(data));
+
       if (data && data.length > 0) {
-        console.log('🏫 Estructura de la primera aula:', data[0]);
-        console.log('🏫 Propiedades de la primera aula:', Object.keys(data[0]));
       }
     },
     onError: (error) => {
@@ -49,10 +43,8 @@ export const useAulasAsignacion = () => {
     staleTime: 5 * 60 * 1000, // 5 minutos
     cacheTime: 10 * 60 * 1000, // 10 minutos
     onSuccess: (data) => {
-      console.log('🎯 Asignaciones cargadas exitosamente:', data);
       if (data?.asignacionesAula) {
-        console.log('🎯 Total de asignaciones:', data.asignacionesAula.length);
-        console.log('🎯 Estructura de asignaciones:', data.asignacionesAula);
+
       }
     },
     onError: (error) => {
@@ -134,8 +126,7 @@ export const useAulasAsignacion = () => {
         idTrabajador: idTrabajador
       };
 
-      console.log('🎯 Datos para asignación de aula:', asignacionData);
-      console.log('🎯 Asignando aula al docente...');
+
       
       const result = await createAsignacionMutation.mutateAsync(asignacionData);
       console.log('✅ Aula asignada exitosamente:', result);
@@ -179,7 +170,6 @@ export const useAulasAsignacion = () => {
   };
 
   // Log para verificar qué se está retornando
-  console.log('🔍 Hook retornando - aulas:', aulas, 'loadingAulas:', loadingAulas);
 
   return {
     // Datos

@@ -11,6 +11,7 @@ export const AULAS_QUERY_KEYS = {
   details: () => [...AULAS_QUERY_KEYS.all, 'detail'],
   detail: (id) => [...AULAS_QUERY_KEYS.details(), id],
   stats: () => [...AULAS_QUERY_KEYS.all, 'stats'],
+  byTrabajador: (idTrabajador) => [...AULAS_QUERY_KEYS.all, 'trabajador', idTrabajador],
 };
 
 /**
@@ -207,5 +208,53 @@ export const useToggleAulaStatus = () => {
         description: error.message || 'Ocurrió un error inesperado'
       });
     },
+  });
+};
+
+/**
+ * Hook para obtener aulas asignadas a un trabajador específico
+ */
+export const useAulasByTrabajador = (idTrabajador, options = {}) => {
+  return useQuery({
+    queryKey: AULAS_QUERY_KEYS.byTrabajador(idTrabajador),
+    queryFn: async () => {
+      try {
+        return await aulaService.getAulasByTrabajador(idTrabajador);
+      } catch (error) {
+        console.error('Error en useAulasByTrabajador:', error);
+        
+        // En desarrollo, devolver datos mock si el backend no está disponible
+        if (process.env.NODE_ENV === 'development') {
+          console.log('🔧 Backend no disponible, usando datos mock para aulas por trabajador');
+          return [
+            {
+              idAula: '1',
+              seccion: 'A',
+              cantidadEstudiantes: 25,
+              capacidadMaxima: 30,
+              descripcion: 'Aula asignada - 5to A',
+              ubicacion: 'Primer piso',
+              equipamiento: 'Proyector, pizarra digital',
+              estado: 'activo'
+            },
+            {
+              idAula: '2', 
+              seccion: 'B',
+              cantidadEstudiantes: 28,
+              capacidadMaxima: 30,
+              descripcion: 'Aula asignada - 5to B',
+              ubicacion: 'Primer piso',
+              equipamiento: 'Proyector, pizarra digital',
+              estado: 'activo'
+            }
+          ];
+        }
+        
+        throw error;
+      }
+    },
+    enabled: !!idTrabajador, // Solo ejecutar si hay idTrabajador
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    ...options
   });
 };

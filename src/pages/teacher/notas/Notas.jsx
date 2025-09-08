@@ -20,12 +20,18 @@ import {
   Award,
   AlertTriangle
 } from 'lucide-react';
+import { ModalAgregarNota } from './modales';
+import { useAnotaciones } from '../../../hooks/useAnotaciones';
 
 const Notas = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
+  const [showModalAgregar, setShowModalAgregar] = useState(false);
+
+  // Hook para manejar anotaciones
+  const { anotaciones, loading: loadingAnotaciones, refetchAnotaciones } = useAnotaciones();
 
   const [newNote, setNewNote] = useState({
     student: '',
@@ -191,6 +197,15 @@ const Notas = () => {
     });
   };
 
+  // Funciones para el modal
+  const handleModalSuccess = () => {
+    refetchAnotaciones();
+  };
+
+  const handleCloseModal = () => {
+    setShowModalAgregar(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -198,7 +213,7 @@ const Notas = () => {
 
         
         <button
-          onClick={() => setIsCreating(true)}
+          onClick={() => setShowModalAgregar(true)}
           className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
@@ -476,7 +491,7 @@ const Notas = () => {
             </p>
             {!searchTerm && selectedCategory === 'all' && (
               <button
-                onClick={() => setIsCreating(true)}
+                onClick={() => setShowModalAgregar(true)}
                 className="inline-flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />
@@ -486,6 +501,13 @@ const Notas = () => {
           </div>
         )}
       </div>
+
+      {/* Modal para agregar nueva anotación */}
+      <ModalAgregarNota 
+        isOpen={showModalAgregar}
+        onClose={handleCloseModal}
+        onSuccess={handleModalSuccess}
+      />
     </div>
   );
 };

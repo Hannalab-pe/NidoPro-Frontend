@@ -236,6 +236,26 @@ export const aulaService = {
       console.error('Error al obtener estadísticas:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener estadísticas');
     }
+  },
+
+  /**
+   * Obtener aulas asignadas a un trabajador específico
+   * @param {string|number} idTrabajador - ID del trabajador
+   * @returns {Promise<Array>} Lista de aulas asignadas al trabajador
+   */
+  async getAulasByTrabajador(idTrabajador) {
+    try {
+      console.log('📤 Obteniendo aulas para trabajador:', idTrabajador);
+      
+      const response = await api.get(`/trabajador/aulas/${idTrabajador}`);
+      console.log('📥 Respuesta de aulas por trabajador:', response.data);
+      
+      // Extraer datos del objeto info.data si existe
+      return response.data?.info?.data || response.data?.info || response.data || [];
+    } catch (error) {
+      console.error('Error al obtener aulas por trabajador:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener aulas del trabajador');
+    }
   }
 };
 

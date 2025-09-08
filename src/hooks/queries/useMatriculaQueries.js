@@ -24,15 +24,32 @@ export const useMatriculas = (filters = {}) => {
     return acc;
   }, {});
 
+
   return useQuery({
     queryKey: matriculaKeys.list(normalizedFilters),
-    queryFn: () => matriculaService.getMatriculas(normalizedFilters),
+    queryFn: () => {
+      console.log('🔄 useMatriculas - Ejecutando queryFn...');
+      return matriculaService.getMatriculas(normalizedFilters);
+    },
     staleTime: 5 * 60 * 1000, // 5 minutos
     gcTime: 10 * 60 * 1000, // 10 minutos
     refetchOnWindowFocus: false,
     refetchOnMount: false, // No refetch al montar si hay datos en cache
     retry: 2,
-    select: (data) => data?.data || []
+    select: (data) => {
+
+      
+      if (data?.data && Array.isArray(data.data)) {
+
+        return data.data;
+      } else if (Array.isArray(data)) {
+
+        return data;
+      } else {
+
+        return [];
+      }
+    }
   });
 };
 

@@ -27,6 +27,7 @@ export const useMatricula = () => {
     refetch: refetchMatriculas 
   } = useMatriculas(filters);
   
+  
   const { data: stats = {} } = {}; // useMatriculaStats(); // Comentado - endpoint no existe
   
   // Mutations
