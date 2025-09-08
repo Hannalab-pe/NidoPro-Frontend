@@ -32,6 +32,9 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
     if (isConfirmDisabled) return;
     
     try {
+      console.log('🔄 Modal - Trabajador a togglear:', trabajador);
+      console.log('🔄 Modal - ID del trabajador:', trabajador.idTrabajador || trabajador.id);
+      
       // El hook se encarga de todo el proceso (toggle status + toast + update state)
       await toggleTrabajadorStatus(trabajador);
       

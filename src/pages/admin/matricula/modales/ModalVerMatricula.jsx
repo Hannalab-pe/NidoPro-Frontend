@@ -12,7 +12,13 @@ import {
   Baby,
   FileText,
   Eye,
-  DollarSign
+  DollarSign,
+  Building,
+  Hash,
+  CheckCircle,
+  Percent,
+  Star,
+  Book
 } from 'lucide-react';
 import DefaultAvatar from '../../../../components/common/DefaultAvatar';
 
@@ -29,17 +35,10 @@ const InfoField = ({ label, value, icon: Icon, className = "" }) => (
 const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
   if (!matricula) return null;
 
-  // Console log para debuggear la estructura de datos
-  console.log('🔍 Datos de matrícula recibidos en el modal:', matricula);
-
   // Extraer datos - usar la estructura real que viene del backend
   const estudiante = matricula.idEstudiante || {};
   const apoderado = matricula.idApoderado || {};
   const grado = matricula.idGrado || {};
-
-  console.log('📚 Datos del estudiante extraídos:', estudiante);
-  console.log('👨‍👩‍👧‍👦 Datos del apoderado extraídos:', apoderado);
-  console.log('🎓 Datos del grado extraídos:', grado);
 
   const formatDate = (dateString) => {
     if (!dateString) return 'No especificado';
@@ -78,7 +77,7 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full items-center justify-center p-2 lg:p-4 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -88,7 +87,7 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+              <Dialog.Panel className="w-full max-w-7xl transform overflow-hidden rounded-2xl bg-white p-4 lg:p-6 text-left align-middle shadow-xl transition-all">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
@@ -112,80 +111,91 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
                   </button>
                 </div>
 
-                <div className="space-y-6">
-                  {/* Foto y datos básicos */}
-                  <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg">
-                    <div className="flex-shrink-0">
+                {/* Foto y datos básicos - Ancho completo */}
+                <div className="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-6 bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg mb-6">
+                  <div className="flex-shrink-0">
+                  </div>
+                  <div className="flex-1 text-center md:text-left">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-1">
+                      {estudiante.nombre} {estudiante.apellido}
+                    </h2>
+                    <p className="text-lg text-blue-600 font-medium mb-2">
+                      {grado.grado || grado.nombre || `ID: ${matricula.idGrado}`}
+                    </p>
+                    <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600">
+                      <span className="flex items-center">
+                        <Calendar className="w-4 h-4 mr-1" />
+                        {calculateAge(estudiante.fechaNacimiento)}
+                      </span>
+                      <span className="flex items-center">
+                        <Mail className="w-4 h-4 mr-1" />
+                        {estudiante.correo || apoderado.correo || 'No especificado'}
+                      </span>
+                      <span className="flex items-center">
+                        <Phone className="w-4 h-4 mr-1" />
+                        {estudiante.telefono || apoderado.numero || 'No especificado'}
+                      </span>
                     </div>
-                    <div className="flex-1 text-center md:text-left">
-                      <h2 className="text-2xl font-bold text-gray-900 mb-1">
-                        {estudiante.nombre} {estudiante.apellido}
-                      </h2>
-                      <p className="text-lg text-blue-600 font-medium mb-2">
-                        {grado.grado || grado.nombre || `ID: ${matricula.idGrado}`}
-                      </p>
-                      <div className="flex flex-wrap justify-center md:justify-start gap-4 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {calculateAge(estudiante.fechaNacimiento)}
-                        </span>
-                        <span className="flex items-center">
-                          <Mail className="w-4 h-4 mr-1" />
-                          {estudiante.correo || apoderado.correo || 'No especificado'}
-                        </span>
-                        <span className="flex items-center">
-                          <Phone className="w-4 h-4 mr-1" />
-                          {estudiante.telefono || apoderado.numero || 'No especificado'}
-                        </span>
+                  </div>
+                </div>
+
+                {/* Contenido principal con layout de 2 columnas en pantallas grandes */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                  
+                  {/* Columna izquierda */}
+                  <div className="space-y-6">
+                    
+                    {/* Información Personal */}
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <User className="w-5 h-5 mr-2 text-blue-600" />
+                        Información Personal del Estudiante
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InfoField
+                          label="Nombre Completo"
+                          value={`${estudiante.nombre || ''} ${estudiante.apellido || ''}`}
+                          icon={User}
+                        />
+                        <InfoField
+                          label="Número de Documento"
+                          value={estudiante.nroDocumento || 'No especificado'}
+                          icon={FileText}
+                        />
+                        <InfoField
+                          label="Usuario del Sistema"
+                          value={estudiante.idUsuario?.usuario || 'No asignado'}
+                          icon={User}
+                        />
+                        <InfoField
+                          label="Estado de Usuario"
+                          value={estudiante.idUsuario?.estaActivo ? 'Activo' : 'Inactivo'}
+                          icon={User}
+                        />
+                        <InfoField
+                          label="Grado Asignado"
+                          value={`${grado.grado || 'No especificado'} - ${grado.descripcion || ''}`}
+                          icon={GraduationCap}
+                        />
+                        <InfoField
+                          label="Monto de Pensión"
+                          value={grado.idPension?.monto ? `S/ ${grado.idPension.monto}` : 'No especificado'}
+                          icon={DollarSign}
+                        />
+                        <InfoField
+                          label="Observaciones"
+                          value={estudiante.observaciones || 'Sin observaciones'}
+                          icon={FileText}
+                          className="md:col-span-2"
+                        />
                       </div>
                     </div>
-                  </div>
-
-                  {/* Información Personal */}
-                  <div className="bg-white rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <User className="w-5 h-5 mr-2 text-blue-600" />
-                      Información Personal del Estudiante
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <InfoField
-                        label="Nombre Completo"
-                        value={`${estudiante.nombre || ''} ${estudiante.apellido || ''}`}
-                        icon={User}
-                      />
-                      <InfoField
-                        label="Documento"
-                        value={`${estudiante.tipoDocumento || 'DNI'}: ${estudiante.nroDocumento || 'No especificado'}`}
-                        icon={FileText}
-                      />
-                      <InfoField
-                        label="Contacto de Emergencia"
-                        value={estudiante.contactoEmergencia || 'No especificado'}
-                        icon={User}
-                      />
-                      <InfoField
-                        label="Teléfono de Emergencia"
-                        value={estudiante.nroEmergencia || 'No especificado'}
-                        icon={Phone}
-                      />
-                      <InfoField
-                        label="Grado Asignado"
-                        value={`${grado.grado || 'No especificado'} - ${grado.descripcion || ''}`}
-                        icon={GraduationCap}
-                      />
-                      <InfoField
-                        label="Estado del Grado"
-                        value={grado.estaActivo ? 'Activo' : 'Inactivo'}
-                        icon={User}
-                      />
-                    </div>
-                  </div>
 
                   {/* Información del Padre/Madre */}
                   <div className="bg-white rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <Users className="w-5 h-5 mr-2 text-green-600" />
-                      Información del Apoderado
+                      Información del Apoderado Principal
                     </h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <InfoField
@@ -194,18 +204,13 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
                         icon={User}
                       />
                       <InfoField
-                        label="Tipo de Documento"
-                        value={apoderado.tipoDocumentoIdentidad || apoderado.tipoDocumento || 'DNI'}
-                        icon={FileText}
-                      />
-                      <InfoField
                         label="Documento de Identidad"
-                        value={apoderado.documentoIdentidad || apoderado.dni || apoderado.nroDocumento || 'No especificado'}
+                        value={apoderado.documentoIdentidad || 'No especificado'}
                         icon={FileText}
                       />
                       <InfoField
                         label="Teléfono"
-                        value={apoderado.numero || apoderado.telefono || 'No especificado'}
+                        value={apoderado.numero || 'No especificado'}
                         icon={Phone}
                       />
                       <InfoField
@@ -214,9 +219,14 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
                         icon={Mail}
                       />
                       <InfoField
-                        label="Relación"
-                        value={apoderado.relacion || 'No especificado'}
+                        label="Tipo de Apoderado"
+                        value={apoderado.tipoApoderado || 'No especificado'}
                         icon={Users}
+                      />
+                      <InfoField
+                        label="Es Principal"
+                        value={apoderado.esPrincipal ? 'Sí' : 'No'}
+                        icon={User}
                       />
                       <InfoField
                         label="Dirección"
@@ -226,19 +236,6 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
                       />
                     </div>
                   </div>
-
-                  {/* Observaciones del Estudiante */}
-                  {estudiante.observaciones && (
-                    <div className="bg-white rounded-lg p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <FileText className="w-5 h-5 mr-2 text-gray-600" />
-                        Observaciones del Estudiante
-                      </h3>
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <p className="text-gray-900 whitespace-pre-wrap">{estudiante.observaciones}</p>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Información de Matrícula */}
                   <div className="bg-white rounded-lg p-4">
@@ -287,63 +284,202 @@ const ModalVerMatricula = ({ isOpen, onClose, matricula }) => {
                       </div>
                     )}
                   </div>
+                  </div>
 
-                  {/* Información de Asignación de Aula */}
-                  {(matricula.idAulaEspecifica || matricula.tipoAsignacionAula || matricula.motivoPreferencia) && (
+                  {/* Columna derecha */}
+                  <div className="space-y-6">
+                    
+                    {/* Contactos de Emergencia */}
+                    {estudiante.contactosEmergencia && estudiante.contactosEmergencia.length > 0 && (
+                      <div className="bg-white rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <Phone className="w-5 h-5 mr-2 text-red-600" />
+                          Contactos de Emergencia
+                        </h3>
+                        <div className="space-y-4">
+                          {estudiante.contactosEmergencia.map((contacto, index) => (
+                            <div key={contacto.idContactoEmergencia || index} className="bg-red-50 p-4 rounded-lg border-l-4 border-red-200">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <InfoField
+                                  label="Nombre Completo"
+                                  value={`${contacto.nombre || ''} ${contacto.apellido || ''}`}
+                                  icon={User}
+                                />
+                                <InfoField
+                                  label="Tipo de Contacto"
+                                  value={contacto.tipoContacto || 'No especificado'}
+                                  icon={Users}
+                                />
+                                <InfoField
+                                  label="Teléfono"
+                                  value={contacto.telefono || 'No especificado'}
+                                  icon={Phone}
+                                />
+                                <InfoField
+                                  label="Email"
+                                  value={contacto.email || 'No especificado'}
+                                  icon={Mail}
+                                />
+                                <InfoField
+                                  label="Prioridad"
+                                  value={`Prioridad ${contacto.prioridad || 'No especificada'}`}
+                                  icon={Star}
+                                />
+                                <InfoField
+                                  label="Es Principal"
+                                  value={contacto.esPrincipal ? 'Sí' : 'No'}
+                                  icon={User}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Información del Grado */}
                     <div className="bg-white rounded-lg p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <GraduationCap className="w-5 h-5 mr-2 text-orange-600" />
-                        Asignación de Aula
+                        <GraduationCap className="w-5 h-5 mr-2 text-purple-600" />
+                        Información del Grado
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <InfoField
-                          label="ID Aula Específica"
-                          value={matricula.idAulaEspecifica || 'No especificado'}
-                          icon={FileText}
+                          label="Nombre del Grado"
+                          value={grado.nombre || 'No especificado'}
+                          icon={Book}
                         />
                         <InfoField
-                          label="Tipo de Asignación"
-                          value={matricula.tipoAsignacionAula || 'No especificado'}
-                          icon={User}
+                          label="Descripción"
+                          value={grado.descripcion || 'No especificado'}
+                          icon={FileText}
+                          className="md:col-span-2"
                         />
-                        {matricula.motivoPreferencia && (
+                      </div>
+                    </div>
+
+                    {/* Información del Aula */}
+                    {matricula.matriculaAula && (
+                      <div className="bg-white rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <Building className="w-5 h-5 mr-2 text-orange-600" />
+                          Información del Aula
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <InfoField
-                            label="Motivo de Preferencia"
-                            value={matricula.motivoPreferencia}
+                            label="Nombre del Aula"
+                            value={matricula.matriculaAula.aula?.nombre || 'No especificado'}
+                            icon={Building}
+                          />
+                          <InfoField
+                            label="Sección"
+                            value={matricula.matriculaAula.aula?.seccion || 'No especificado'}
+                            icon={Hash}
+                          />
+                          <InfoField
+                            label="Cantidad de Estudiantes"
+                            value={matricula.matriculaAula.aula?.cantidadEstudiantes || 'No especificado'}
+                            icon={Users}
+                          />
+                          <InfoField
+                            label="Fecha de Asignación"
+                            value={formatDate(matricula.matriculaAula.fechaAsignacion)}
+                            icon={Calendar}
+                          />
+                          <InfoField
+                            label="Estado de Asignación"
+                            value={matricula.matriculaAula.estado || 'No especificado'}
+                            icon={CheckCircle}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Información de Pensión */}
+                    {matricula.pension && (
+                      <div className="bg-white rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <DollarSign className="w-5 h-5 mr-2 text-emerald-600" />
+                          Información de Pensión
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <InfoField
+                            label="Monto de Pensión"
+                            value={`S/ ${matricula.pension.monto || '0.00'}`}
+                            icon={DollarSign}
+                          />
+                          <InfoField
+                            label="Descuento"
+                            value={`S/ ${matricula.pension.descuento || '0.00'}`}
+                            icon={Percent}
+                          />
+                          <InfoField
+                            label="Estado de Pensión"
+                            value={matricula.pension.estado || 'No especificado'}
+                            icon={CheckCircle}
+                          />
+                          <InfoField
+                            label="Fecha de Vencimiento"
+                            value={formatDate(matricula.pension.fechaVencimiento)}
+                            icon={Calendar}
+                          />
+                          <InfoField
+                            label="Observaciones"
+                            value={matricula.pension.observacion || 'Ninguna'}
                             icon={FileText}
                             className="md:col-span-2"
                           />
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
+                    {/* Imagen del Estudiante */}
+                    {estudiante.imagen_estudiante && (
+                      <div className="bg-white rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <User className="w-5 h-5 mr-2 text-blue-600" />
+                          Imagen del Estudiante
+                        </h3>
+                        <div className="flex justify-center">
+                          <img 
+                            src={estudiante.imagen_estudiante} 
+                            alt={`Foto de ${estudiante.nombre} ${estudiante.apellido}`}
+                            className="w-32 h-32 object-cover rounded-full border-4 border-blue-200 shadow-lg"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Secciones que ocupan todo el ancho */}
+                <div className="mt-6 space-y-6">
                   {/* IDs de Referencia */}
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                       <FileText className="w-5 h-5 mr-2 text-gray-600" />
                       IDs de Referencia del Sistema
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <InfoField
+                        label="ID de Matrícula"
+                        value={matricula.idMatricula || 'No asignado'}
+                        icon={FileText}
+                      />
                       <InfoField
                         label="ID del Estudiante"
-                        value={typeof matricula.idEstudiante === 'object' ? estudiante.idEstudiante || 'No asignado' : matricula.idEstudiante || 'No asignado'}
+                        value={estudiante.idEstudiante || 'No asignado'}
                         icon={User}
                       />
                       <InfoField
                         label="ID del Apoderado"
-                        value={typeof matricula.idApoderado === 'object' ? apoderado.idApoderado || 'No asignado' : matricula.idApoderado || 'No asignado'}
+                        value={apoderado.idApoderado || 'No asignado'}
                         icon={Users}
                       />
                       <InfoField
                         label="ID del Grado"
-                        value={typeof matricula.idGrado === 'object' ? grado.idGrado || 'No asignado' : matricula.idGrado || 'No asignado'}
+                        value={grado.idGrado || 'No asignado'}
                         icon={GraduationCap}
-                      />
-                      <InfoField
-                        label="ID de la Matrícula"
-                        value={matricula.idMatricula || 'No asignado'}
-                        icon={FileText}
                       />
                     </div>
                   </div>

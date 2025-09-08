@@ -20,8 +20,8 @@ export const useStudents = () => {
     search: ''
   });
 
-  // TanStack Query hooks
-  const { data: students = [], isLoading: loading, refetch: fetchStudents } = useEstudiantes(filters);
+  // TanStack Query hooks - Cargar todos los estudiantes por defecto
+  const { data: students = [], isLoading: loading, refetch: fetchStudents } = useEstudiantes({});
   const createMutation = useCreateEstudiante();
   const updateMutation = useUpdateEstudiante();
   const deleteMutation = useDeleteEstudiante();

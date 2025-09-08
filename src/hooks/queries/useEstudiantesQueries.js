@@ -98,18 +98,21 @@ const estudiantesService = {
     return id;
   },
 
-  // Cambiar estado del estudiante
+  // Cambiar estado del estudiante (desactivar)
   toggleEstudianteStatus: async (id) => {
     const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
     const token = localStorage.getItem('token');
     
-    const response = await axios.patch(`${API_BASE_URL}/estudiante/${id}/toggle-status`, {}, {
+    console.log(`🔄 Cambiando estado del estudiante ID: ${id}`);
+    
+    const response = await axios.delete(`${API_BASE_URL}/estudiante/${id}`, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : ''
       }
     });
     
-    return response.data.estudiante;
+    console.log('✅ Estado del estudiante actualizado:', response.data);
+    return response.data;
   }
 };
 
@@ -246,24 +249,46 @@ export const useUpdateEstudiante = () => {
   });
 };
 
-// Hook para eliminar estudiante
+// Hook para eliminar estudiante (desactivar)
 export const useDeleteEstudiante = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: estudiantesService.deleteEstudiante,
-    onSuccess: (deletedId) => {
+    mutationFn: (id) => {
+      console.log('🔄 Desactivando estudiante ID:', id);
+      
+      if (!id) {
+        console.error('❌ No se encontró ID del estudiante:', id);
+        throw new Error('ID del estudiante no encontrado');
+      }
+      
+      // Usar la función correcta del servicio que llama al DELETE endpoint
+      return estudiantesService.toggleEstudianteStatus(id);
+    },
+    onMutate: () => {
+      const loadingToast = toast.loading('Desactivando estudiante...', {
+        description: 'Procesando desactivación...'
+      });
+      return { loadingToast };
+    },
+    onSuccess: (data, id, context) => {
       // Invalidar lista de estudiantes
       queryClient.invalidateQueries({ queryKey: estudiantesKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: estudiantesKeys.detail(id) });
       
-      toast.success('Estudiante eliminado exitosamente', {
-        description: 'El registro ha sido eliminado del sistema'
+      toast.success('Estudiante desactivado exitosamente', {
+        id: context.loadingToast,
+        description: 'El estudiante ha sido desactivado del sistema'
       });
+      
+      console.log('✅ Estudiante desactivado y cache invalidado');
     },
-    onError: (error) => {
-      toast.error('Error al eliminar estudiante', {
+    onError: (error, variables, context) => {
+      toast.error('Error al desactivar estudiante', {
+        id: context?.loadingToast,
         description: error.message || 'Ocurrió un error inesperado'
       });
+      console.error('❌ Error al desactivar estudiante:', error);
     }
   });
 };
@@ -273,21 +298,40 @@ export const useToggleEstudianteStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: estudiantesService.toggleEstudianteStatus,
-    onSuccess: (updatedEstudiante) => {
+    mutationFn: (id) => {
+      console.log('🔄 Cambiando estado del estudiante ID:', id);
+      
+      if (!id) {
+        console.error('❌ No se encontró ID del estudiante:', id);
+        throw new Error('ID del estudiante no encontrado');
+      }
+      
+      return estudiantesService.toggleEstudianteStatus(id);
+    },
+    onMutate: () => {
+      const loadingToast = toast.loading('Cambiando estado del estudiante...', {
+        description: 'Procesando cambio...'
+      });
+      return { loadingToast };
+    },
+    onSuccess: (data, id, context) => {
       // Invalidar queries relacionadas
       queryClient.invalidateQueries({ queryKey: estudiantesKeys.lists() });
-      queryClient.invalidateQueries({ queryKey: estudiantesKeys.detail(updatedEstudiante.idEstudiante) });
+      queryClient.invalidateQueries({ queryKey: estudiantesKeys.detail(id) });
       
-      const newStatus = updatedEstudiante.estaActivo ? 'activado' : 'desactivado';
-      toast.success(`¡Estudiante ${newStatus} exitosamente!`, {
-        description: `${updatedEstudiante.nombre} ${updatedEstudiante.apellido} ha sido ${newStatus}`
+      toast.success('¡Estado del estudiante actualizado exitosamente!', {
+        id: context.loadingToast,
+        description: 'El estado ha sido cambiado correctamente'
       });
+      
+      console.log('✅ Estado del estudiante actualizado y cache invalidado');
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
       toast.error('Error al cambiar estado del estudiante', {
+        id: context?.loadingToast,
         description: error.message || 'Ocurrió un error inesperado'
       });
+      console.error('❌ Error al cambiar estado del estudiante:', error);
     }
   });
 };
