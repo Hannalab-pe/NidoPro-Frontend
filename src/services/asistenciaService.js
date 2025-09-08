@@ -218,6 +218,42 @@ export const asistenciaService = {
       console.error('❌ Error al obtener asistencias por aula y fecha:', error.response?.data || error.message);
       throw new Error(error.response?.data?.message || 'Error al obtener asistencias');
     }
+  },
+
+  /**
+   * Obtener historial de asistencias de un estudiante
+   * @param {string} idEstudiante - ID del estudiante
+   * @returns {Promise} Historial de asistencias del estudiante
+   */
+  getHistorialAsistenciasEstudiante: async (idEstudiante) => {
+    try {
+      console.log('🔍 [ASISTENCIA SERVICE] Iniciando llamada al endpoint');
+      console.log('📝 [ASISTENCIA SERVICE] ID Estudiante recibido:', idEstudiante);
+      console.log('🌐 [ASISTENCIA SERVICE] URL completa:', `${API_BASE_URL}/asistencia/estudiante/${idEstudiante}`);
+      console.log('🔑 [ASISTENCIA SERVICE] Token en localStorage:', localStorage.getItem('token') ? 'EXISTE' : 'NO EXISTE');
+      
+      const response = await api.get(`/asistencia/estudiante/${idEstudiante}`);
+      
+      console.log('✅ [ASISTENCIA SERVICE] Respuesta exitosa del servidor:');
+      console.log('📊 [ASISTENCIA SERVICE] Status:', response.status);
+      console.log('📋 [ASISTENCIA SERVICE] Headers:', response.headers);
+      console.log('💾 [ASISTENCIA SERVICE] Data completa:', response.data);
+      console.log('📈 [ASISTENCIA SERVICE] Estructura de datos:', {
+        hasInfo: !!response.data?.info,
+        hasData: !!response.data?.info?.data,
+        dataLength: response.data?.info?.data?.length || 0,
+        totalRegistros: response.data?.info?.totalRegistros || 0
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ [ASISTENCIA SERVICE] Error completo:', error);
+      console.error('❌ [ASISTENCIA SERVICE] Error response:', error.response);
+      console.error('❌ [ASISTENCIA SERVICE] Error data:', error.response?.data);
+      console.error('❌ [ASISTENCIA SERVICE] Error status:', error.response?.status);
+      console.error('❌ [ASISTENCIA SERVICE] Error message:', error.message);
+      throw new Error(error.response?.data?.message || 'Error al obtener historial de asistencias');
+    }
   }
 };
 

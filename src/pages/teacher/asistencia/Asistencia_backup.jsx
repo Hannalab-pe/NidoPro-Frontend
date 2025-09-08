@@ -24,8 +24,7 @@ import { useAsistenciaProfesor, useEstudiantesAula, useAsistenciasPorAulaYFecha 
 import { toast } from 'sonner';
 
 const Asistencia = () => {
-  // Inicializar fecha una sola vez al montar el componente
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedAula, setSelectedAula] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [asistencias, setAsistencias] = useState({});
@@ -59,38 +58,30 @@ const Asistencia = () => {
     selectedDate
   );
 
-  // Seleccionar la primera aula disponible por defecto INMEDIATAMENTE
+  // Seleccionar la primera aula disponible por defecto
   useEffect(() => {
     if (aulas.length > 0 && !selectedAula) {
-      const primeraAula = aulas[0];
-      setSelectedAula(primeraAula);
-      
-      // FORZAR CARGA INICIAL INMEDIATA con la primera aula
-      console.log('🚀 Cargando datos iniciales para:', primeraAula.nombre, 'Fecha:', selectedDate);
+      setSelectedAula(aulas[0]);
     }
-  }, [aulas]);
-
-  // Refrescar datos cuando cambie aula o fecha manualmente
-  useEffect(() => {
-    if (selectedAula && selectedDate) {
-      console.log('🔄 Refrescando datos para:', selectedAula.nombre, 'Fecha:', selectedDate);
-      refetchEstudiantes();
-      refetchAsistenciasExistentes();
-    }
-  }, [selectedAula?.id_aula, selectedDate]);
+  }, [aulas, selectedAula]);
 
   // Procesar datos de estudiantes y asistencias
   const estudiantes = estudiantesData?.estudiantes || estudiantesData?.data || [];
   const asistenciasRegistradas = asistenciasExistentes?.info?.data || asistenciasExistentes?.asistencias || asistenciasExistentes?.data || [];
   const tieneAsistenciasRegistradas = asistenciasRegistradas.length > 0;
-
-  // DEBUG: Ver estructura de estudiantes
+  
+  // Log solo para verificar cambios importantes
   useEffect(() => {
-    if (estudiantes.length > 0) {
-      console.log('🔍 DEBUG - Estructura de estudiantes:', estudiantes[0]);
-      console.log('🔍 DEBUG - Todos los estudiantes:', estudiantes);
+    if (selectedAula && estudiantes.length > 0) {
+      console.log('📊 Estado cargado:', {
+        aula: selectedAula?.nombre,
+        fecha: selectedDate,
+        estudiantes: estudiantes.length,
+        asistenciasExistentes: tieneAsistenciasRegistradas,
+        totalAsistenciasRegistradas: asistenciasRegistradas.length
+      });
     }
-  }, [estudiantes.length]);
+  }, [selectedAula?.nombre, selectedDate, estudiantes.length, tieneAsistenciasRegistradas, asistenciasRegistradas.length]);
 
   // Inicializar asistencias cuando se cargan estudiantes o asistencias existentes
   useEffect(() => {
@@ -101,27 +92,12 @@ const Asistencia = () => {
         const idEstudiante = estudiante.id_estudiante || estudiante.idEstudiante;
         
         // Buscar si ya tiene asistencia registrada para esta fecha
-        // El formato del endpoint es: { asistio, observaciones, idEstudiante }
         const asistenciaExistente = asistenciasRegistradas.find(
-          asist => (asist.idEstudiante || asist.id_estudiante) === idEstudiante
+          asist => (asist.id_estudiante || asist.idEstudiante) === idEstudiante
         );
         
         if (asistenciaExistente) {
-          // Convertir el formato del backend al formato local
-          if (asistenciaExistente.asistio === true) {
-            // Si asistió, verificar las observaciones para determinar el estado exacto
-            if (asistenciaExistente.observaciones === 'Presente') {
-              asistenciasIniciales[idEstudiante] = 'presente';
-            } else if (asistenciaExistente.observaciones === 'Tardanza') {
-              asistenciasIniciales[idEstudiante] = 'tardanza';
-            } else if (asistenciaExistente.observaciones === 'Justificado') {
-              asistenciasIniciales[idEstudiante] = 'justificado';
-            } else {
-              asistenciasIniciales[idEstudiante] = 'presente'; // Default para asistio=true
-            }
-          } else {
-            asistenciasIniciales[idEstudiante] = 'ausente';
-          }
+          asistenciasIniciales[idEstudiante] = asistenciaExistente.estado;
         } else {
           asistenciasIniciales[idEstudiante] = '';
         }
@@ -129,14 +105,14 @@ const Asistencia = () => {
       
       setAsistencias(asistenciasIniciales);
     }
-  }, [estudiantes.length, selectedAula?.id_aula, selectedDate]); // Dependencias más estables
+  }, [estudiantes, asistenciasRegistradas]);
 
-  // Refrescar asistencias cuando cambie la fecha o el aula (SIN refetchAsistenciasExistentes en dependencias)
+  // Refrescar asistencias cuando cambie la fecha o el aula
   useEffect(() => {
     if (selectedAula && selectedDate) {
       refetchAsistenciasExistentes();
     }
-  }, [selectedAula?.id_aula, selectedDate]); // Solo ID del aula y fecha
+  }, [selectedAula, selectedDate, refetchAsistenciasExistentes]);
 
   const handleAsistenciaChange = (estudianteId, estado) => {
     setAsistencias(prev => ({
@@ -151,48 +127,16 @@ const Asistencia = () => {
       return;
     }
 
-    // Obtener la hora actual en formato HH:MM:SS
-    const ahora = new Date();
-    const hora = ahora.toTimeString().split(' ')[0]; // Formato "HH:MM:SS"
-
-    // Preparar datos para el registro masivo - HORA VA EN EL NIVEL SUPERIOR
+    // Preparar datos para el registro masivo
     const asistenciasData = {
       fecha: selectedDate,
-      hora: hora, // ← HORA VA AQUÍ, NO EN CADA ASISTENCIA
-      idAula: selectedAula.id_aula || selectedAula.idAula,
+      id_aula: selectedAula.id_aula || selectedAula.idAula,
       asistencias: Object.entries(asistencias)
         .filter(([_, estado]) => estado !== '') // Solo enviar asistencias que tienen estado
-        .map(([estudianteId, estado]) => {
-          // Convertir el estado local al formato del backend
-          let asistio = true;
-          let observaciones = 'Presente';
-          
-          switch (estado) {
-            case 'presente':
-              asistio = true;
-              observaciones = 'Presente';
-              break;
-            case 'ausente':
-              asistio = false;
-              observaciones = 'Ausente';
-              break;
-            case 'tardanza':
-              asistio = true;
-              observaciones = 'Tardanza';
-              break;
-            case 'justificado':
-              asistio = true;
-              observaciones = 'Justificado';
-              break;
-          }
-          
-          return {
-            idEstudiante: estudianteId,
-            asistio: asistio,
-            observaciones: observaciones
-            // ← SIN CAMPO HORA AQUÍ
-          };
-        })
+        .map(([estudianteId, estado]) => ({
+          id_estudiante: estudianteId,
+          estado: estado
+        }))
     };
 
     if (asistenciasData.asistencias.length === 0) {
@@ -202,7 +146,7 @@ const Asistencia = () => {
 
     try {
       await registrarAsistencia(asistenciasData);
-      toast.success(`Asistencias guardadas correctamente para ${asistenciasData.asistencias.length} estudiantes`);
+      toast.success(`Asistencias guardadas correctamente para ${estudiantes.length} estudiantes`);
       
       // Refrescar datos después del registro
       await refetchAsistenciasExistentes();
@@ -242,10 +186,11 @@ const Asistencia = () => {
   };
 
   // Filtrar estudiantes por término de búsqueda
-  const estudiantesFiltrados = estudiantes.filter(estudiante => {
-    const nombreCompleto = `${estudiante.nombres || estudiante.nombre || ''} ${estudiante.apellido_paterno || estudiante.apellidoPaterno || ''} ${estudiante.apellido_materno || estudiante.apellidoMaterno || ''}`;
-    return nombreCompleto.toLowerCase().includes(searchTerm.toLowerCase());
-  });
+  const estudiantesFiltrados = estudiantes.filter(estudiante =>
+    `${estudiante.nombres} ${estudiante.apellido_paterno} ${estudiante.apellido_materno}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
+  );
 
   // Estadísticas
   const estadisticas = {
@@ -524,10 +469,10 @@ const Asistencia = () => {
                         
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {estudiante.nombres || estudiante.nombre || 'Sin nombre'} {estudiante.apellido_paterno || estudiante.apellidoPaterno || ''} {estudiante.apellido_materno || estudiante.apellidoMaterno || ''}
+                            {estudiante.nombres} {estudiante.apellido_paterno} {estudiante.apellido_materno}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            Código: {estudiante.codigo_estudiante || estudiante.codigoEstudiante || estudiante.codigo || 'N/A'}
+                            Código: {estudiante.codigo_estudiante || 'N/A'}
                           </p>
                         </div>
                       </div>
