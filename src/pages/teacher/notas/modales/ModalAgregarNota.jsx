@@ -9,17 +9,37 @@ import {
   AlertCircle 
 } from 'lucide-react'
 import { useAuthStore } from '../../../../store/useAuthStore'
-import { useStudents } from '../../../../hooks/useStudents'
 import { useAnotaciones } from '../../../../hooks/useAnotaciones'
 import { useCursos } from '../../../../hooks/useCursos'
 import { useTrabajadores as useTrabajadoresQuery } from '../../../../hooks/queries/useTrabajadoresQueries'
+import { useEstudiantesByTrabajadorAulas } from '../../../../hooks/queries/useAulasQueries'
+import { getIdTrabajadorFromToken } from '../../../../utils/tokenUtils'
 
 const ModalAgregarNota = ({ isOpen, onClose, onSuccess }) => {
   const { user } = useAuthStore()
-  const { students, loading: loadingStudents } = useStudents()
   const { createAnotacion, creating } = useAnotaciones()
   const { data: cursos, isLoading: loadingCursos } = useCursos()
   const { data: trabajadores, isLoading: loadingTrabajadores } = useTrabajadoresQuery()
+
+  // Obtener el idTrabajador del token JWT
+  const idTrabajadorFromToken = getIdTrabajadorFromToken()
+  
+  // Hook para obtener estudiantes de las aulas asignadas al trabajador
+  const { 
+    data: estudiantesData, 
+    isLoading: loadingStudents, 
+    error: errorStudents 
+  } = useEstudiantesByTrabajadorAulas(idTrabajadorFromToken, {
+    enabled: !!idTrabajadorFromToken
+  })
+
+  console.log('👨‍🏫 ID Trabajador desde token:', idTrabajadorFromToken);
+  console.log('👥 Datos de estudiantes filtrados:', estudiantesData);
+  console.log('📚 Loading estudiantes:', loadingStudents);
+  
+  if (errorStudents) {
+    console.error('❌ Error al cargar estudiantes:', errorStudents);
+  }
 
   // Estado del formulario
   const [formData, setFormData] = useState({
@@ -36,8 +56,14 @@ const ModalAgregarNota = ({ isOpen, onClose, onSuccess }) => {
 
   // Buscar el trabajador correcto basado en el usuario logueado
   useEffect(() => {
-    if (user && trabajadores && trabajadores.length > 0) {
-      // Buscar trabajador por email, documento o nombre
+    if (idTrabajadorFromToken) {
+      // Usar directamente el ID del token
+      setFormData(prev => ({
+        ...prev,
+        idTrabajador: idTrabajadorFromToken
+      }));
+    } else if (user && trabajadores && trabajadores.length > 0) {
+      // Fallback: buscar trabajador por email, documento o nombre
       const trabajadorEncontrado = trabajadores.find(t => 
         t.email === user.email || 
         t.nroDocumento === user.email ||
@@ -52,7 +78,7 @@ const ModalAgregarNota = ({ isOpen, onClose, onSuccess }) => {
         }));
       }
     }
-  }, [user, trabajadores]);
+  }, [idTrabajadorFromToken, user, trabajadores]);
 
   // Resetear formulario cuando se abre el modal
   useEffect(() => {
@@ -187,21 +213,47 @@ const ModalAgregarNota = ({ isOpen, onClose, onSuccess }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Estudiante *
             </label>
-            <select
-              value={formData.idEstudiante}
-              onChange={(e) => handleInputChange('idEstudiante', e.target.value)}
-              className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                errors.idEstudiante ? 'border-red-500' : 'border-gray-300'
-              }`}
-              disabled={creating || loadingStudents}
-            >
-              <option value="">Seleccionar estudiante...</option>
-              {students?.map((student) => (
-                <option key={student.idEstudiante || student.id} value={student.idEstudiante || student.id}>
-                  {student.nombre} {student.apellido} - {student.grado?.nombre || 'Sin grado'}
-                </option>
-              ))}
-            </select>
+            {loadingStudents ? (
+              <div className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50">
+                <span className="text-gray-500">Cargando estudiantes de tus aulas...</span>
+              </div>
+            ) : errorStudents ? (
+              <div className="w-full px-3 py-2 border border-red-300 rounded-md bg-red-50">
+                <span className="text-red-600">Error al cargar estudiantes</span>
+              </div>
+            ) : (
+              <select
+                value={formData.idEstudiante}
+                onChange={(e) => handleInputChange('idEstudiante', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                  errors.idEstudiante ? 'border-red-500' : 'border-gray-300'
+                }`}
+                disabled={creating}
+              >
+                <option value="">Seleccionar estudiante...</option>
+                {estudiantesData?.estudiantes?.map((student) => (
+                  <option key={student.id_estudiante} value={student.id_estudiante}>
+                    {student.nombre} {student.apellido}
+                    {student.seccion && ` - Sección ${student.seccion}`}
+                  </option>
+                ))}
+              </select>
+            )}
+            
+            {/* Información adicional */}
+            {estudiantesData?.estudiantes && estudiantesData.estudiantes.length > 0 && (
+              <p className="mt-1 text-xs text-gray-500">
+                {estudiantesData.totalEstudiantes} estudiante(s) de {estudiantesData.totalAulas} aula(s) asignada(s)
+              </p>
+            )}
+            
+            {/* Mensaje si no hay estudiantes */}
+            {estudiantesData?.estudiantes && estudiantesData.estudiantes.length === 0 && (
+              <p className="mt-1 text-xs text-amber-600">
+                No tienes estudiantes asignados en tus aulas
+              </p>
+            )}
+            
             {errors.idEstudiante && (
               <p className="mt-1 text-sm text-red-600 flex items-center">
                 <AlertCircle className="w-4 h-4 mr-1" />

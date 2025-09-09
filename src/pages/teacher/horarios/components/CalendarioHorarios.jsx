@@ -10,6 +10,38 @@ import ModalDetalleEvento from '../modales/ModalDetalleEvento';
 moment.locale('es');
 const localizer = momentLocalizer(moment);
 
+// Función para obtener el color del calendario según el rol del usuario
+const getCalendarColorByRole = () => {
+  try {
+    // Obtener datos del localStorage
+    const authState = localStorage.getItem('auth-storage');
+    if (!authState) {
+      console.log('🎨 No se encontró auth-storage, usando color por defecto');
+      return '#D08700'; // Color por defecto
+    }
+
+    const parsedState = JSON.parse(authState);
+    const roleName = parsedState?.state?.role?.nombre?.toLowerCase();
+    
+    console.log('🎨 Rol detectado para colores:', roleName);
+    
+    // Definir colores según el rol
+    const colorsByRole = {
+      'trabajador': '#00A63E',  // Verde para trabajadores/profesores
+      'docente': '#00A63E',     // Verde para docentes
+      'profesor': '#00A63E',    // Verde para profesores
+      'padre': '#D08700',       // Naranja para padres
+      'estudiante': '#D08700',  // Naranja para estudiantes/padres
+      'apoderado': '#D08700',   // Naranja para apoderados
+    };
+
+    return colorsByRole[roleName] || '#D08700'; // Color por defecto naranja
+  } catch (error) {
+    console.error('❌ Error al obtener rol para colores:', error);
+    return '#D08700'; // Color por defecto en caso de error
+  }
+};
+
 const CalendarioHorarios = ({ 
   events = [], 
   isLoading = false,
@@ -19,7 +51,8 @@ const CalendarioHorarios = ({
   onView, 
   date, 
   onNavigate, 
-  isMobile: propIsMobile 
+  isMobile: propIsMobile,
+  readOnly = false 
 }) => {
   // Estado para los modales
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -82,10 +115,12 @@ const CalendarioHorarios = ({
 
   // Personalizar la apariencia de los eventos
   const eventStyleGetter = (event) => {
+    const baseColor = getCalendarColorByRole(); // Obtener color según el rol
+    
     return {
       style: {
-        backgroundColor: event.resource.backgroundColor || '#3B82F6',
-        borderColor: event.resource.borderColor || '#3B82F6',
+        backgroundColor: event.resource?.backgroundColor || baseColor,
+        borderColor: event.resource?.borderColor || baseColor,
         color: 'white',
         borderRadius: '8px',
         border: 'none',
@@ -95,8 +130,16 @@ const CalendarioHorarios = ({
     };
   };
 
+  // Obtener el color dinámico para los estilos CSS
+  const dynamicColor = getCalendarColorByRole();
+
   // Funciones para el modal de nueva actividad
   const handleSelectSlot = (slotInfo) => {
+    // En modo readOnly, no permitir crear nuevos eventos
+    if (readOnly) {
+      return;
+    }
+    
     setSelectedDate(slotInfo.start);
     setIsModalOpen(true);
     if (onSelectSlot) {
@@ -160,7 +203,7 @@ const CalendarioHorarios = ({
     onNavigate,
     onSelectEvent: handleSelectEvent,
     onSelectSlot: handleSelectSlot,
-    selectable: true,
+    selectable: !readOnly, // Deshabilitar selección en modo readOnly
     eventPropGetter: eventStyleGetter,
     components: {
       event: EventComponent,
@@ -357,12 +400,12 @@ const CalendarioHorarios = ({
         
         .rbc-toolbar button:hover {
           background: #e5e7eb;
-          border-color: #d1d5db;
+          border-color: ${dynamicColor};
         }
         
         .rbc-toolbar button.rbc-active {
-          background: #3B82F6;
-          border-color: #3B82F6;
+          background: ${dynamicColor};
+          border-color: ${dynamicColor};
           color: white;
         }
         

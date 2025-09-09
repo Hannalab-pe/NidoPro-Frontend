@@ -21,9 +21,12 @@ import {
   Target,
   GraduationCap,
   ChevronDown,
-  MoreVertical
+  MoreVertical,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTareasTrabajador } from '../../../hooks/useTareasTrabajador';
 import CrearTareaModal from './modales/CrearTareaModal';
 import EditarTareaModal from './modales/EditarTareaModal';
 import DetallesTareaModal from './modales/DetallesTareaModal';
@@ -36,7 +39,6 @@ const Tareas = () => {
   const [filterMateria, setFilterMateria] = useState('todas');
   const [sortBy, setSortBy] = useState('fecha_vencimiento');
   const [viewMode, setViewMode] = useState('tarjetas'); // 'tarjetas' o 'tabla'
-  const [refreshKey, setRefreshKey] = useState(0); // Para forzar re-render después de crear
   
   // Estados de modales
   const [showCrearModal, setShowCrearModal] = useState(false);
@@ -45,95 +47,51 @@ const Tareas = () => {
   const [showEliminarModal, setShowEliminarModal] = useState(false);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
 
+  // Hook para obtener tareas del trabajador
+  const {
+    tareas,
+    loading,
+    error,
+    refrescarTareas,
+    crearTarea,
+    actualizarTarea,
+    eliminarTarea
+  } = useTareasTrabajador();
+
   // Manejar la creación exitosa de una tarea
-  const handleTareaCreada = (nuevaTarea) => {
-    console.log('✅ [TAREAS] Nueva tarea creada:', nuevaTarea);
-    
-    // Forzar actualización de la lista
-    setRefreshKey(prev => prev + 1);
-    
-    // Mostrar mensaje adicional
-    toast.success('🎉 ¡Tarea asignada exitosamente!', {
-      description: `La tarea "${nuevaTarea.titulo}" ha sido enviada a todos los estudiantes`,
-      duration: 4000
-    });
+  const handleTareaCreada = async (tareaData) => {
+    try {
+      console.log('✅ [TAREAS] Iniciando creación de tarea:', tareaData);
+      await crearTarea(tareaData);
+      setShowCrearModal(false);
+    } catch (error) {
+      console.error('❌ [TAREAS] Error al crear tarea:', error);
+    }
   };
 
-  // Datos simulados de tareas
-  const tareas = [
-    {
-      id: 1,
-      titulo: 'Ejercicios de Matemáticas - Capítulo 5',
-      descripcion: 'Resolver los ejercicios del 1 al 20 del libro de matemáticas',
-      materia: 'Matemáticas',
-      grado: '5to Grado',
-      aula: 'Aula A',
-      fechaCreacion: '2024-03-15',
-      fechaVencimiento: '2024-03-22',
-      estado: 'activa',
-      prioridad: 'media',
-      totalEstudiantes: 25,
-      entregadas: 18,
-      pendientes: 7,
-      calificadas: 15,
-      archivosAdjuntos: ['ejercicios_cap5.pdf'],
-      instrucciones: 'Resolver todos los ejercicios mostrando el procedimiento completo.'
-    },
-    {
-      id: 2,
-      titulo: 'Ensayo sobre el Sistema Solar',
-      descripcion: 'Escribir un ensayo de 2 páginas sobre los planetas del sistema solar',
-      materia: 'Ciencias',
-      grado: '4to Grado',
-      aula: 'Aula B',
-      fechaCreacion: '2024-03-18',
-      fechaVencimiento: '2024-03-25',
-      estado: 'activa',
-      prioridad: 'alta',
-      totalEstudiantes: 22,
-      entregadas: 12,
-      pendientes: 10,
-      calificadas: 8,
-      archivosAdjuntos: ['rubrica_ensayo.pdf', 'ejemplos.docx'],
-      instrucciones: 'El ensayo debe incluir imágenes y citar al menos 3 fuentes.'
-    },
-    {
-      id: 3,
-      titulo: 'Lectura Comprensiva - Cuento Infantil',
-      descripcion: 'Leer el cuento "El Principito" y responder cuestionario',
-      materia: 'Comunicación',
-      grado: '3er Grado',
-      aula: 'Aula C',
-      fechaCreacion: '2024-03-10',
-      fechaVencimiento: '2024-03-20',
-      estado: 'vencida',
-      prioridad: 'baja',
-      totalEstudiantes: 20,
-      entregadas: 20,
-      pendientes: 0,
-      calificadas: 20,
-      archivosAdjuntos: ['cuestionario.pdf'],
-      instrucciones: 'Responder todas las preguntas con oraciones completas.'
-    },
-    {
-      id: 4,
-      titulo: 'Proyecto de Arte - Autorretrato',
-      descripcion: 'Crear un autorretrato usando diferentes técnicas artísticas',
-      materia: 'Arte',
-      grado: '5to Grado',
-      aula: 'Aula A',
-      fechaCreacion: '2024-03-20',
-      fechaVencimiento: '2024-04-05',
-      estado: 'borrador',
-      prioridad: 'media',
-      totalEstudiantes: 25,
-      entregadas: 0,
-      pendientes: 25,
-      calificadas: 0,
-      archivosAdjuntos: ['tecnicas_arte.pdf', 'ejemplos_autorretrato.jpg'],
-      instrucciones: 'Usar al menos 3 técnicas diferentes aprendidas en clase.'
+  // Manejar actualización de tarea
+  const handleTareaActualizada = async (idTarea, tareaData) => {
+    try {
+      console.log('✅ [TAREAS] Iniciando actualización de tarea:', idTarea, tareaData);
+      await actualizarTarea(idTarea, tareaData);
+      setShowEditarModal(false);
+      setTareaSeleccionada(null);
+    } catch (error) {
+      console.error('❌ [TAREAS] Error al actualizar tarea:', error);
     }
-  ];
+  };
+
+  // Manejar eliminación de tarea
+  const handleTareaEliminada = async (idTarea) => {
+    try {
+      console.log('✅ [TAREAS] Iniciando eliminación de tarea:', idTarea);
+      await eliminarTarea(idTarea);
+      setShowEliminarModal(false);
+      setTareaSeleccionada(null);
+    } catch (error) {
+      console.error('❌ [TAREAS] Error al eliminar tarea:', error);
+    }
+  };
 
   // Filtrar y ordenar tareas
   const tareasFiltradas = useMemo(() => {
@@ -152,7 +110,7 @@ const Tareas = () => {
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'fecha_vencimiento':
-          return new Date(a.fechaVencimiento) - new Date(b.fechaVencimiento);
+          return new Date(a.fechaVencimiento || a.fechaEntrega) - new Date(b.fechaVencimiento || b.fechaEntrega);
         case 'fecha_creacion':
           return new Date(b.fechaCreacion) - new Date(a.fechaCreacion);
         case 'titulo':
@@ -249,14 +207,30 @@ const Tareas = () => {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">Gestión de Tareas</h1>
             <p className="text-gray-600">Administra y haz seguimiento a las tareas de tus estudiantes</p>
+            {error && (
+              <div className="mt-2 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+                {error}
+              </div>
+            )}
           </div>
-          <button
-            onClick={() => setShowCrearModal(true)}
-            className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Nueva Tarea</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={refrescarTareas}
+              disabled={loading}
+              className="flex items-center space-x-2 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+              <span>Refrescar</span>
+            </button>
+            <button
+              onClick={() => setShowCrearModal(true)}
+              disabled={loading}
+              className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Nueva Tarea</span>
+            </button>
+          </div>
         </div>
 
         {/* Estadísticas */}
@@ -416,7 +390,39 @@ const Tareas = () => {
       </div>
 
       {/* Lista de tareas */}
-      {viewMode === 'tarjetas' ? (
+      {loading ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+          <div className="flex flex-col items-center justify-center">
+            <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">Cargando tareas...</h3>
+            <p className="text-gray-600">Obteniendo las tareas del profesor desde el servidor</p>
+          </div>
+        </div>
+      ) : tareasFiltradas.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12">
+          <div className="flex flex-col items-center justify-center">
+            <FileText className="w-16 h-16 text-gray-400 mb-4" />
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              {tareas.length === 0 ? 'No tienes tareas creadas' : 'No se encontraron tareas'}
+            </h3>
+            <p className="text-gray-600 text-center mb-6">
+              {tareas.length === 0 
+                ? 'Comienza creando tu primera tarea para asignar a tus estudiantes'
+                : 'Intenta ajustar los filtros para encontrar las tareas que buscas'
+              }
+            </p>
+            {tareas.length === 0 && (
+              <button
+                onClick={() => setShowCrearModal(true)}
+                className="flex items-center space-x-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Crear primera tarea</span>
+              </button>
+            )}
+          </div>
+        </div>
+      ) : viewMode === 'tarjetas' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tareasFiltradas.map((tarea) => {
             const estadoInfo = getEstadoInfo(tarea.estado);
@@ -647,6 +653,7 @@ const Tareas = () => {
         isOpen={showEditarModal} 
         onClose={() => setShowEditarModal(false)}
         tarea={tareaSeleccionada}
+        onSave={handleTareaActualizada}
       />
       
       <DetallesTareaModal 
@@ -659,6 +666,7 @@ const Tareas = () => {
         isOpen={showEliminarModal} 
         onClose={() => setShowEliminarModal(false)}
         tarea={tareaSeleccionada}
+        onConfirm={handleTareaEliminada}
       />
     </div>
   );

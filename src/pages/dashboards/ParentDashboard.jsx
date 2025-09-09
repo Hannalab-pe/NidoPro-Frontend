@@ -28,6 +28,7 @@ import Sociabilidad from "../parent/sociabilidad/Sociabilidad";
 import Aprendizaje from "../parent/aprendizaje/Aprendizaje";
 import ParentAIChat from '../parent/iachat/ParentAIChat';
 import Anotaciones from '../parent/anotaciones/Anotaciones';
+import Cronograma from '../parent/cronograma/Cronograma';
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -37,9 +38,10 @@ const ParentDashboard = () => {
   const menuItems = [
     { id: "overview", label: "Resumen Familiar", icon: BarChart3 },
     { id: "reports", label: "Informes", icon: FileText },
-    { id: "tasks", label: "Tareas", icon: BookOpen },
+    { id: "tasks", label: "Actividades", icon: BookOpen },
+    { id: "cronograma", label: "Cronograma", icon: Calendar },
     { id: "suggestions", label: "Sugerencias", icon: MessageSquare },
-    { id: "attendance", label: "Asistencia", icon: Calendar },
+    { id: "attendance", label: "Asistencia", icon: CheckCircle },
     { id: "learning", label: "Aprendizaje", icon: Brain },
     { id: "anotaciones", label: "Anotaciones", icon: Bell },
     { id: "iachat", label: "Asistente IA", icon: MessageSquare }
@@ -257,6 +259,8 @@ const ParentDashboard = () => {
         return <Reportes />;
       case "tasks":
         return <Tareas />;
+      case "cronograma":
+        return <Cronograma />;
       case "suggestions":
         return <Sugerencias />;
       case "attendance":
