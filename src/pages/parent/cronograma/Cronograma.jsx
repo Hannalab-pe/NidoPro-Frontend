@@ -198,12 +198,9 @@ const Cronograma = () => {
         {/* Información del estudiante y aula */}
         <div className="flex flex-col space-y-2">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Calendar className="w-5 h-5 text-blue-600" />
-            </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">
-                Cronograma de {estudiante?.nombre} {estudiante?.apellido}
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Cronograma
               </h1>
               {aulaInfo?.grado && aulaInfo?.seccion && (
                 <p className="text-sm text-gray-600">

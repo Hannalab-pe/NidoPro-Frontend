@@ -25,13 +25,10 @@ export const useTareasTrabajador = () => {
         throw new Error('No se pudo obtener el ID del trabajador del token');
       }
 
-      console.log('🔍 [HOOK TAREAS TRABAJADOR] Cargando tareas para trabajador:', idTrabajador);
-      
-      const tareasData = await tareaService.obtenerTareasPorTrabajador(idTrabajador);
-      console.log('📚 [HOOK TAREAS TRABAJADOR] Tareas obtenidas:', tareasData);
+      const tareasArray = await tareaService.obtenerTareasPorTrabajador(idTrabajador);
       
       // Transformar datos si es necesario
-      const tareasTransformadas = transformarTareas(tareasData);
+      const tareasTransformadas = transformarTareas(tareasArray);
       setTareas(tareasTransformadas || []);
       
     } catch (error) {
@@ -55,41 +52,68 @@ export const useTareasTrabajador = () => {
       return [];
     }
 
-    return tareasBackend.map(tarea => ({
-      id: tarea.id || tarea.idTarea,
-      titulo: tarea.titulo,
-      descripcion: tarea.descripcion,
-      fechaCreacion: tarea.fechaCreacion || tarea.created_at,
-      fechaVencimiento: tarea.fechaEntrega,
-      fechaEntrega: tarea.fechaEntrega,
-      estado: mapearEstado(tarea.estado),
-      prioridad: tarea.prioridad || 'media',
+    return tareasBackend.map(tarea => {
+      // Calcular estadísticas basadas en tareaEntregas
+      const totalEstudiantes = tarea.tareaEntregas?.length || 0;
+      const entregadas = tarea.tareaEntregas?.filter(entrega => entrega.realizoTarea === true).length || 0;
+      const pendientes = totalEstudiantes - entregadas;
       
-      // Información del aula (si viene del backend)
-      aula: tarea.aula?.seccion || tarea.aulaSeccion || 'Sin asignar',
-      idAula: tarea.idAula,
-      
-      // Estadísticas (valores por defecto si no vienen del backend)
-      totalEstudiantes: tarea.totalEstudiantes || tarea.cantidadEstudiantes || 0,
-      entregadas: tarea.entregadas || 0,
-      pendientes: tarea.pendientes || tarea.totalEstudiantes || 0,
-      calificadas: tarea.calificadas || 0,
-      
-      // Archivos adjuntos
-      archivosAdjuntos: tarea.archivosAdjuntos || [],
-      
-      // Información adicional
-      materia: tarea.materia || 'Sin materia',
-      grado: tarea.grado || tarea.aula?.grado || 'Sin grado',
-      instrucciones: tarea.instrucciones || tarea.descripcion,
-      
-      // Datos del backend
-      idTrabajador: tarea.idTrabajador,
-      trabajador: tarea.trabajador,
-      
-      // Metadatos
-      _original: tarea // Guardar datos originales para debugging
-    }));
+      return {
+        id: tarea.idTarea,
+        idTarea: tarea.idTarea,
+        titulo: tarea.titulo,
+        descripcion: tarea.descripcion,
+        fechaAsignacion: tarea.fechaAsignacion,
+        fechaEntrega: tarea.fechaEntrega,
+        estado: mapearEstado(tarea.estado),
+        prioridad: tarea.prioridad || 'media', // Valor por defecto si no viene del backend
+        
+        // Información del aula
+        aula: `${tarea.aula?.idGrado?.grado || 'Sin grado'} - ${tarea.aula?.seccion || 'Sin sección'}`,
+        aulaInfo: {
+          idAula: tarea.aula?.idAula,
+          seccion: tarea.aula?.seccion,
+          grado: tarea.aula?.idGrado?.grado,
+          descripcion: tarea.aula?.idGrado?.descripcion,
+          cantidadEstudiantes: tarea.aula?.cantidadEstudiantes
+        },
+        
+        // Estadísticas calculadas
+        totalEstudiantes,
+        entregadas,
+        pendientes,
+        calificadas: 0, // Por ahora 0, se puede calcular si hay campo de calificación
+        
+        // Información del trabajador
+        trabajadorInfo: {
+          idTrabajador: tarea.idTrabajador?.idTrabajador,
+          nombre: `${tarea.idTrabajador?.nombre || ''} ${tarea.idTrabajador?.apellido || ''}`.trim(),
+          correo: tarea.idTrabajador?.correo,
+          rol: tarea.idTrabajador?.idRol?.nombre
+        },
+        
+        // Entregas de estudiantes
+        entregas: tarea.tareaEntregas?.map(entrega => ({
+          idTareaEntrega: entrega.idTareaEntrega,
+          idEstudiante: entrega.idEstudiante,
+          fechaEntrega: entrega.fechaEntrega,
+          archivoUrl: entrega.archivoUrl,
+          estado: entrega.estado,
+          realizoTarea: entrega.realizoTarea,
+          observaciones: entrega.observaciones,
+          estudiante: {
+            idEstudiante: entrega.idEstudiante2?.idEstudiante,
+            nombre: entrega.idEstudiante2?.nombre,
+            apellido: entrega.idEstudiante2?.apellido,
+            nroDocumento: entrega.idEstudiante2?.nroDocumento,
+            imagen: entrega.idEstudiante2?.imagen_estudiante
+          }
+        })) || [],
+        
+        // Datos originales para debugging
+        _original: tarea
+      };
+    });
   };
 
   /**

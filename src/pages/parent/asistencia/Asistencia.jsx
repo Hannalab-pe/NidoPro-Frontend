@@ -215,7 +215,7 @@ const Asistencia = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Historial de Asistencias</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Historial de Asistencias</h1>
         <p className="text-gray-600">Consulta el registro de asistencias de tu hijo/a</p>
       </div>
 

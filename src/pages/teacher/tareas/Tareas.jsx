@@ -31,6 +31,7 @@ import CrearTareaModal from './modales/CrearTareaModal';
 import EditarTareaModal from './modales/EditarTareaModal';
 import DetallesTareaModal from './modales/DetallesTareaModal';
 import EliminarTareaModal from './modales/EliminarTareaModal';
+import VerEntregasModal from './modales/VerEntregasModal';
 
 const Tareas = () => {
   // Estados
@@ -45,6 +46,7 @@ const Tareas = () => {
   const [showEditarModal, setShowEditarModal] = useState(false);
   const [showDetallesModal, setShowDetallesModal] = useState(false);
   const [showEliminarModal, setShowEliminarModal] = useState(false);
+  const [showEntregasModal, setShowEntregasModal] = useState(false);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
 
   // Hook para obtener tareas del trabajador
@@ -321,10 +323,10 @@ const Tareas = () => {
               onChange={(e) => setFilterStatus(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-              <option value="todas">Todos los estados</option>
-              <option value="activa">Activas</option>
-              <option value="vencida">Vencidas</option>
-              <option value="borrador">Borradores</option>
+              <option key="todas" value="todas">Todos los estados</option>
+              <option key="activa" value="activa">Activas</option>
+              <option key="vencida" value="vencida">Vencidas</option>
+              <option key="borrador" value="borrador">Borradores</option>
             </select>
           </div>
 
@@ -349,10 +351,10 @@ const Tareas = () => {
               onChange={(e) => setSortBy(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
-              <option value="fecha_vencimiento">Por vencimiento</option>
-              <option value="fecha_creacion">Por creación</option>
-              <option value="titulo">Por título</option>
-              <option value="materia">Por materia</option>
+              <option key="fecha_vencimiento" value="fecha_vencimiento">Por vencimiento</option>
+              <option key="fecha_creacion" value="fecha_creacion">Por creación</option>
+              <option key="titulo" value="titulo">Por título</option>
+              <option key="materia" value="materia">Por materia</option>
             </select>
           </div>
         </div>
@@ -442,9 +444,11 @@ const Tareas = () => {
                           <EstadoIcon className="w-3 h-3 mr-1" />
                           {estadoInfo.label}
                         </span>
-                        <span className={`text-xs font-medium ${getPrioridadColor(tarea.prioridad)}`}>
-                          ● {tarea.prioridad.toUpperCase()}
-                        </span>
+                        {tarea.prioridad && (
+                          <span className={`text-xs font-medium ${getPrioridadColor(tarea.prioridad)}`}>
+                            ● {tarea.prioridad.toUpperCase()}
+                          </span>
+                        )}
                       </div>
                     </div>
                     <div className="relative">
@@ -458,12 +462,12 @@ const Tareas = () => {
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center text-sm text-gray-600">
                       <BookOpen className="w-4 h-4 mr-2" />
-                      <span>{tarea.materia} - {tarea.grado}</span>
+                      <span>{tarea.aulaInfo?.grado || 'Sin grado'} - {tarea.aulaInfo?.seccion || 'Sin sección'}</span>
                     </div>
                     
                     <div className="flex items-center text-sm text-gray-600">
                       <Calendar className="w-4 h-4 mr-2" />
-                      <span>Vence: {formatFecha(tarea.fechaVencimiento)}</span>
+                      <span>Vence: {formatFecha(tarea.fechaEntrega)}</span>
                     </div>
 
                     <div className="flex items-center text-sm text-gray-600">
@@ -471,58 +475,25 @@ const Tareas = () => {
                       <span>{tarea.entregadas}/{tarea.totalEstudiantes} entregadas</span>
                     </div>
 
-                    {tarea.archivosAdjuntos.length > 0 && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <PaperclipIcon className="w-4 h-4 mr-2" />
-                        <span>{tarea.archivosAdjuntos.length} archivos adjuntos</span>
-                      </div>
-                    )}
+                    <div className="flex items-center text-sm text-gray-600">
+                      <Clock className="w-4 h-4 mr-2" />
+                      <span>Asignada: {formatFecha(tarea.fechaAsignacion)}</span>
+                    </div>
                   </div>
 
-                  {/* Barra de progreso */}
-                  <div className="mb-4">
-                    <div className="flex justify-between text-sm text-gray-600 mb-1">
-                      <span>Progreso de entrega</span>
-                      <span>{Math.round((tarea.entregadas / tarea.totalEstudiantes) * 100)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                        style={{ width: `${(tarea.entregadas / tarea.totalEstudiantes) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
+                 
 
                   {/* Acciones */}
                   <div className="flex space-x-2">
                     <button
                       onClick={() => {
                         setTareaSeleccionada(tarea);
-                        setShowDetallesModal(true);
+                        setShowEntregasModal(true);
                       }}
-                      className="flex-1 flex items-center justify-center space-x-2 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors"
+                      className="flex-1 flex items-center justify-center space-x-2 bg-indigo-50 text-indigo-600 hover:cursor-pointer px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors"
                     >
-                      <Eye className="w-4 h-4" />
-                      <span>Ver</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTareaSeleccionada(tarea);
-                        setShowEditarModal(true);
-                      }}
-                      className="flex-1 flex items-center justify-center space-x-2 bg-green-50 text-green-600 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors"
-                    >
-                      <Edit className="w-4 h-4" />
-                      <span>Editar</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setTareaSeleccionada(tarea);
-                        setShowEliminarModal(true);
-                      }}
-                      className="flex items-center justify-center bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition-colors"
-                    >
-                      <Trash2 className="w-4 h-4" />
+                      <Users className="w-4 h-4" />
+                      <span>Entregas</span>
                     </button>
                   </div>
                 </div>
@@ -667,6 +638,13 @@ const Tareas = () => {
         onClose={() => setShowEliminarModal(false)}
         tarea={tareaSeleccionada}
         onConfirm={handleTareaEliminada}
+      />
+
+      {/* Modal para ver entregas de estudiantes */}
+      <VerEntregasModal 
+        isOpen={showEntregasModal} 
+        onClose={() => setShowEntregasModal(false)}
+        tarea={tareaSeleccionada}
       />
     </div>
   );
