@@ -54,7 +54,7 @@ const ModalDetalleEvento = ({ isOpen, onClose, evento }) => {
             >
               <Dialog.Panel className="w-full max-w-md sm:max-w-sm md:max-w-md mx-4 sm:mx-auto transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-gradient-to-r from-green-500 to-green-600">
+                <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-gradient-to-r from-yellow-600 to-yellow-500">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-lg flex items-center justify-center">
                       <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
@@ -148,7 +148,7 @@ const ModalDetalleEvento = ({ isOpen, onClose, evento }) => {
                     
                     <div className="bg-blue-50 rounded-lg p-4 space-y-2">
                       <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                         <span className="text-sm text-gray-700">Estado: Programado</span>
                       </div>
                       <div className="flex items-center gap-2">
@@ -174,7 +174,7 @@ const ModalDetalleEvento = ({ isOpen, onClose, evento }) => {
                   </button>
                   <button
                     onClick={onClose}
-                    className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                    className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
                   >
                     Entendido
                   </button>

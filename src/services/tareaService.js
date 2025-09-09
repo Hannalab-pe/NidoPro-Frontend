@@ -78,6 +78,31 @@ export const tareaService = {
   },
 
   /**
+   * Obtener tareas de un trabajador específico
+   * @param {string} idTrabajador - ID del trabajador
+   * @returns {Promise} Lista de tareas del trabajador
+   */
+  obtenerTareasPorTrabajador: async (idTrabajador) => {
+    try {
+      console.log('🔍 [TAREA SERVICE] Obteniendo tareas del trabajador:', idTrabajador);
+      console.log('🌐 [TAREA SERVICE] URL completa:', `${API_BASE_URL}/tarea/trabajador/${idTrabajador}`);
+      
+      const response = await api.get(`/tarea/trabajador/${idTrabajador}`);
+      
+      console.log('✅ [TAREA SERVICE] Tareas del trabajador obtenidas exitosamente:');
+      console.log('📊 [TAREA SERVICE] Status:', response.status);
+      console.log('📋 [TAREA SERVICE] Data:', response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ [TAREA SERVICE] Error al obtener tareas del trabajador:', error);
+      console.error('❌ [TAREA SERVICE] Error response:', error.response);
+      console.error('❌ [TAREA SERVICE] Error data:', error.response?.data);
+      throw new Error(error.response?.data?.message || 'Error al obtener las tareas del trabajador');
+    }
+  },
+
+  /**
    * Obtener todas las tareas
    * @returns {Promise} Lista de tareas
    */

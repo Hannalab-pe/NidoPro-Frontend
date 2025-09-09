@@ -75,7 +75,9 @@ const Horarios = () => {
   // Obtener cronograma de todas las aulas asignadas
   const { data: cronogramaData = [], isLoading: loadingCronograma, error: errorCronograma } = useCronogramaDocente(
     aulasTrabajador,
-    { enabled: aulasTrabajador.length > 0 }
+    { 
+      enabled: !!(aulasTrabajador?.aulas?.length > 0 || (Array.isArray(aulasTrabajador) && aulasTrabajador.length > 0))
+    }
   );
 
   // Debug logs

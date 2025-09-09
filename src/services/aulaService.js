@@ -254,7 +254,7 @@ export const aulaService = {
       // La respuesta tiene la estructura: { success: true, message: "...", aulas: [...] }
       if (response.data?.success && response.data?.aulas) {
         console.log('✅ Aulas encontradas:', response.data.aulas);
-        return response.data.aulas;
+        return response.data;
       }
       
       // Fallbacks para otras estructuras posibles
@@ -271,10 +271,49 @@ export const aulaService = {
       }
       
       console.log('⚠️ No se encontraron aulas en la respuesta');
-      return [];
+      return { success: false, aulas: [] };
     } catch (error) {
       console.error('Error al obtener aulas por trabajador:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener aulas del trabajador');
+    }
+  },
+
+  /**
+   * Obtener estudiantes de un aula específica
+   * @param {string|number} idAula - ID del aula
+   * @returns {Promise<Object>} Lista de estudiantes del aula
+   */
+  async obtenerEstudiantesPorAula(idAula) {
+    try {
+      console.log('📤 Obteniendo estudiantes del aula:', idAula);
+      
+      const response = await api.get(`/estudiante/aula/${idAula}`);
+      console.log('📥 Respuesta completa de estudiantes por aula:', response.data);
+      
+      // La respuesta tiene la estructura: { success: true, message: "...", estudiantes: [...] }
+      if (response.data?.success && response.data?.estudiantes) {
+        console.log('✅ Estudiantes encontrados:', response.data.estudiantes);
+        return response.data;
+      }
+      
+      // Fallbacks para otras estructuras posibles
+      if (response.data?.info?.data) {
+        return { success: true, estudiantes: response.data.info.data };
+      }
+      
+      if (response.data?.data) {
+        return { success: true, estudiantes: response.data.data };
+      }
+      
+      if (Array.isArray(response.data)) {
+        return { success: true, estudiantes: response.data };
+      }
+      
+      console.log('⚠️ No se encontraron estudiantes en la respuesta');
+      return { success: false, estudiantes: [] };
+    } catch (error) {
+      console.error('❌ Error al obtener estudiantes del aula:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener estudiantes del aula');
     }
   }
 };

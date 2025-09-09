@@ -261,3 +261,100 @@ export const useAulasByTrabajador = (idTrabajador, options = {}) => {
     ...options
   });
 };
+
+/**
+ * Hook para obtener los estudiantes de un aula específica
+ */
+export const useEstudiantesByAula = (idAula, options = {}) => {
+  return useQuery({
+    queryKey: ['estudiantes-aula', idAula],
+    queryFn: async () => {
+      try {
+        console.log('🔍 Obteniendo estudiantes del aula:', idAula);
+        const resultado = await aulaService.obtenerEstudiantesPorAula(idAula);
+        console.log('✅ Estudiantes obtenidos:', resultado);
+        return resultado;
+      } catch (error) {
+        console.error('❌ Error al obtener estudiantes del aula:', error);
+        throw error;
+      }
+    },
+    enabled: !!idAula,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
+    retry: 2,
+    ...options
+  });
+};
+
+/**
+ * Hook para obtener todos los estudiantes de las aulas asignadas a un trabajador
+ */
+export const useEstudiantesByTrabajadorAulas = (idTrabajador, options = {}) => {
+  // Primero obtenemos las aulas del trabajador
+  const { 
+    data: aulasData, 
+    isLoading: loadingAulas, 
+    error: errorAulas 
+  } = useAulasByTrabajador(idTrabajador, { enabled: !!idTrabajador });
+
+  console.log('🏫 Aulas del trabajador:', aulasData);
+
+  // Extraemos los IDs de las aulas
+  const aulaIds = aulasData?.aulas?.map(aula => aula.id_aula) || [];
+  console.log('🆔 IDs de aulas:', aulaIds);
+
+  // Obtenemos los estudiantes de cada aula usando useQuery para cada una
+  const estudiantesQueries = useQuery({
+    queryKey: ['estudiantes-trabajador-aulas', idTrabajador, aulaIds],
+    queryFn: async () => {
+      if (aulaIds.length === 0) {
+        return [];
+      }
+
+      console.log('🔍 Obteniendo estudiantes para aulas:', aulaIds);
+      
+      // Obtener estudiantes de todas las aulas en paralelo
+      const promesas = aulaIds.map(idAula => 
+        aulaService.obtenerEstudiantesPorAula(idAula)
+      );
+
+      const resultados = await Promise.all(promesas);
+      
+      // Combinar todos los estudiantes de todas las aulas
+      const todosLosEstudiantes = resultados
+        .filter(resultado => resultado?.estudiantes)
+        .flatMap(resultado => resultado.estudiantes)
+        .filter((estudiante, index, array) => 
+          // Eliminar duplicados basados en id_estudiante
+          index === array.findIndex(e => e.id_estudiante === estudiante.id_estudiante)
+        );
+
+      console.log('✅ Total estudiantes combinados:', todosLosEstudiantes);
+
+      return {
+        estudiantes: todosLosEstudiantes,
+        aulas: aulasData?.aulas || [],
+        totalEstudiantes: todosLosEstudiantes.length,
+        totalAulas: aulasData?.aulas?.length || 0
+      };
+    },
+    enabled: !!idTrabajador && aulaIds.length > 0 && !loadingAulas,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    retry: 2,
+    ...options
+  });
+
+  return {
+    data: estudiantesQueries.data || {
+      estudiantes: [],
+      aulas: [],
+      totalEstudiantes: 0,
+      totalAulas: 0
+    },
+    isLoading: loadingAulas || estudiantesQueries.isLoading,
+    error: errorAulas || estudiantesQueries.error,
+    refetch: estudiantesQueries.refetch
+  };
+};
