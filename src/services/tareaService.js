@@ -84,21 +84,42 @@ export const tareaService = {
    */
   obtenerTareasPorTrabajador: async (idTrabajador) => {
     try {
-      console.log('🔍 [TAREA SERVICE] Obteniendo tareas del trabajador:', idTrabajador);
-      console.log('🌐 [TAREA SERVICE] URL completa:', `${API_BASE_URL}/tarea/trabajador/${idTrabajador}`);
-      
       const response = await api.get(`/tarea/trabajador/${idTrabajador}`);
       
-      console.log('✅ [TAREA SERVICE] Tareas del trabajador obtenidas exitosamente:');
-      console.log('📊 [TAREA SERVICE] Status:', response.status);
-      console.log('📋 [TAREA SERVICE] Data:', response.data);
-      
-      return response.data;
+      // Verificar la estructura de respuesta
+      if (response.data.success && response.data.tareas) {
+        return response.data.tareas; // Retornar solo el array de tareas
+      } else if (Array.isArray(response.data)) {
+        return response.data; // Si ya es un array
+      } else {
+        return response.data; // Fallback
+      }
     } catch (error) {
       console.error('❌ [TAREA SERVICE] Error al obtener tareas del trabajador:', error);
-      console.error('❌ [TAREA SERVICE] Error response:', error.response);
-      console.error('❌ [TAREA SERVICE] Error data:', error.response?.data);
       throw new Error(error.response?.data?.message || 'Error al obtener las tareas del trabajador');
+    }
+  },
+
+  /**
+   * Obtener tareas de un estudiante específico
+   * @param {string} idEstudiante - ID del estudiante
+   * @returns {Promise} Array de tareas del estudiante
+   */
+  obtenerTareasPorEstudiante: async (idEstudiante) => {
+    try {
+      const response = await api.get(`/tarea/estudiante/${idEstudiante}`);
+      
+      // Verificar la estructura de respuesta
+      if (response.data.success && response.data.tareas) {
+        return response.data.tareas; // Retornar solo el array de tareas
+      } else if (Array.isArray(response.data)) {
+        return response.data; // Si ya es un array
+      } else {
+        return response.data; // Fallback
+      }
+    } catch (error) {
+      console.error('❌ [TAREA SERVICE] Error al obtener tareas del estudiante:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener las tareas del estudiante');
     }
   },
 
@@ -159,6 +180,49 @@ export const tareaService = {
     } catch (error) {
       console.error('❌ Error al eliminar tarea:', error.response?.data || error.message);
       throw new Error(error.response?.data?.message || 'Error al eliminar la tarea');
+    }
+  },
+
+  /**
+   * Registrar la entrega de una tarea por parte de un estudiante
+   * @param {Object} entregaData - Datos de la entrega
+   * @param {string} entregaData.idTarea - ID de la tarea
+   * @param {string} entregaData.idEstudiante - ID del estudiante
+   * @param {boolean} entregaData.realizoTarea - Si realizó la tarea
+   * @param {string} entregaData.observaciones - Observaciones del padre/estudiante
+   * @param {string} entregaData.archivoUrl - URL del archivo adjunto (opcional)
+   * @returns {Promise} Respuesta del servidor
+   */
+  entregarTarea: async (entregaData) => {
+    try {
+      console.log('📤 Enviando entrega de tarea:', entregaData);
+      
+      const response = await api.post('/tarea-entrega', entregaData);
+      
+      console.log('✅ Entrega enviada exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al enviar entrega de tarea:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Error al enviar la entrega de la tarea');
+    }
+  },
+
+  /**
+   * Obtener todas las entregas de una tarea específica
+   * @param {string} idTarea - ID de la tarea
+   * @returns {Promise} Respuesta del servidor con entregas y estadísticas
+   */
+  obtenerEntregasPorTarea: async (idTarea) => {
+    try {
+      console.log('🔍 Obteniendo entregas para tarea:', idTarea);
+      
+      const response = await api.get(`/tarea-entrega/tarea/${idTarea}`);
+      
+      console.log('✅ Entregas obtenidas exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al obtener entregas de la tarea:', error.response?.data || error.message);
+      throw new Error(error.response?.data?.message || 'Error al obtener las entregas de la tarea');
     }
   }
 };
