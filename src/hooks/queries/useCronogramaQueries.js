@@ -66,9 +66,28 @@ export const useCronogramaMultiplesAulas = (idsAulas, options = {}) => {
  * Hook para obtener cronograma completo del docente
  * Combina las aulas asignadas con sus respectivos cronogramas
  */
-export const useCronogramaDocente = (aulasTrabajador, options = {}) => {
+export const useCronogramaDocente = (aulasTrabajadorData, options = {}) => {
+  // Extraer el array de aulas desde la estructura de respuesta
+  let aulasTrabajador = [];
+  
+  if (Array.isArray(aulasTrabajadorData)) {
+    // Si ya es un array, usarlo directamente
+    aulasTrabajador = aulasTrabajadorData;
+  } else if (aulasTrabajadorData?.aulas && Array.isArray(aulasTrabajadorData.aulas)) {
+    // Si tiene la estructura { success: true, aulas: [...] }
+    aulasTrabajador = aulasTrabajadorData.aulas;
+  } else if (aulasTrabajadorData?.data && Array.isArray(aulasTrabajadorData.data)) {
+    // Si tiene la estructura { data: [...] }
+    aulasTrabajador = aulasTrabajadorData.data;
+  }
+
+  console.log('🔍 [useCronogramaDocente] Datos recibidos:', aulasTrabajadorData);
+  console.log('🔍 [useCronogramaDocente] Aulas extraídas:', aulasTrabajador);
+  
   // Extraer solo los IDs de las aulas
   const idsAulas = aulasTrabajador?.map(aula => aula.id_aula || aula.idAula || aula.id) || [];
+  
+  console.log('🔍 [useCronogramaDocente] IDs de aulas:', idsAulas);
   
   return useCronogramaMultiplesAulas(idsAulas, {
     ...options,

@@ -162,23 +162,13 @@ const CrearTareaModal = ({ isOpen, onClose, onSave }) => {
       console.log('📝 [CREAR TAREA] Datos a enviar:', tareaData);
       console.log('📝 [CREAR TAREA] idAula en tareaData:', tareaData.idAula);
 
-      // Enviar al backend
-      const nuevaTarea = await tareaService.crearTarea(tareaData);
-      console.log('✅ [CREAR TAREA] Tarea creada exitosamente:', nuevaTarea);
-
-      // Mostrar mensaje de éxito
-      toast.success('Tarea creada exitosamente', {
-        description: 'La tarea ha sido asignada a todos los estudiantes del aula seleccionada'
-      });
-
-      // Notificar al componente padre
+      // Enviar al backend usando la función del hook padre
       if (onSave) {
-        onSave(nuevaTarea);
+        await onSave(tareaData);
       }
       
       // Limpiar formulario y cerrar modal
       resetForm();
-      onClose();
 
     } catch (error) {
       console.error('❌ [CREAR TAREA] Error al crear tarea:', error);
