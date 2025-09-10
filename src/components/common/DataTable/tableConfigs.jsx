@@ -113,6 +113,85 @@ export const studentsFilters = {
   }
 };
 
+// Configuración de columnas para grados
+export const gradosColumns = [
+  {
+    Header: 'Grado',
+    accessor: 'grado',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <span className="text-blue-600 font-bold text-sm">
+            {value?.charAt(0)?.toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">{value}</div>
+          <div className="text-sm text-gray-500">{row.descripcion || 'Sin descripción'}</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Descripción',
+    accessor: 'descripcion',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="max-w-xs truncate">
+        {value || 'Sin descripción'}
+      </div>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estaActivo',
+    sortable: true,
+    Cell: ({ value }) => {
+      const isActive = value === true || value === 'true' || value === 1;
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          isActive 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      );
+    }
+  },
+  {
+    Header: 'ID Pensión',
+    accessor: 'idPension',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="font-mono text-sm">
+        {value || 'Sin asignar'}
+      </div>
+    )
+  }
+];
+
+// Filtros para grados
+export const gradosFilters = {
+  status: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'active', label: 'Activo' },
+      { value: 'inactive', label: 'Inactivo' }
+    ]
+  },
+  pension: {
+    label: 'Pensión',
+    placeholder: 'Todas las pensiones',
+    options: [
+      { value: 'assigned', label: 'Con pensión asignada' },
+      { value: 'unassigned', label: 'Sin pensión asignada' }
+    ]
+  }
+};
+
 // Configuración de columnas para informes/reportes
 export const informesColumns = [
   {

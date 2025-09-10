@@ -38,6 +38,7 @@ import Reportes from '../admin/reportes/Reportes';
 import Configuraciones from "../admin/configuraciones/Configuracion";
 import Usuarios from '../admin/usuarios/Usuarios';
 import Planificaciones from '../admin/planificaciones/Planificaciones';
+import Grados from '../admin/grados/aulas';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -67,6 +68,7 @@ const AdminDashboard = () => {
     { id: "finances", label: "Finanzas", icon: DollarSign },
     { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
     { id: "planificaciones", label: "Planificaciones", icon: FileText },
+    { id: "grados", label: "Grados Académicos", icon: School },
   ];
 
   const stats = [
@@ -330,6 +332,7 @@ const AdminDashboard = () => {
           {activeSection === "users" && <Usuarios />}
           {activeSection === "settings" && <Configuraciones />}
           {activeSection === "planificaciones" && <Planificaciones />}
+          {activeSection === "grados" && <Grados />}
         </div>
       </main>
     </div>
