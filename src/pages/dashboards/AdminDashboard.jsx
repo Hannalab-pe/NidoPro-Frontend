@@ -65,7 +65,6 @@ const AdminDashboard = () => {
     { id: "parents", label: "Padres de Familia", icon: UserCheck },
     { id: "classes", label: "Aulas y Clases", icon: BookOpen },
     { id: "finances", label: "Finanzas", icon: DollarSign },
-    { id: "reports", label: "Reportes", icon: FileText },
     { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
     { id: "planificaciones", label: "Planificaciones", icon: FileText },
   ];
