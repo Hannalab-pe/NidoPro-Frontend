@@ -50,7 +50,6 @@ export const useAsistenciaDocente = () => {
       staleTime: 5 * 60 * 1000, // 5 minutos
       cacheTime: 10 * 60 * 1000, // 10 minutos
       onSuccess: (data) => {
-        console.log('👥 Estudiantes del aula cargados:', data);
         console.log('👥 Estructura de datos:', {
           tipo: typeof data,
           esArray: Array.isArray(data),
