@@ -37,12 +37,9 @@ const ParentDashboard = () => {
 
   const menuItems = [
     { id: "overview", label: "Resumen Familiar", icon: BarChart3 },
-    { id: "reports", label: "Informes", icon: FileText },
     { id: "tasks", label: "Actividades", icon: BookOpen },
     { id: "cronograma", label: "Cronograma", icon: Calendar },
-    { id: "suggestions", label: "Sugerencias", icon: MessageSquare },
     { id: "attendance", label: "Asistencia", icon: CheckCircle },
-    { id: "learning", label: "Aprendizaje", icon: Brain },
     { id: "anotaciones", label: "Anotaciones", icon: Bell },
     { id: "iachat", label: "Asistente IA", icon: MessageSquare }
   ];
