@@ -107,7 +107,7 @@ const schema = yup.object({
 });
 
 const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
-  const { matricularEstudiante, loading } = useMatricula();
+  const { matricularEstudiante, loading, creating } = useMatricula();
   
   // Usar el hook con manejo de errores
   let aulasHookData;
@@ -383,7 +383,9 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
 
       await matricularEstudiante(cleanMatriculaData);
       
-      toast.success('Estudiante matriculado exitosamente');
+      toast.success('Matrícula registrada exitosamente', {
+        description: 'La matrícula ha sido creada y registrada en el sistema financiero'
+      });
       handleClose();
       if (refetch) refetch();
     } catch (error) {
@@ -1087,7 +1089,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                     </button>
                     <button
                       type="submit"
-                      disabled={loading || uploadingVoucher}
+                      disabled={creating || uploadingVoucher}
                       className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {uploadingVoucher ? (
@@ -1095,10 +1097,10 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Subiendo voucher...
                         </>
-                      ) : loading ? (
+                      ) : creating ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Matriculando...
+                          Matriculando estudiante...
                         </>
                       ) : (
                         <>

@@ -161,7 +161,9 @@ const useAuthStore = create(
             }
           }
           
-          // Para tokens reales, intentar validar con backend (sin bloquear si falla)
+          // Para tokens reales, verificar si es un token válido localmente sin llamar al backend
+          // (Comentado para evitar error 404 ya que no existe /auth/validate en el backend)
+          /*
           try {
             const { authService } = await import('../services/authService');
             const validation = await authService.validateToken(token);
@@ -181,35 +183,39 @@ const useAuthStore = create(
           } catch (error) {
             // Si falla la validación del backend, mantener el estado persistido
             console.log('Backend no disponible, manteniendo sesión persistida');
-            
-            // Obtener el estado persistido del localStorage
-            const persistedState = JSON.parse(localStorage.getItem('auth-storage') || '{}');
-            
-            if (persistedState.state && persistedState.state.user && persistedState.state.role) {
-              // Restaurar el estado persistido completo
-              set({ 
-                user: persistedState.state.user,
-                token, 
-                isAuthenticated: true, 
-                role: persistedState.state.role,
-                permissions: persistedState.state.permissions || [],
-                loading: false,
-                error: null
-              });
-            } else {
-              // Si no hay estado persistido, limpiar todo
-              localStorage.removeItem('token');
-              localStorage.removeItem('auth-storage');
-              set({ 
-                user: null,
-                token: null,
-                role: null,
-                permissions: [],
-                isAuthenticated: false,
-                loading: false,
-                error: null
-              });
-            }
+          }
+          */
+          
+          // Si hay un token guardado, mantener el estado persistido
+          console.log('🔄 Restaurando sesión persistida desde localStorage');
+          
+          // Obtener el estado persistido del localStorage
+          const persistedState = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+          
+          if (persistedState.state && persistedState.state.user && persistedState.state.role) {
+            // Restaurar el estado persistido completo
+            set({ 
+              user: persistedState.state.user,
+              token, 
+              isAuthenticated: true, 
+              role: persistedState.state.role,
+              permissions: persistedState.state.permissions || [],
+              loading: false,
+              error: null
+            });
+          } else {
+            // Si no hay estado persistido, limpiar todo
+            localStorage.removeItem('token');
+            localStorage.removeItem('auth-storage');
+            set({ 
+              user: null,
+              token: null,
+              role: null,
+              permissions: [],
+              isAuthenticated: false,
+              loading: false,
+              error: null
+            });
           }
         } else {
           // Si no hay token, establecer loading como false

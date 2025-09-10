@@ -28,14 +28,35 @@ api.interceptors.request.use(
 
 // Interceptor para manejar respuestas y errores
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Verificar si la respuesta contiene HTML en lugar de JSON
+    if (typeof response.data === 'string' && response.data.includes('<html>')) {
+      console.error('❌ Respuesta HTML detectada en trabajadorService');
+      if (import.meta.env.PROD) {
+        // En producción, crear una respuesta vacía en lugar de fallar
+        return {
+          ...response,
+          data: { trabajadores: [], data: [], info: { data: [] } }
+        };
+      }
+    }
+    return response;
+  },
   (error) => {
     console.error('Error en la respuesta del API:', error);
     
-    // Si el token expiró, redirigir al login
-    if (error.response?.status === 401) {
+    // Si el token expiró, redirigir al login (solo si no estamos ya en login)
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
+      console.warn('🔐 Token expirado en trabajadorService, redirigiendo al login');
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem('auth-storage');
+      
+      // En producción, usar reemplazo en lugar de asignación directa
+      if (import.meta.env.PROD) {
+        window.location.replace('/login');
+      } else {
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);

@@ -29,14 +29,35 @@ api.interceptors.request.use(
 
 // Interceptor para manejar respuestas y errores
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Verificar si la respuesta contiene HTML en lugar de JSON
+    if (typeof response.data === 'string' && response.data.includes('<html>')) {
+      console.error('❌ Respuesta HTML detectada en interceptor');
+      if (import.meta.env.PROD) {
+        // En producción, crear una respuesta vacía en lugar de fallar
+        return {
+          ...response,
+          data: { roles: [], data: [] }
+        };
+      }
+    }
+    return response;
+  },
   (error) => {
     console.error('Error en la respuesta del API de roles:', error);
     
-    // Si el token expiró, redirigir al login
-    if (error.response?.status === 401) {
+    // Si el token expiró, redirigir al login (solo si no estamos ya en login)
+    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
+      console.warn('🔐 Token expirado, redirigiendo al login');
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      localStorage.removeItem('auth-storage');
+      
+      // En producción, usar reemplazo en lugar de asignación directa
+      if (import.meta.env.PROD) {
+        window.location.replace('/login');
+      } else {
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);
@@ -63,6 +84,11 @@ const fetchRoles = async () => {
     // Si la respuesta es HTML (string), indica problema de autenticación
     if (typeof response.data === 'string') {
       console.error('❌ Respuesta es HTML, posible problema de autenticación');
+      // En producción, retornar array vacío en lugar de fallar
+      if (import.meta.env.PROD) {
+        console.warn('🏭 Modo producción: Retornando array vacío para roles');
+        return [];
+      }
       throw new Error('Respuesta inválida del servidor (HTML en lugar de JSON)');
     }
 
@@ -92,8 +118,16 @@ const fetchRoles = async () => {
       data: error.response?.data
     });
     
-    toast.error('Error al cargar los roles');
-    throw error;
+    // En producción, manejar errores de forma más silenciosa
+    if (import.meta.env.PROD) {
+      console.warn('🏭 Producción: Error en roles manejado silenciosamente');
+      return [];
+    } else {
+      toast.error('Error al cargar los roles');
+    }
+    
+    // Retornar array vacío en lugar de fallar la aplicación
+    return [];
   }
 };
 

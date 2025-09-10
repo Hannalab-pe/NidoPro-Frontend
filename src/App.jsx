@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'sonner';
 import { useAuthStore } from './store';
 import { ProtectedRoute } from './components/auth';
+import ChangePasswordModal from './components/auth/ChangePasswordModal';
 import Login from './pages/auth/Login';
 import Dashboard from './pages/auth/Dashboard';
 
@@ -25,12 +26,37 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const { initializeAuth, isAuthenticated, loading } = useAuthStore();
+  const { initializeAuth, isAuthenticated, loading, user } = useAuthStore();
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
 
   // Inicializar autenticación al cargar la app
   useEffect(() => {
     initializeAuth();
   }, []);
+
+  // Verificar si necesita cambiar contraseña después de autenticarse
+  useEffect(() => {
+    if (isAuthenticated && user && user.cambioContrasena === false) {
+      setShowPasswordModal(true);
+    } else {
+      setShowPasswordModal(false);
+    }
+  }, [isAuthenticated, user]);
+
+  const handlePasswordChangeSuccess = (success) => {
+    if (success) {
+      setShowPasswordModal(false);
+      // Actualizar el estado del usuario para indicar que ya cambió la contraseña
+      // Esto evitará que el modal se muestre nuevamente
+      useAuthStore.setState(state => ({
+        ...state,
+        user: {
+          ...state.user,
+          cambioContrasena: true
+        }
+      }));
+    }
+  };
 
   // Mostrar loading mientras se inicializa la autenticación
   if (loading) {
@@ -102,6 +128,16 @@ function App() {
           closeButton
           duration={4000}
         />
+
+        {/* Modal de cambio de contraseña obligatorio */}
+        {showPasswordModal && user && (
+          <ChangePasswordModal
+            isOpen={showPasswordModal}
+            onClose={handlePasswordChangeSuccess}
+            userId={user.id}
+            userName={user.nombre || user.fullName}
+          />
+        )}
       </div>
       
       {/* React Query DevTools - solo en desarrollo */}
