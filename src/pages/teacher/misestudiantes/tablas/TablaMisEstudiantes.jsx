@@ -162,8 +162,8 @@ const TablaMisEstudiantes = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.map((student) => (
-                <tr key={`${student.idEstudiante}-${student.aulaInfo?.idAula}`} className="hover:bg-gray-50">
+              {filteredStudents.map((student, index) => (
+                <tr key={student.idMatriculaAula || student.idMatricula || `${student.idEstudiante}-${index}`} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {generateAvatar(student.nombre, student.apellido)}

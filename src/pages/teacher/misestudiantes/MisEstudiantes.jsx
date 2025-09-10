@@ -34,6 +34,9 @@ const MisEstudiantes = () => {
   const primeraAula = asignaciones?.[0];
   const idPrimeraAula = primeraAula?.idAula?.idAula || primeraAula?.idAula;
   
+  console.log('🏫 Primera aula:', primeraAula);
+  console.log('🆔 ID de primera aula:', idPrimeraAula);
+  
   const { 
     data: estudiantesData, 
     isLoading: loadingEstudiantes, 
@@ -43,6 +46,8 @@ const MisEstudiantes = () => {
   // Procesar estudiantes de la API
   const estudiantesProcesados = estudiantesData?.info?.data || [];
   console.log('📚 Estudiantes procesados:', estudiantesProcesados);
+  console.log('🔍 Estructura primer estudiante:', estudiantesProcesados[0]);
+  console.log('📊 Estructura completa estudiantesData:', estudiantesData);
   
   // useEffect para ver los cambios en los datos y el estado
   useEffect(() => {

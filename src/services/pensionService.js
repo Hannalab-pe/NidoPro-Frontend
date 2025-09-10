@@ -482,6 +482,64 @@ export const pensionService = {
       console.error('Error al configurar recordatorios:', error);
       throw new Error('Error al configurar recordatorios automáticos');
     }
+  },
+
+  /**
+   * Obtener todas las pensiones de estudiantes con filtros opcionales
+   * @param {Object} filtros - Filtros opcionales
+   * @returns {Promise<Object>} Lista de pensiones
+   */
+  async obtenerPensionesEstudiantes(filtros = {}) {
+    try {
+      // Construir query params si hay filtros
+      const queryParams = new URLSearchParams();
+      Object.keys(filtros).forEach(key => {
+        if (filtros[key] !== null && filtros[key] !== undefined && filtros[key] !== '') {
+          queryParams.append(key, filtros[key]);
+        }
+      });
+
+      const url = `/pension-estudiante${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+      console.log('🔍 Obteniendo pensiones de estudiantes...', { url, filtros });
+
+      const response = await api.get(url);
+      
+      console.log('📥 Pensiones obtenidas:', response.data.length, 'registros');
+      
+      return {
+        success: true,
+        pensiones: Array.isArray(response.data) ? response.data : []
+      };
+
+    } catch (error) {
+      console.error('❌ Error al obtener pensiones:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener pensiones');
+    }
+  },
+
+  /**
+   * Verificar o rechazar múltiples pagos de forma masiva
+   * @param {Object} datos - Datos para verificación masiva
+   * @returns {Promise<Object>} Resultado de la verificación
+   */
+  async verificarPagosMasivo(datos) {
+    try {
+      console.log('📤 Verificando pagos masivos:', datos);
+
+      const response = await api.patch('/pension-estudiante/verify-masivo', datos);
+
+      console.log('✅ Pagos verificados:', response.data);
+      
+      return {
+        success: true,
+        resultado: response.data
+      };
+
+    } catch (error) {
+      console.error('❌ Error al verificar pagos:', error);
+      throw new Error(error.response?.data?.message || 'Error al verificar pagos masivos');
+    }
   }
 };
 
