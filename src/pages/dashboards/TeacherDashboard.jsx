@@ -221,7 +221,7 @@ const TeacherDashboard = () => {
             
             <div className="flex-1 lg:ml-0 ml-4">
               <h1 className="text-xl lg:text-2xl font-bold text-white">
-                Panel de Trabajador
+                Panel de Docente
               </h1>
               <p className="text-sm text-white mt-1 hidden sm:block">
                 {user?.fullName || user?.nombre || user?.username} | {new Date().toLocaleDateString('es-ES', { 
