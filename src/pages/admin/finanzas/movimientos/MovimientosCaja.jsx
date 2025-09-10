@@ -12,11 +12,95 @@ import {
   CreditCard,
   FileText,
   Eye,
+  Edit,
   Filter,
   Search
 } from 'lucide-react'
 import { toast } from 'sonner'
 import cajaService from '../../../../services/cajaService'
+
+// Categorías por tipo de movimiento
+const categoriasIngreso = [
+  { value: 'PENSION_MENSUAL', label: 'Pensión Mensual' },
+  { value: 'MATRICULA', label: 'Matrícula' },
+  { value: 'MATERIALES', label: 'Materiales' },
+  { value: 'TALLERES', label: 'Talleres' },
+  { value: 'EVENTOS', label: 'Eventos' },
+  { value: 'OTROS_INGRESOS', label: 'Otros Ingresos' }
+]
+
+const categoriasEgreso = [
+  { value: 'PLANILLA', label: 'Planilla' },
+  { value: 'SERVICIOS', label: 'Servicios' },
+  { value: 'MATERIALES_EDUCATIVOS', label: 'Materiales Educativos' },
+  { value: 'MANTENIMIENTO', label: 'Mantenimiento' },
+  { value: 'GASTOS_ADMINISTRATIVOS', label: 'Gastos Administrativos' },
+  { value: 'OTROS_EGRESOS', label: 'Otros Egresos' }
+]
+
+// Subcategorías por categoría
+const subcategoriasPorCategoria = {
+  // Subcategorías de Ingresos
+  'PENSION_MENSUAL': [
+    { value: 'PENSION_REGULAR', label: 'Pensión Regular' },
+    { value: 'PENSION_ESPECIAL', label: 'Pensión Especial' }
+  ],
+  'MATRICULA': [
+    { value: 'MATRICULA_NUEVA', label: 'Matrícula Nueva' },
+    { value: 'MATRICULA_RENOVACION', label: 'Renovación Matrícula' }
+  ],
+  'MATERIALES': [
+    { value: 'LIBROS', label: 'Libros' },
+    { value: 'UNIFORMES', label: 'Uniformes' },
+    { value: 'UTILES', label: 'Útiles Escolares' }
+  ],
+  'TALLERES': [
+    { value: 'DEPORTIVOS', label: 'Deportivos' },
+    { value: 'ARTISTICOS', label: 'Artísticos' },
+    { value: 'ACADEMICOS', label: 'Académicos' }
+  ],
+  'EVENTOS': [
+    { value: 'PROMOCION', label: 'Promoción' },
+    { value: 'ACTUACIONES', label: 'Actuaciones' },
+    { value: 'CONCURSOS', label: 'Concursos' }
+  ],
+  'OTROS_INGRESOS': [
+    { value: 'DONACIONES', label: 'Donaciones' },
+    { value: 'VARIOS', label: 'Varios' }
+  ],
+  
+  // Subcategorías de Egresos
+  'PLANILLA': [
+    { value: 'SUELDOS_DOCENTES', label: 'Sueldos Docentes' },
+    { value: 'SUELDOS_ADMINISTRATIVOS', label: 'Sueldos Administrativos' },
+    { value: 'BONIFICACIONES', label: 'Bonificaciones' }
+  ],
+  'SERVICIOS': [
+    { value: 'LUZ', label: 'Luz' },
+    { value: 'AGUA', label: 'Agua' },
+    { value: 'INTERNET', label: 'Internet' },
+    { value: 'TELEFONO', label: 'Teléfono' }
+  ],
+  'MATERIALES_EDUCATIVOS': [
+    { value: 'LIBROS_DOCENTES', label: 'Libros para Docentes' },
+    { value: 'MATERIAL_DIDACTICO', label: 'Material Didáctico' },
+    { value: 'TECNOLOGIA', label: 'Tecnología' }
+  ],
+  'MANTENIMIENTO': [
+    { value: 'INFRAESTRUCTURA', label: 'Infraestructura' },
+    { value: 'EQUIPOS', label: 'Equipos' },
+    { value: 'LIMPIEZA', label: 'Limpieza' }
+  ],
+  'GASTOS_ADMINISTRATIVOS': [
+    { value: 'PAPELERIA', label: 'Papelería' },
+    { value: 'TRANSPORTE', label: 'Transporte' },
+    { value: 'CAPACITACIONES', label: 'Capacitaciones' }
+  ],
+  'OTROS_EGRESOS': [
+    { value: 'IMPREVISTOS', label: 'Imprevistos' },
+    { value: 'VARIOS_EGRESOS', label: 'Varios' }
+  ]
+}
 
 const MovimientosCaja = () => {
   const [activeTab, setActiveTab] = useState('nuevo')
@@ -27,6 +111,12 @@ const MovimientosCaja = () => {
   const [filteredMovimientos, setFilteredMovimientos] = useState([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTipo, setFilterTipo] = useState('TODOS')
+  
+  // Estados para edición
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [movimientoToEdit, setMovimientoToEdit] = useState(null)
+  const [editFormData, setEditFormData] = useState({})
+  const [loadingUpdate, setLoadingUpdate] = useState(false)
   
   // Estado del saldo
   const [saldoData, setSaldoData] = useState({
@@ -128,10 +218,29 @@ const MovimientosCaja = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    
+    // Si cambia el tipo de movimiento, limpiar categoría y subcategoría
+    if (name === 'tipo') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        categoria: '',
+        subcategoria: ''
+      }))
+    } 
+    // Si cambia la categoría, limpiar subcategoría
+    else if (name === 'categoria') {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        subcategoria: ''
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -224,6 +333,128 @@ const MovimientosCaja = () => {
     } finally {
       setLoading(false)
     }
+  }
+
+  // Funciones para manejo de edición
+  const handleEditClick = (movimiento) => {
+    // No permitir editar movimientos anulados
+    if (movimiento.estado === 'ANULADO') {
+      toast.error('No se puede editar un movimiento anulado')
+      return
+    }
+
+    setMovimientoToEdit(movimiento)
+    setEditFormData({
+      tipo: movimiento.tipo,
+      concepto: movimiento.concepto,
+      descripcion: movimiento.descripcion || '',
+      monto: movimiento.monto.toString(),
+      categoria: movimiento.categoria,
+      subcategoria: movimiento.subcategoria || '',
+      metodoPago: movimiento.metodoPago,
+      comprobante: movimiento.comprobante || '',
+      fecha: movimiento.fecha,
+      numeroTransaccion: movimiento.numeroTransaccion || '',
+      referenciaExterna: movimiento.referenciaExterna || ''
+    })
+    setIsEditModalOpen(true)
+  }
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target
+    
+    // Si cambia el tipo de movimiento, limpiar categoría y subcategoría
+    if (name === 'tipo') {
+      setEditFormData(prev => ({
+        ...prev,
+        [name]: value,
+        categoria: '',
+        subcategoria: ''
+      }))
+    } 
+    // Si cambia la categoría, limpiar subcategoría
+    else if (name === 'categoria') {
+      setEditFormData(prev => ({
+        ...prev,
+        [name]: value,
+        subcategoria: ''
+      }))
+    } else {
+      setEditFormData(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    }
+  }
+
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault()
+    setLoadingUpdate(true)
+
+    try {
+      // Preparar solo los campos que han cambiado
+      const fieldsToUpdate = {}
+      const originalData = {
+        tipo: movimientoToEdit.tipo,
+        concepto: movimientoToEdit.concepto,
+        descripcion: movimientoToEdit.descripcion || '',
+        monto: movimientoToEdit.monto.toString(),
+        categoria: movimientoToEdit.categoria,
+        subcategoria: movimientoToEdit.subcategoria || '',
+        metodoPago: movimientoToEdit.metodoPago,
+        comprobante: movimientoToEdit.comprobante || '',
+        fecha: movimientoToEdit.fecha,
+        numeroTransaccion: movimientoToEdit.numeroTransaccion || '',
+        referenciaExterna: movimientoToEdit.referenciaExterna || ''
+      }
+
+      // Comparar cada campo y agregar solo los que han cambiado
+      Object.keys(editFormData).forEach(key => {
+        if (editFormData[key] !== originalData[key]) {
+          if (key === 'monto') {
+            fieldsToUpdate[key] = parseFloat(editFormData[key])
+          } else {
+            fieldsToUpdate[key] = editFormData[key]
+          }
+        }
+      })
+
+      // Si no hay cambios, mostrar mensaje
+      if (Object.keys(fieldsToUpdate).length === 0) {
+        toast.info('No se detectaron cambios para actualizar')
+        return
+      }
+
+      console.log('📝 Campos a actualizar:', fieldsToUpdate)
+
+      // Llamar al servicio de actualización
+      const response = await cajaService.actualizarMovimiento(
+        movimientoToEdit.idMovimiento, 
+        fieldsToUpdate
+      )
+
+      if (response.success) {
+        toast.success('Movimiento actualizado exitosamente')
+        setIsEditModalOpen(false)
+        setMovimientoToEdit(null)
+        setEditFormData({})
+        
+        // Recargar movimientos
+        cargarMovimientos()
+      }
+
+    } catch (error) {
+      console.error('❌ Error al actualizar:', error)
+      toast.error(error.message || 'Error al actualizar el movimiento')
+    } finally {
+      setLoadingUpdate(false)
+    }
+  }
+
+  const handleCloseEditModal = () => {
+    setIsEditModalOpen(false)
+    setMovimientoToEdit(null)
+    setEditFormData({})
   }
 
   // Funciones auxiliares
@@ -439,14 +670,21 @@ const MovimientosCaja = () => {
                         value={formData.categoria}
                         onChange={handleInputChange}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={!formData.tipo}
                       >
-                        <option value="">Seleccionar categoría</option>
-                        <option value="PENSION_MENSUAL">Pensión Mensual</option>
-                        <option value="MATRICULA">Matrícula</option>
-                        <option value="PLANILLA">Planilla</option>
-                        <option value="SERVICIOS">Servicios</option>
-                        <option value="MATERIALES">Materiales</option>
-                        <option value="OTROS">Otros</option>
+                        <option value="">
+                          {!formData.tipo ? 'Primero selecciona el tipo' : 'Seleccionar categoría'}
+                        </option>
+                        {formData.tipo === 'INGRESO' && categoriasIngreso.map(categoria => (
+                          <option key={categoria.value} value={categoria.value}>
+                            {categoria.label}
+                          </option>
+                        ))}
+                        {formData.tipo === 'EGRESO' && categoriasEgreso.map(categoria => (
+                          <option key={categoria.value} value={categoria.value}>
+                            {categoria.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -462,12 +700,16 @@ const MovimientosCaja = () => {
                         value={formData.subcategoria}
                         onChange={handleInputChange}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={!formData.categoria}
                       >
-                        <option value="">Seleccionar subcategoría</option>
-                        <option value="PENSION_REGULAR">Pensión Regular</option>
-                        <option value="PENSION_ESPECIAL">Pensión Especial</option>
-                        <option value="MATRICULA_NUEVA">Matrícula Nueva</option>
-                        <option value="MATRICULA_RENOVACION">Renovación Matrícula</option>
+                        <option value="">
+                          {!formData.categoria ? 'Primero selecciona la categoría' : 'Seleccionar subcategoría'}
+                        </option>
+                        {formData.categoria && subcategoriasPorCategoria[formData.categoria]?.map(subcategoria => (
+                          <option key={subcategoria.value} value={subcategoria.value}>
+                            {subcategoria.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
@@ -990,13 +1232,25 @@ const MovimientosCaja = () => {
                               
                               {/* Acciones */}
                               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button
-                                  className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
-                                  title="Ver detalles del movimiento"
-                                >
-                                  <Eye className="w-4 h-4" />
-                                  <span>Ver</span>
-                                </button>
+                                <div className="flex items-center justify-end space-x-2">
+                                  <button
+                                    onClick={() => handleEditClick(movimiento)}
+                                    className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
+                                    title="Editar movimiento"
+                                    disabled={movimiento.estado === 'ANULADO'}
+                                  >
+                                    <Edit className="w-4 h-4" />
+                                    <span>Editar</span>
+                                  </button>
+                                  
+                                  <button
+                                    className="text-gray-600 hover:text-gray-900 flex items-center space-x-1"
+                                    title="Ver detalles del movimiento"
+                                  >
+                                    <Eye className="w-4 h-4" />
+                                    <span>Ver</span>
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -1010,6 +1264,263 @@ const MovimientosCaja = () => {
           </div>
         </div>
       </div>
+
+      {/* Modal de Edición */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                Editar Movimiento
+              </h3>
+              <button
+                onClick={handleCloseEditModal}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <span className="text-2xl">&times;</span>
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateSubmit} className="space-y-4">
+              {/* Tipo de Movimiento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Tipo de Movimiento *
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  {tiposMovimiento.map((tipo) => (
+                    <div
+                      key={tipo.id}
+                      className={`
+                        border-2 rounded-lg p-4 cursor-pointer transition-all
+                        ${editFormData.tipo === tipo.id.toUpperCase() 
+                          ? `border-blue-500 ${tipo.bgColor}` 
+                          : 'border-gray-200 hover:border-gray-300'
+                        }
+                      `}
+                      onClick={() => setEditFormData(prev => ({ ...prev, tipo: tipo.id.toUpperCase() }))}
+                    >
+                      <div className="flex items-center justify-center">
+                        {tipo.id === 'ingreso' ? (
+                          <Plus className={`h-8 w-8 ${tipo.color} mr-3`} />
+                        ) : (
+                          <Minus className={`h-8 w-8 ${tipo.color} mr-3`} />
+                        )}
+                        <span className={`text-lg font-medium ${tipo.color}`}>
+                          {tipo.label}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Concepto y Categoría */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Concepto *
+                  </label>
+                  <input
+                    type="text"
+                    name="concepto"
+                    value={editFormData.concepto || ''}
+                    onChange={handleEditInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Categoría
+                  </label>
+                  <select
+                    name="categoria"
+                    value={editFormData.categoria || ''}
+                    onChange={handleEditInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={!editFormData.tipo}
+                  >
+                    <option value="">
+                      {!editFormData.tipo ? 'Primero selecciona el tipo' : 'Seleccionar categoría'}
+                    </option>
+                    {editFormData.tipo === 'INGRESO' && categoriasIngreso.map(categoria => (
+                      <option key={categoria.value} value={categoria.value}>
+                        {categoria.label}
+                      </option>
+                    ))}
+                    {editFormData.tipo === 'EGRESO' && categoriasEgreso.map(categoria => (
+                      <option key={categoria.value} value={categoria.value}>
+                        {categoria.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Subcategoría y Método de Pago */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Subcategoría
+                  </label>
+                  <select
+                    name="subcategoria"
+                    value={editFormData.subcategoria || ''}
+                    onChange={handleEditInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    disabled={!editFormData.categoria}
+                  >
+                    <option value="">
+                      {!editFormData.categoria ? 'Primero selecciona la categoría' : 'Seleccionar subcategoría'}
+                    </option>
+                    {editFormData.categoria && subcategoriasPorCategoria[editFormData.categoria]?.map(subcategoria => (
+                      <option key={subcategoria.value} value={subcategoria.value}>
+                        {subcategoria.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Método de Pago *
+                  </label>
+                  <select
+                    name="metodoPago"
+                    value={editFormData.metodoPago || ''}
+                    onChange={handleEditInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="EFECTIVO">Efectivo</option>
+                    <option value="TRANSFERENCIA">Transferencia</option>
+                    <option value="TARJETA">Tarjeta</option>
+                    <option value="DEPOSITO">Depósito</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Monto y Descripción */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Monto *
+                  </label>
+                  <input
+                    type="number"
+                    name="monto"
+                    value={editFormData.monto || ''}
+                    onChange={handleEditInputChange}
+                    step="0.01"
+                    min="0"
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Fecha
+                  </label>
+                  <input
+                    type="date"
+                    name="fecha"
+                    value={editFormData.fecha || ''}
+                    onChange={handleEditInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Descripción */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Descripción
+                </label>
+                <textarea
+                  name="descripcion"
+                  value={editFormData.descripcion || ''}
+                  onChange={handleEditInputChange}
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Descripción del movimiento (opcional)"
+                />
+              </div>
+
+              {/* Campos adicionales */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Comprobante
+                  </label>
+                  <input
+                    type="text"
+                    name="comprobante"
+                    value={editFormData.comprobante || ''}
+                    onChange={handleEditInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Número de comprobante"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Número de Transacción
+                  </label>
+                  <input
+                    type="text"
+                    name="numeroTransaccion"
+                    value={editFormData.numeroTransaccion || ''}
+                    onChange={handleEditInputChange}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Número de transacción"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Referencia Externa
+                </label>
+                <input
+                  type="text"
+                  name="referenciaExterna"
+                  value={editFormData.referenciaExterna || ''}
+                  onChange={handleEditInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Referencia externa"
+                />
+              </div>
+
+              {/* Botones */}
+              <div className="flex justify-end space-x-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleCloseEditModal}
+                  className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingUpdate}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
+                >
+                  {loadingUpdate ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Actualizando...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      <span>Actualizar</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

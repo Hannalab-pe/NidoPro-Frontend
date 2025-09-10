@@ -23,6 +23,11 @@ const ProtectedRoute = ({ children, requiredRole = null, requiredPermission = nu
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Verificar si necesita cambiar contraseña (solo para debugging)
+  if (user && user.cambioContrasena === false) {
+    console.log('🔐 Usuario necesita cambiar contraseña:', user.nombre);
+  }
+
   // Verificar rol específico si es requerido
   if (requiredRole && !hasRole(requiredRole)) {
     return (

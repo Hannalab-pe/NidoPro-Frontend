@@ -43,11 +43,14 @@ const MisEstudiantes = () => {
     refetch: refetchEstudiantes 
   } = useEstudiantesAula(idPrimeraAula) || {};
   
-  // Procesar estudiantes de la API
-  const estudiantesProcesados = estudiantesData?.info?.data || [];
+  // Procesar estudiantes de la API - SOLO si tenemos datos y no estamos cargando
+  const estudiantesProcesados = (!loadingAsignaciones && !loadingEstudiantes && estudiantesData?.info?.data) ? estudiantesData.info.data : [];
   console.log('📚 Estudiantes procesados:', estudiantesProcesados);
   console.log('🔍 Estructura primer estudiante:', estudiantesProcesados[0]);
   console.log('📊 Estructura completa estudiantesData:', estudiantesData);
+  
+  // Estado de carga general - cargando si cualquiera de los dos está cargando
+  const isLoadingGeneral = loadingAsignaciones || (idPrimeraAula && loadingEstudiantes);
   
   // useEffect para ver los cambios en los datos y el estado
   useEffect(() => {
@@ -58,7 +61,8 @@ const MisEstudiantes = () => {
 
   // Función para obtener todos los estudiantes de todas las aulas asignadas
   const getAllStudents = () => {
-    if (!asignaciones || !Array.isArray(asignaciones) || !estudiantesProcesados || estudiantesProcesados.length === 0) {
+    // Si estamos cargando o no hay datos básicos, retornar array vacío
+    if (isLoadingGeneral || !asignaciones || !Array.isArray(asignaciones) || !estudiantesProcesados || estudiantesProcesados.length === 0) {
       return [];
     }
 
@@ -157,7 +161,7 @@ const MisEstudiantes = () => {
     console.log('Exportar lista de estudiantes');
   };
 
-  // Loading state
+  // Loading state - mostrar loading solo si está cargando asignaciones inicialmente
   if (loadingAsignaciones) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -233,7 +237,7 @@ const MisEstudiantes = () => {
       <TablaMisEstudiantes
         estudiantes={allStudents}
         asignaciones={asignaciones}
-        loading={loadingEstudiantes}
+        loading={isLoadingGeneral}
         onView={handleView}
         onEdit={handleEdit}
         onDelete={handleDelete}
