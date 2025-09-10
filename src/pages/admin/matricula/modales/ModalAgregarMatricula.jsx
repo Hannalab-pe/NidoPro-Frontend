@@ -180,7 +180,6 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         try {
           console.log('🎓 Iniciando carga de aulas para grado:', selectedGrado);
           await fetchAulasPorGrado(selectedGrado);
-          console.log('✅ Aulas cargadas exitosamente');
         } catch (error) {
           console.error('❌ Error al cargar aulas para grado:', error);
           console.error('❌ Stack trace:', error.stack);
