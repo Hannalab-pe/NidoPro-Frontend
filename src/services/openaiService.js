@@ -3,11 +3,7 @@ class OpenAIService {
     this.apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     this.baseURL = 'https://api.openai.com/v1';
     
-    // Temporary debug logging
-    console.log('🔑 OpenAI Service Init:');
-    console.log('- API Key found:', !!this.apiKey);
-    console.log('- API Key length:', this.apiKey?.length || 0);
-    console.log('- Environment mode:', import.meta.env.MODE);
+
     
     if (!this.apiKey) {
       console.warn('OpenAI API key not found. Please set VITE_OPENAI_API_KEY in your .env file');
