@@ -1,20 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { Loader2, CheckCircle, School, X, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAulasSimple } from '../../../../hooks/useAulas';
+import { useAulasHook } from '../../../../hooks/useAulas';
 import { useGradosOptions } from '../../../../hooks/useGrados';
 
-const ModalAgregarAula = ({ isOpen, onClose }) => {
+const ModalEditarAula = ({ isOpen, onClose, aula }) => {
   const [form, setForm] = useState({
     seccion: '',
     cantidadEstudiantes: '',
+    descripcion: '',
+    ubicacion: '',
+    equipamiento: '',
     idGrado: ''
   });
   const [loading, setLoading] = useState(false);
-  const { crearAula } = useAulasSimple();
-  const { options: gradosOptions, isLoading: loadingGrados, hasGrados } = useGradosOptions();
+  const { updateAula, updating } = useAulasHook();
+  const { options: gradosOptions, isLoading: loadingGrados } = useGradosOptions();
+
+  // Cargar datos del aula cuando se abre el modal
+  useEffect(() => {
+    if (aula && isOpen) {
+      setForm({
+        seccion: aula.seccion || '',
+        cantidadEstudiantes: aula.cantidadEstudiantes?.toString() || '',
+        descripcion: aula.descripcion || '',
+        ubicacion: aula.ubicacion || '',
+        equipamiento: aula.equipamiento || '',
+        idGrado: aula.idGrado || ''
+      });
+    }
+  }, [aula, isOpen]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,13 +43,18 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    if (!aula?.idAula) {
+      toast.error('No se pudo identificar el aula a actualizar');
+      return;
+    }
+
     // Validaciones
     if (!form.seccion.trim()) {
       toast.error('La sección es requerida');
       return;
     }
-    
+
     if (!form.cantidadEstudiantes || isNaN(form.cantidadEstudiantes) || Number(form.cantidadEstudiantes) < 0) {
       toast.error('La cantidad de estudiantes debe ser un número válido mayor o igual a 0');
       return;
@@ -49,28 +71,29 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
       const aulaData = {
         seccion: form.seccion.trim(),
         cantidadEstudiantes: Number(form.cantidadEstudiantes),
+        descripcion: form.descripcion.trim(),
+        ubicacion: form.ubicacion.trim(),
+        equipamiento: form.equipamiento.trim(),
         idGrado: form.idGrado
       };
 
-      await crearAula(aulaData);
-      
-      // Resetear formulario y cerrar modal
-      setForm({
-        seccion: '',
-        cantidadEstudiantes: '',
-        idGrado: ''
-      });
+      await updateAula(aula.idAula, aulaData);
       onClose();
     } catch (error) {
       // El error ya se maneja en el hook
     } finally {
       setLoading(false);
     }
-  };  const handleClose = () => {
+  };
+
+  const handleClose = () => {
     if (!loading) {
       setForm({
         seccion: '',
         cantidadEstudiantes: '',
+        descripcion: '',
+        ubicacion: '',
+        equipamiento: '',
         idGrado: ''
       });
       onClose();
@@ -107,7 +130,7 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
                 <div className="flex items-center justify-between mb-4">
                   <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 flex items-center">
                     <School className="w-5 h-5 mr-2 text-blue-600" />
-                    Crear Nueva Aula
+                    Editar Aula
                   </Dialog.Title>
                   <button
                     onClick={handleClose}
@@ -185,11 +208,59 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
                         <ChevronDown className="w-4 h-4 text-gray-400" />
                       </div>
                     </div>
-                    {!hasGrados && !loadingGrados && (
-                      <p className="text-xs text-amber-600 mt-1">
-                        No hay grados disponibles. Primero debe crear grados académicos.
-                      </p>
-                    )}
+                  </div>
+
+                  {/* Información adicional */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="ubicacion" className="block text-sm font-medium text-gray-700 mb-1">
+                        Ubicación
+                      </label>
+                      <input
+                        type="text"
+                        id="ubicacion"
+                        name="ubicacion"
+                        value={form.ubicacion}
+                        onChange={handleChange}
+                        placeholder="Ej: Primer piso, Edificio A"
+                        disabled={loading}
+                        className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Descripción */}
+                  <div>
+                    <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
+                      Descripción
+                    </label>
+                    <textarea
+                      id="descripcion"
+                      name="descripcion"
+                      value={form.descripcion}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Descripción del aula..."
+                      disabled={loading}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
+                  </div>
+
+                  {/* Equipamiento */}
+                  <div>
+                    <label htmlFor="equipamiento" className="block text-sm font-medium text-gray-700 mb-1">
+                      Equipamiento
+                    </label>
+                    <textarea
+                      id="equipamiento"
+                      name="equipamiento"
+                      value={form.equipamiento}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Proyector, pizarra digital, computadoras..."
+                      disabled={loading}
+                      className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    />
                   </div>
 
                   <div className="flex justify-end space-x-3 pt-4">
@@ -209,12 +280,12 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
                       {loading ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creando...
+                          Actualizando...
                         </>
                       ) : (
                         <>
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          Crear Aula
+                          Actualizar Aula
                         </>
                       )}
                     </button>
@@ -229,4 +300,4 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
   );
 };
 
-export default ModalAgregarAula;
+export default ModalEditarAula;

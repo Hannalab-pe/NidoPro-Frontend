@@ -26,13 +26,13 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validaciones
     if (!form.seccion.trim()) {
       toast.error('La sección es requerida');
       return;
     }
-    
+
     if (!form.cantidadEstudiantes || isNaN(form.cantidadEstudiantes) || Number(form.cantidadEstudiantes) < 0) {
       toast.error('La cantidad de estudiantes debe ser un número válido mayor o igual a 0');
       return;
@@ -53,7 +53,7 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
       };
 
       await crearAula(aulaData);
-      
+
       // Resetear formulario y cerrar modal
       setForm({
         seccion: '',
@@ -66,7 +66,9 @@ const ModalAgregarAula = ({ isOpen, onClose }) => {
     } finally {
       setLoading(false);
     }
-  };  const handleClose = () => {
+  };
+
+  const handleClose = () => {
     if (!loading) {
       setForm({
         seccion: '',

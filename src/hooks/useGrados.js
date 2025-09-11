@@ -169,22 +169,35 @@ export const useGradosOptions = () => {
   
   const options = grados.map(grado => ({
     value: grado.idGrado || grado.id,
-    label: grado.nombre,
-    data: grado
+    label: grado.grado || grado.nombre,
+    grado: grado
   }));
 
   return {
     options,
     isLoading,
-    isError
+    isError,
+    hasGrados: grados.length > 0
   };
 };
 
 // Hook simple para crear grado (para modales rápidos)
 const useGradosSimple = () => {
+  const queryClient = useQueryClient();
+  
   const crearGrado = async (data) => {
-    return await gradoService.createGrado(data);
+    try {
+      const result = await gradoService.createGrado(data);
+      
+      // Invalidar el caché de la tabla de grados para que se actualice inmediatamente
+      queryClient.invalidateQueries(GRADOS_QUERY_KEYS.lists());
+      
+      return result;
+    } catch (error) {
+      throw error;
+    }
   };
+  
   return { crearGrado };
 };
 
@@ -195,7 +208,7 @@ export default useGradosSimple;
  */
 export const useGradosTabla = () => {
   return useQuery({
-    queryKey: ['grados'],
+    queryKey: GRADOS_QUERY_KEYS.lists(),
     queryFn: gradoService.getAllGrados,
     staleTime: 5 * 60 * 1000, // 5 minutos
     cacheTime: 10 * 60 * 1000, // 10 minutos
@@ -205,7 +218,30 @@ export const useGradosTabla = () => {
       console.error('❌ Error al cargar grados en tabla:', error);
       toast.error('Error al cargar los grados');
     },
-    // Asegurar que siempre retorne un array
-    select: (data) => Array.isArray(data) ? data : []
+    // Asegurar que siempre retorne un array y extraer correctamente los datos
+    select: (data) => {
+      // Si ya es un array, devolverlo
+      if (Array.isArray(data)) {
+        return data;
+      }
+      
+      // Si tiene la estructura response.info.data
+      if (data?.info?.data && Array.isArray(data.info.data)) {
+        return data.info.data;
+      }
+      
+      // Si tiene la estructura response.grados
+      if (data?.grados && Array.isArray(data.grados)) {
+        return data.grados;
+      }
+      
+      // Si tiene la estructura response.data
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      }
+      
+      // Fallback: array vacío
+      return [];
+    }
   });
 };

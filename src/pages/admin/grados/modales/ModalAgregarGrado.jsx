@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { Loader2, CheckCircle } from 'lucide-react';
+import { Loader2, CheckCircle, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 import useGradosSimple from '../../../../hooks/useGrados';
+import { usePensionesOptions } from '../../../../hooks/usePensiones';
 
 const ModalAgregarGrado = ({ isOpen, onClose }) => {
   const [form, setForm] = useState({
@@ -14,6 +15,7 @@ const ModalAgregarGrado = ({ isOpen, onClose }) => {
   });
   const [loading, setLoading] = useState(false);
   const { crearGrado } = useGradosSimple();
+  const { options: pensionesOptions, isLoading: loadingPensiones, hasPensiones } = usePensionesOptions();
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -25,6 +27,18 @@ const ModalAgregarGrado = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validaciones
+    if (!form.grado.trim()) {
+      toast.error('El nombre del grado es requerido');
+      return;
+    }
+    
+    if (!form.idPension) {
+      toast.error('Debe seleccionar una pensión');
+      return;
+    }
+
     setLoading(true);
     try {
       await crearGrado(form);
@@ -100,15 +114,42 @@ const ModalAgregarGrado = ({ isOpen, onClose }) => {
                     <label className="text-sm text-gray-700">Activo</label>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ID de Pensión *</label>
-                    <input
-                      type="text"
-                      name="idPension"
-                      value={form.idPension}
-                      onChange={handleChange}
-                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Pensión Asociada *
+                    </label>
+                    {loadingPensiones ? (
+                      <div className="w-full border border-gray-300 rounded-md px-3 py-2 bg-gray-50 flex items-center">
+                        <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        <span className="text-gray-500">Cargando pensiones...</span>
+                      </div>
+                    ) : !hasPensiones ? (
+                      <div className="w-full border border-red-300 rounded-md px-3 py-2 bg-red-50 text-red-700">
+                        No hay pensiones disponibles. Cree una pensión primero.
+                      </div>
+                    ) : (
+                      <div className="relative">
+                        <select
+                          name="idPension"
+                          value={form.idPension}
+                          onChange={handleChange}
+                          className="w-full border border-gray-300 rounded-md px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
+                          required
+                        >
+                          <option value="">Seleccione una pensión</option>
+                          {pensionesOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                      </div>
+                    )}
+                    {form.idPension && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Pensión seleccionada: {pensionesOptions.find(p => p.value === form.idPension)?.label}
+                      </p>
+                    )}
                   </div>
                   <div className="flex justify-end pt-2">
                     <button
@@ -121,11 +162,11 @@ const ModalAgregarGrado = ({ isOpen, onClose }) => {
                     </button>
                     <button
                       type="submit"
-                      disabled={loading}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2 disabled:opacity-50"
+                      disabled={loading || !hasPensiones || loadingPensiones}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                      <span>Crear</span>
+                      <span>{!hasPensiones ? 'Sin pensiones' : 'Crear'}</span>
                     </button>
                   </div>
                 </form>

@@ -498,4 +498,114 @@ export const usePensiones = (initialFilters = {}) => {
   };
 };
 
+/**
+ * Hook simple para obtener todas las pensiones para la tabla
+ */
+export const usePensionesTabla = () => {
+  return useQuery({
+    queryKey: ['pensiones'],
+    queryFn: () => pensionService.getAllPensiones(),
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
+    refetchOnWindowFocus: false,
+    retry: 3,
+    onError: (error) => {
+      console.error('❌ Error al cargar pensiones en tabla:', error);
+      toast.error('Error al cargar las pensiones');
+    },
+    // Asegurar que siempre retorne un array y extraer correctamente los datos
+    select: (data) => {
+      // Si ya es un array, devolverlo
+      if (Array.isArray(data)) {
+        return data;
+      }
+      
+      // Si tiene la estructura response.info.data
+      if (data?.info?.data && Array.isArray(data.info.data)) {
+        return data.info.data;
+      }
+      
+      // Si tiene la estructura response.pensiones
+      if (data?.pensiones && Array.isArray(data.pensiones)) {
+        return data.pensiones;
+      }
+      
+      // Si tiene la estructura response.data
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      }
+      
+      // Fallback: array vacío
+      return [];
+    }
+  });
+};
+
+/**
+ * Hook simple para crear pensión (solo monto)
+ */
+export const usePensionesSimple = () => {
+  const queryClient = useQueryClient();
+
+  const crearPension = async (data) => {
+    try {
+      // Para el endpoint simple, solo enviamos el monto
+      const payload = {
+        monto: Number(data.monto)
+      };
+      
+      // Usar fetch directamente para el endpoint simple
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+      
+      const response = await fetch(`${API_BASE_URL}/pension`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al crear pensión');
+      }
+
+      const result = await response.json();
+      
+      // Invalidar caché para refrescar la lista
+      queryClient.invalidateQueries(['pensiones']);
+      toast.success('Pensión creada exitosamente');
+      
+      return result;
+    } catch (error) {
+      console.error('❌ Error al crear pensión:', error);
+      toast.error(error.message || 'Error al crear pensión');
+      throw error;
+    }
+  };
+
+  return { crearPension };
+};
+
+/**
+ * Hook para obtener pensiones como opciones para selectores
+ */
+export const usePensionesOptions = () => {
+  const { data: pensiones = [], isLoading } = usePensionesTabla();
+
+  const options = pensiones.map(pension => ({
+    value: pension.idPension,
+    label: `S/ ${parseFloat(pension.monto).toFixed(2)} - Vence día ${pension.fechaVencimientoMensual}`,
+    pension: pension
+  }));
+
+  return {
+    options,
+    isLoading,
+    hasPensiones: pensiones.length > 0
+  };
+};
+
 export default usePensiones;
