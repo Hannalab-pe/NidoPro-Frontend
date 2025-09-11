@@ -34,10 +34,6 @@ const Anotaciones = () => {
   // Categorías de anotaciones para filtrado
   const categorias = [
     { id: 'all', nombre: 'Todas', color: '#6B7280', icon: Bell },
-    { id: 'comportamiento', nombre: 'Comportamiento', color: '#EF4444', icon: AlertTriangle },
-    { id: 'academico', nombre: 'Académico', color: '#3B82F6', icon: BookOpen },
-    { id: 'positivo', nombre: 'Reconocimiento', color: '#10B981', icon: CheckCircle },
-    { id: 'informativo', nombre: 'Informativo', color: '#F59E0B', icon: Info }
   ]
 
   const formatDate = (date) => {

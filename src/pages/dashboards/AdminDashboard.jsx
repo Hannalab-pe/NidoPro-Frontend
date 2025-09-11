@@ -43,6 +43,7 @@ import Usuarios from '../admin/usuarios/Usuarios';
 import Planificaciones from '../admin/planificaciones/Planificaciones';
 import Grados from '../admin/grados/aulas';
 import Pensiones from '../admin/pensiones/pensiones';
+import Cursos from '../admin/cursos/Cursos';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -71,6 +72,7 @@ const AdminDashboard = () => {
     { id: "parents", label: "Padres de Familia", icon: UserCheck },
     { id: "asignacion-aula", label: "Asignación de Aulas", icon: BookOpen },
     { id: "aulas", label: "Gestión de Aulas", icon: School },
+    { id: "cursos", label: "Gestión de Cursos", icon: BookOpen },
     { id: "pensiones", label: "Pensiones", icon: BanknoteArrowUp },
     { id: "planificaciones", label: "Planificaciones", icon: FileText },
     { id: "grados", label: "Grados Académicos", icon: School },
@@ -334,6 +336,7 @@ const AdminDashboard = () => {
           {activeSection === "parents" && <Padres />}
           {activeSection === "asignacion-aula" && <AsignacionAula />}
           {activeSection === "aulas" && <Aulas />}
+          {activeSection === "cursos" && <Cursos />}
           {activeSection === "finances" && renderFinanceComponent()}
           {activeSection === "pensiones" && <Pensiones />}
           {activeSection === "reports" && <Reportes />}

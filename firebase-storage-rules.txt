@@ -1,0 +1,72 @@
+// Firebase Storage Rules - Reglas de seguridad para NidoPro
+// Configurar en: Firebase Console > Storage > Rules
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Función helper para verificar autenticación
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Función helper para verificar que el usuario es el propietario
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Función helper para validar tipos de archivo permitidos
+    function isValidFileType() {
+      return request.resource.contentType.matches('image/.*') ||
+             request.resource.contentType == 'application/pdf' ||
+             request.resource.contentType.matches('application/vnd.openxmlformats-officedocument.*') ||
+             request.resource.contentType.matches('application/msword.*') ||
+             request.resource.contentType == 'text/plain';
+    }
+
+    // Función helper para validar tamaño de archivo (10MB máximo)
+    function isValidFileSize() {
+      return request.resource.size < 10 * 1024 * 1024; // 10MB
+    }
+
+    // Reglas para archivos de tareas
+    match /tareas/{userId}/{allPaths=**} {
+      // Solo el propietario puede leer/escribir sus archivos
+      allow read, write: if isOwner(userId) &&
+                            isValidFileType() &&
+                            isValidFileSize();
+
+      // Solo el propietario puede eliminar sus archivos
+      allow delete: if isOwner(userId);
+    }
+
+    // Reglas para archivos públicos (si es necesario)
+    match /public/{allPaths=**} {
+      // Solo lectura pública
+      allow read: if true;
+
+      // Solo usuarios autenticados pueden escribir
+      allow write: if isAuthenticated() &&
+                      isValidFileType() &&
+                      isValidFileSize();
+
+      // Nadie puede eliminar archivos públicos
+      allow delete: if false;
+    }
+
+    // Reglas para archivos temporales (se eliminan automáticamente)
+    match /temp/{userId}/{allPaths=**} {
+      // Archivos temporales con expiración de 1 hora
+      allow read, write: if isOwner(userId) &&
+                            isValidFileType() &&
+                            isValidFileSize() &&
+                            request.time < timestamp.date(2025, 12, 31);
+
+      allow delete: if isOwner(userId);
+    }
+
+    // Denegar todo lo demás
+    match /{allPaths=**} {
+      allow read, write, delete: if false;
+    }
+  }
+}
