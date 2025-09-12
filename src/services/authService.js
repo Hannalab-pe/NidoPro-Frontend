@@ -57,6 +57,7 @@ export const authService = {
           tipo: data.usuario.tipo,
           rol: data.usuario.rol,
           entidadId: data.usuario.entidadId,
+          cambioContrasena: data.usuario.cambioContrasena, // Nuevo campo
           role: { 
             id: roleMapping.id, 
             nombre: roleMapping.nombre
@@ -152,7 +153,8 @@ export const authService = {
     }
   },
 
-  // Validar token
+  // Validar token (NOTA: Esta función no se usa actualmente porque el backend no tiene /auth/validate)
+  // Se mantiene por compatibilidad pero está comentada en useAuthStore.js
   async validateToken(token) {
     try {
       // Fallback para modo desarrollo primero
@@ -254,18 +256,28 @@ export const authService = {
     }
   },
 
-  // Cambiar contraseña
-  async changePassword(passwordData) {
+  // Cambiar contraseña (PATCH /api/v1/usuario/{id}/cambiar-contrasena)
+  async changePassword(userId, passwordData) {
     try {
       const token = localStorage.getItem('token');
-      await authApi.put('/auth/change-password', passwordData, {
+      
+      console.log('🔐 Cambiando contraseña para usuario:', userId);
+      console.log('📤 Datos enviados:', { 
+        contrasenaActual: '[OCULTA]', 
+        nuevaContrasena: '[OCULTA]', 
+        confirmarContrasena: '[OCULTA]' 
+      });
+      
+      const response = await authApi.patch(`/usuario/${userId}/cambiar-contrasena`, passwordData, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      return { success: true };
+      console.log('✅ Contraseña cambiada exitosamente:', response.data);
+      return response.data;
     } catch (error) {
+      console.error('❌ Error al cambiar contraseña:', error);
       throw new Error(error.response?.data?.message || 'Error al cambiar contraseña');
     }
   }

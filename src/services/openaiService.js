@@ -3,11 +3,7 @@ class OpenAIService {
     this.apiKey = import.meta.env.VITE_OPENAI_API_KEY;
     this.baseURL = 'https://api.openai.com/v1';
     
-    // Temporary debug logging
-    console.log('🔑 OpenAI Service Init:');
-    console.log('- API Key found:', !!this.apiKey);
-    console.log('- API Key length:', this.apiKey?.length || 0);
-    console.log('- Environment mode:', import.meta.env.MODE);
+
     
     if (!this.apiKey) {
       console.warn('OpenAI API key not found. Please set VITE_OPENAI_API_KEY in your .env file');
@@ -53,7 +49,10 @@ TONO:
 - Comprensivo con los desafíos docentes
 - Práctico y orientado a soluciones
 
-Siempre termina tus respuestas preguntando si el profesor necesita más detalles sobre algún aspecto específico o si hay algo más en lo que puedas ayudar.`;
+Siempre termina tus respuestas preguntando si el profesor necesita más detalles sobre algún aspecto específico o si hay algo más en lo que puedas ayudar.
+Si te hace preguntas fuera de tu área de especialización, redirige amablemente la conversación a temas pedagógicos y educativos y no extiendas tanto la espuesta para no gastar 
+tokens innecesariamente.
+`;
 
     try {
       const response = await fetch(`${this.baseURL}/chat/completions`, {
@@ -120,7 +119,10 @@ Disculpa, estoy experimentando dificultades técnicas en este momento.
 
 Como asistente pedagógico, estoy aquí para ayudarte con planificación de clases, estrategias de enseñanza, manejo del aula y mucho más. 
 
-¿Te gustaría intentar con una consulta más específica?`;
+¿Te gustaría intentar con una consulta más específica?
+Si te hace preguntas fuera de tu área de especialización, redirige amablemente la conversación a temas pedagógicos y educativos y no extiendas tanto la espuesta para no gastar 
+tokens innecesariamente.
+`;
     }
   }
 

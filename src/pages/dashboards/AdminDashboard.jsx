@@ -12,10 +12,12 @@ import {
   School,
   LogOut,
   Bell,
+  BanknoteArrowUp,
   CircleUser,
   Baby,
   Search,
   TrendingUp,
+  Banana,
   Calendar,
   Clock,
   ChevronRight,
@@ -28,7 +30,8 @@ import Estudiantes from '../admin/estudiantes/Estudiantes';
 import Matricula from '../admin/matricula/Matricula';
 import Trabajadores from '../admin/trabajadores/Trabajadores';
 import Padres from '../admin/padres/Padres';
-import Clases from '../admin/aulas/Aulas';
+import AsignacionAula from '../admin/aulas/AsignacionAula';
+import Aulas from '../admin/aula/Aulas';
 import GestionFinanciera from '../admin/finanzas/GestionFinanciera';
 import MovimientosCaja from '../admin/finanzas/movimientos/MovimientosCaja';
 import PagosPensiones from '../admin/finanzas/pensiones/PagosPensiones';
@@ -38,6 +41,9 @@ import Reportes from '../admin/reportes/Reportes';
 import Configuraciones from "../admin/configuraciones/Configuracion";
 import Usuarios from '../admin/usuarios/Usuarios';
 import Planificaciones from '../admin/planificaciones/Planificaciones';
+import Grados from '../admin/grados/aulas';
+import Pensiones from '../admin/pensiones/pensiones';
+import Cursos from '../admin/cursos/Cursos';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -59,15 +65,18 @@ const AdminDashboard = () => {
 
   const menuItems = [
     { id: "overview", label: "Resumen General", icon: BarChart3},
+    { id: "finances", label: "Finanzas", icon: DollarSign },
     { id: "matricula", label: "Matrícula", icon: GraduationCap },
     { id: "trabajadores", label: "Trabajadores", icon: UsersIcon },
     { id: "students", label: "Estudiantes", icon: CircleUser },
     { id: "parents", label: "Padres de Familia", icon: UserCheck },
-    { id: "classes", label: "Aulas y Clases", icon: BookOpen },
-    { id: "finances", label: "Finanzas", icon: DollarSign },
-    { id: "reports", label: "Reportes", icon: FileText },
-    { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
+    { id: "asignacion-aula", label: "Asignación de Aulas", icon: BookOpen },
+    { id: "aulas", label: "Gestión de Aulas", icon: School },
+    { id: "cursos", label: "Gestión de Cursos", icon: BookOpen },
+    { id: "pensiones", label: "Pensiones", icon: BanknoteArrowUp },
     { id: "planificaciones", label: "Planificaciones", icon: FileText },
+    { id: "grados", label: "Grados Académicos", icon: School },
+      { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
   ];
 
   const stats = [
@@ -258,7 +267,7 @@ const AdminDashboard = () => {
         <div className="p-4 lg:p-6 h-full overflow-y-auto">
           {activeSection === "overview" && (
             <div className="space-y-6 lg:space-y-8">
-              <h1 className="text-2xl font-bold mb-6 text-gray-700">Bienvenido, {user?.nombre || ''}</h1>
+              <h1 className="text-5xl font-bold mb-6 text-gray-700">Bienvenido, {user?.nombre || ''}</h1>
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, index) => {
@@ -325,12 +334,16 @@ const AdminDashboard = () => {
           {activeSection === "matricula" && <Matricula />}
           {activeSection === "trabajadores" && <Trabajadores />}
           {activeSection === "parents" && <Padres />}
-          {activeSection === "classes" && <Clases />}
+          {activeSection === "asignacion-aula" && <AsignacionAula />}
+          {activeSection === "aulas" && <Aulas />}
+          {activeSection === "cursos" && <Cursos />}
           {activeSection === "finances" && renderFinanceComponent()}
+          {activeSection === "pensiones" && <Pensiones />}
           {activeSection === "reports" && <Reportes />}
           {activeSection === "users" && <Usuarios />}
           {activeSection === "settings" && <Configuraciones />}
           {activeSection === "planificaciones" && <Planificaciones />}
+          {activeSection === "grados" && <Grados />}
         </div>
       </main>
     </div>

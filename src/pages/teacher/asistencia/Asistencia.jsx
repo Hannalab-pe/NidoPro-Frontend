@@ -67,6 +67,9 @@ const Asistencia = () => {
       
       // FORZAR CARGA INICIAL INMEDIATA con la primera aula
       console.log('🚀 Cargando datos iniciales para:', primeraAula.nombre, 'Fecha:', selectedDate);
+          // Ver el primer estudiante completo
+      console.log('📄 Primer estudiante completo:', estudiantes[0]);
+
     }
   }, [aulas]);
 
@@ -524,10 +527,10 @@ const Asistencia = () => {
                         
                         <div>
                           <h4 className="font-medium text-gray-900">
-                            {estudiante.nombres || estudiante.nombre || 'Sin nombre'} {estudiante.apellido_paterno || estudiante.apellidoPaterno || ''} {estudiante.apellido_materno || estudiante.apellidoMaterno || ''}
+                            {estudiante.nombres || estudiante.nombre || 'Sin nombre'} {estudiante.apellido}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            Código: {estudiante.codigo_estudiante || estudiante.codigoEstudiante || estudiante.codigo || 'N/A'}
+                            Código: {estudiante.id_estudiante || 'N/A'}
                           </p>
                         </div>
                       </div>

@@ -213,8 +213,8 @@ const TablaAulas = ({
         onRefresh={onRefresh}
         actions={{
           add: false, // Las asignaciones se crean desde trabajadores
-          edit: true,
-          delete: true,
+          edit: false,
+          delete: false,
           view: false,
           import: false,
           export: true,

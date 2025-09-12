@@ -80,7 +80,7 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
   
   // Determinar qué aulas usar y el estado de loading
   // Asegurar que siempre sea un array
-  const rawAulas = isDocente ? aulasTrabajador : allAulas;
+  const rawAulas = isDocente ? (aulasTrabajador?.aulas || []) : allAulas;
   const aulas = Array.isArray(rawAulas) ? rawAulas : [];
   const loadingAulas = isDocente ? loadingAulasTrabajador : loadingAllAulas;
 
@@ -122,6 +122,7 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
     nombre: aula.nombre,
     seccion: aula.seccion,
     grado: aula.grado,
+    display: aula.grado && aula.seccion ? `${aula.grado} - ${aula.seccion}` : aula.nombre,
     original: aula
   })));
 
@@ -410,10 +411,9 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
                           </option>
                           {Array.isArray(aulas) && aulas.length > 0 ? (
                             aulas.map((aula) => (
-                              <option key={aula.idAula || aula.id_aula || aula.id} value={aula.idAula || aula.id_aula || aula.id}>
-                                {aula.nombre || `Aula ${aula.seccion || aula.numero || aula.id}`} 
-                                {aula.seccion && ` - Sección ${aula.seccion}`}
-                                {(aula.capacidad || aula.capacidadMaxima) && ` (Cap: ${aula.capacidad || aula.capacidadMaxima})`}
+                              <option key={aula.id_aula || aula.idAula || aula.id} value={aula.id_aula || aula.idAula || aula.id}>
+                                {aula.grado && aula.seccion ? `${aula.grado} - ${aula.seccion}` : 
+                                 aula.nombre || `Aula ${aula.seccion || aula.numero || aula.id}`}
                               </option>
                             ))
                           ) : !loadingAulas ? (

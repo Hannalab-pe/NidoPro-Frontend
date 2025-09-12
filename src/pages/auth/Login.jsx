@@ -640,7 +640,7 @@ const Login = () => {
               rel="noopener noreferrer"
               className="hover:text-black transition-colors cursor-pointer"
             >
-              Powered by <span className="font-extrabold text-lg bg-green-700 bg-clip-text text-transparent">HannahLab</span>
+              Powered by <span className="font-extrabold text-lg bg-gradient-to-r from-green-500 to-emerald-700 bg-clip-text text-transparent">HannahLab</span>
             </a>
           </div>
         </div>
