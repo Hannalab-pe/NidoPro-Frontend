@@ -315,6 +315,82 @@ export const aulaService = {
       console.error('❌ Error al obtener estudiantes del aula:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener estudiantes del aula');
     }
+  },
+
+  /**
+   * Obtener aulas disponibles por grado
+   * @param {string|number} idGrado - ID del grado
+   * @returns {Promise<Array>} Lista de aulas disponibles para el grado
+   */
+  async getAulasDisponiblesPorGrado(idGrado) {
+    try {
+      console.log('🎯 Obteniendo aulas disponibles para grado:', idGrado);
+      
+      if (!idGrado) {
+        console.log('⚠️ ID de grado no proporcionado');
+        return [];
+      }
+      
+      const response = await api.get(`/aula/disponibles-por-grado/${idGrado}`);
+      console.log('📥 Respuesta del endpoint disponibles-por-grado:', response.data);
+      
+      // Extraer datos del objeto info.data según la estructura proporcionada
+      if (response.data?.info?.data) {
+        return response.data.info.data;
+      }
+      
+      if (response.data?.data) {
+        return response.data.data;
+      }
+      
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+      
+      console.log('⚠️ No se encontraron aulas disponibles en la respuesta');
+      return [];
+    } catch (error) {
+      console.error('❌ Error al obtener aulas disponibles por grado:', error);
+      
+      // Si es un error 404 (grado no encontrado), devolver array vacío en lugar de error
+      if (error.response?.status === 404) {
+        console.log('ℹ️ Grado no encontrado, devolviendo array vacío');
+        return [];
+      }
+      
+      // Para otros errores, aún lanzamos la excepción
+      throw new Error(error.response?.data?.message || 'Error al obtener aulas disponibles por grado');
+    }
+  },
+
+  /**
+   * Obtener aula por grado y sección
+   * @param {string|number} idGrado - ID del grado
+   * @param {string} seccion - Sección del aula (A, B, C, etc.)
+   * @returns {Promise<Object|null>} Datos del aula o null si no se encuentra
+   */
+  async getAulaByGradoAndSeccion(idGrado, seccion) {
+    try {
+      console.log('🎯 Buscando aula por grado y sección:', { idGrado, seccion });
+      
+      // Usar el endpoint de todas las aulas con filtros
+      const aulas = await this.getAllAulas({ 
+        grado: idGrado,
+        seccion: seccion 
+      });
+      
+      // Retornar la primera aula que coincida
+      if (aulas && aulas.length > 0) {
+        console.log('✅ Aula encontrada:', aulas[0]);
+        return aulas[0];
+      }
+      
+      console.log('⚠️ No se encontró aula para grado y sección especificados');
+      return null;
+    } catch (error) {
+      console.error('❌ Error al buscar aula por grado y sección:', error);
+      throw new Error(error.response?.data?.message || 'Error al buscar aula');
+    }
   }
 };
 

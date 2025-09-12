@@ -6,7 +6,8 @@ import {
   Calendar,
   School,
   MapPin,
-  UserCheck
+  UserCheck,
+  Plus
 } from 'lucide-react';
 import TablaAulas from './tablas/TablaAula';
 import { useAulasAsignacion } from '../../../hooks/useAulasAsignacion';
@@ -16,7 +17,7 @@ import ModalVerAula from './modales/ModalVerAula';
 import ModalEditarAula from './modales/ModalEditarAula';
 import ModalEliminarAula from './modales/ModalEliminarAula';
 
-const Clases = () => {
+const AsignacionAula = () => {
   // Hook para gestión de aulas y asignaciones
   const { 
     aulas,
@@ -199,4 +200,4 @@ const Clases = () => {
   }
 };
 
-export default Clases;
+export default AsignacionAula;

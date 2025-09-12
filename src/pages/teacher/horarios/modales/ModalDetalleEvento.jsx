@@ -10,11 +10,54 @@ import {
 } from 'lucide-react';
 import moment from 'moment';
 import 'moment/locale/es';
+import { useAuthStore } from '../../../../store/useAuthStore';
 
 moment.locale('es');
 
 const ModalDetalleEvento = ({ isOpen, onClose, evento }) => {
+  const { user } = useAuthStore();
+  
   if (!evento) return null;
+
+  // Determinar colores basado en el rol del usuario
+  const getHeaderColors = () => {
+    const rol = user?.role?.nombre || user?.rol;
+    
+    if (rol === 'trabajador' || rol === 'DOCENTE') {
+      return {
+        gradient: 'from-[#00A63E] to-[#008F36]',
+        iconBg: 'bg-white/20',
+        text: 'text-white',
+        subtitle: 'text-green-100',
+        button: 'bg-[#00A63E] hover:bg-[#008F36]'
+      };
+    } else if (rol === 'padre' || rol === 'PADRE') {
+      return {
+        gradient: 'from-[#D08700] to-[#B87500]',
+        iconBg: 'bg-white/20',
+        text: 'text-white',
+        subtitle: 'text-orange-100',
+        button: 'bg-[#D08700] hover:bg-[#B87500]'
+      };
+    } else {
+      // Color por defecto (amarillo original)
+      return {
+        gradient: 'from-yellow-600 to-yellow-500',
+        iconBg: 'bg-white/20',
+        text: 'text-white',
+        subtitle: 'text-green-100',
+        button: 'bg-yellow-600 hover:bg-yellow-700'
+      };
+    }
+  };
+
+  const headerColors = getHeaderColors();
+
+  // Debug: verificar colores aplicados
+  console.log('🎨 Rol detectado para colores:', { 
+    rol: user?.role?.nombre || user?.rol,
+    colores: headerColors 
+  });
 
   const formatearFecha = (fecha) => {
     return moment(fecha).format('dddd, DD [de] MMMM [de] YYYY');
@@ -54,16 +97,16 @@ const ModalDetalleEvento = ({ isOpen, onClose, evento }) => {
             >
               <Dialog.Panel className="w-full max-w-md sm:max-w-sm md:max-w-md mx-4 sm:mx-auto transform overflow-hidden rounded-lg bg-white text-left align-middle shadow-xl transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between p-4 sm:p-6 border-b bg-gradient-to-r from-yellow-600 to-yellow-500">
+                <div className={`flex items-center justify-between p-4 sm:p-6 border-b bg-gradient-to-r ${headerColors.gradient}`}>
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 sm:w-10 sm:h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 ${headerColors.iconBg} rounded-lg flex items-center justify-center`}>
                       <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                     </div>
                     <div>
-                      <Dialog.Title className="text-base sm:text-lg font-semibold text-white">
+                      <Dialog.Title className={`text-base sm:text-lg font-semibold ${headerColors.text}`}>
                         Detalles del Evento
                       </Dialog.Title>
-                      <p className="text-green-100 text-xs sm:text-sm">Cronograma de Actividades</p>
+                      <p className={`text-xs sm:text-sm ${headerColors.subtitle}`}>Cronograma de Actividades</p>
                     </div>
                   </div>
                   <button
@@ -174,7 +217,7 @@ const ModalDetalleEvento = ({ isOpen, onClose, evento }) => {
                   </button>
                   <button
                     onClick={onClose}
-                    className="w-full sm:w-auto px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+                    className={`w-full sm:w-auto px-4 py-2 ${headerColors.button} text-white rounded-md transition-colors`}
                   >
                     Entendido
                   </button>
