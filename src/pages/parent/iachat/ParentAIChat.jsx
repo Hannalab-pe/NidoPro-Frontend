@@ -22,12 +22,6 @@ import {
 import openaiService from '../../../services/openaiService';
 
 const ParentAIChat = () => {
-  useEffect(() => {
-    console.log('🔍 ParentAIChat Debug:');
-    console.log('- VITE_OPENAI_API_KEY exists:', !!import.meta.env.VITE_OPENAI_API_KEY);
-    console.log('- API Key length:', import.meta.env.VITE_OPENAI_API_KEY?.length || 0);
-    console.log('- OpenAI Service configured:', openaiService.isConfigured());
-  }, []);
 
   const [messages, setMessages] = useState([
     {

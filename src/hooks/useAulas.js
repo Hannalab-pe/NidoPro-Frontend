@@ -1,5 +1,7 @@
 // src/hooks/useAulas.js
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import {
   useAulas,
   useCreateAula,
@@ -158,3 +160,46 @@ export default useAulasHook;
 
 // Alias para compatibilidad con componentes que esperan useAulas
 export { useAulasHook as useAulas };
+
+/**
+ * Hook simple para crear aula (para modales rápidos)
+ */
+export const useAulasSimple = () => {
+  const queryClient = useQueryClient();
+
+  const crearAula = async (data) => {
+    try {
+      // Usar fetch directamente para el endpoint simple
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+
+      const response = await fetch(`${API_BASE_URL}/aula`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Error al crear aula');
+      }
+
+      const result = await response.json();
+
+      // Invalidar caché para refrescar la lista
+      queryClient.invalidateQueries(['aulas']);
+      toast.success('Aula creada exitosamente');
+
+      return result;
+    } catch (error) {
+      console.error('❌ Error al crear aula:', error);
+      toast.error(error.message || 'Error al crear aula');
+      throw error;
+    }
+  };
+
+  return { crearAula };
+};

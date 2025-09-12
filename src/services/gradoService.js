@@ -18,7 +18,6 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Token añadido a headers para grados:', token.substring(0, 20) + '...');
     }
     return config;
   },
@@ -53,9 +52,7 @@ export const gradoService = {
    */
   async getAllGrados() {
     try {
-      console.log('📤 Obteniendo grados del backend...');
       const response = await api.get('/grado');
-      console.log('📋 Respuesta de grados:', response.data);
       
       // Extraer datos según la estructura de respuesta
       let gradosData = [];
@@ -77,13 +74,11 @@ export const gradoService = {
         id: grado.idGrado || grado.id // Asegurar que el ID esté disponible
       }));
       
-      console.log('✅ Grados obtenidos y normalizados:', gradosNormalizados);
       return gradosNormalizados;
     } catch (error) {
       console.error('❌ Error al obtener grados:', error);
       
-      // Si hay error, retornar array vacío - no usar grados por defecto
-      console.log('🔄 Retornando array vacío debido al error');
+      // Si hay error, retornar array vacío
       return [];
     }
   },

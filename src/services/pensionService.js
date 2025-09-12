@@ -65,12 +65,18 @@ export const pensionService = {
       const response = await api.get(`/pension?${params.toString()}`);
       console.log('Respuesta del backend - pensiones:', response.data);
       
-      // Extraer el array de pensiones de la respuesta
-      if (response.data.success && response.data.pensiones) {
+      // Extraer el array de pensiones de la respuesta según la estructura real
+      if (response.data?.info?.data && Array.isArray(response.data.info.data)) {
+        return response.data.info.data;
+      } else if (response.data?.pensiones && Array.isArray(response.data.pensiones)) {
         return response.data.pensiones;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else if (Array.isArray(response.data)) {
+        return response.data;
       }
       
-      return response.data;
+      return [];
     } catch (error) {
       console.error('Error al obtener pensiones:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener pensiones');
@@ -481,6 +487,64 @@ export const pensionService = {
     } catch (error) {
       console.error('Error al configurar recordatorios:', error);
       throw new Error('Error al configurar recordatorios automáticos');
+    }
+  },
+
+  /**
+   * Obtener todas las pensiones de estudiantes con filtros opcionales
+   * @param {Object} filtros - Filtros opcionales
+   * @returns {Promise<Object>} Lista de pensiones
+   */
+  async obtenerPensionesEstudiantes(filtros = {}) {
+    try {
+      // Construir query params si hay filtros
+      const queryParams = new URLSearchParams();
+      Object.keys(filtros).forEach(key => {
+        if (filtros[key] !== null && filtros[key] !== undefined && filtros[key] !== '') {
+          queryParams.append(key, filtros[key]);
+        }
+      });
+
+      const url = `/pension-estudiante${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+      console.log('🔍 Obteniendo pensiones de estudiantes...', { url, filtros });
+
+      const response = await api.get(url);
+      
+      console.log('📥 Pensiones obtenidas:', response.data.length, 'registros');
+      
+      return {
+        success: true,
+        pensiones: Array.isArray(response.data) ? response.data : []
+      };
+
+    } catch (error) {
+      console.error('❌ Error al obtener pensiones:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener pensiones');
+    }
+  },
+
+  /**
+   * Verificar o rechazar múltiples pagos de forma masiva
+   * @param {Object} datos - Datos para verificación masiva
+   * @returns {Promise<Object>} Resultado de la verificación
+   */
+  async verificarPagosMasivo(datos) {
+    try {
+      console.log('📤 Verificando pagos masivos:', datos);
+
+      const response = await api.patch('/pension-estudiante/verify-masivo', datos);
+
+      console.log('✅ Pagos verificados:', response.data);
+      
+      return {
+        success: true,
+        resultado: response.data
+      };
+
+    } catch (error) {
+      console.error('❌ Error al verificar pagos:', error);
+      throw new Error(error.response?.data?.message || 'Error al verificar pagos masivos');
     }
   }
 };

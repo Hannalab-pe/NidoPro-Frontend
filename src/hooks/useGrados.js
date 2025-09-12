@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { gradoService } from '../services/gradoService';
+import gradosService from '../services/gradosService';
 
 // Query keys para los grados
 export const GRADOS_QUERY_KEYS = {
@@ -26,9 +27,6 @@ export const useGrados = () => {
     refetchOnWindowFocus: false,
     retry: 3,
     retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-    onSuccess: (data) => {
-      console.log('✅ Grados cargados exitosamente:', data);
-    },
     onError: (error) => {
       console.error('❌ Error al cargar grados:', error);
       toast.error('Error al cargar los grados disponibles');
@@ -39,7 +37,6 @@ export const useGrados = () => {
   const createGradoMutation = useMutation({
     mutationFn: (gradoData) => gradoService.createGrado(gradoData),
     onSuccess: (data) => {
-      console.log('✅ Grado creado exitosamente:', data);
       // Invalidar caché para refrescar la lista
       queryClient.invalidateQueries(GRADOS_QUERY_KEYS.lists());
     },
@@ -52,7 +49,6 @@ export const useGrados = () => {
   const updateGradoMutation = useMutation({
     mutationFn: ({ id, data }) => gradoService.updateGrado(id, data),
     onSuccess: (data, variables) => {
-      console.log('✅ Grado actualizado exitosamente:', data);
       // Invalidar caché específico del grado y lista general
       queryClient.invalidateQueries(GRADOS_QUERY_KEYS.detail(variables.id));
       queryClient.invalidateQueries(GRADOS_QUERY_KEYS.lists());
@@ -66,7 +62,6 @@ export const useGrados = () => {
   const deleteGradoMutation = useMutation({
     mutationFn: (id) => gradoService.deleteGrado(id),
     onSuccess: (data, id) => {
-      console.log('✅ Grado eliminado exitosamente:', data);
       // Remover del caché y refrescar lista
       queryClient.removeQueries(GRADOS_QUERY_KEYS.detail(id));
       queryClient.invalidateQueries(GRADOS_QUERY_KEYS.lists());
@@ -174,15 +169,79 @@ export const useGradosOptions = () => {
   
   const options = grados.map(grado => ({
     value: grado.idGrado || grado.id,
-    label: grado.nombre,
-    data: grado
+    label: grado.grado || grado.nombre,
+    grado: grado
   }));
 
   return {
     options,
     isLoading,
-    isError
+    isError,
+    hasGrados: grados.length > 0
   };
 };
 
-export default useGrados;
+// Hook simple para crear grado (para modales rápidos)
+const useGradosSimple = () => {
+  const queryClient = useQueryClient();
+  
+  const crearGrado = async (data) => {
+    try {
+      const result = await gradoService.createGrado(data);
+      
+      // Invalidar el caché de la tabla de grados para que se actualice inmediatamente
+      queryClient.invalidateQueries(GRADOS_QUERY_KEYS.lists());
+      
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  };
+  
+  return { crearGrado };
+};
+
+export default useGradosSimple;
+
+/**
+ * Hook para obtener todos los grados para la tabla
+ */
+export const useGradosTabla = () => {
+  return useQuery({
+    queryKey: GRADOS_QUERY_KEYS.lists(),
+    queryFn: gradoService.getAllGrados,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
+    refetchOnWindowFocus: false,
+    retry: 3,
+    onError: (error) => {
+      console.error('❌ Error al cargar grados en tabla:', error);
+      toast.error('Error al cargar los grados');
+    },
+    // Asegurar que siempre retorne un array y extraer correctamente los datos
+    select: (data) => {
+      // Si ya es un array, devolverlo
+      if (Array.isArray(data)) {
+        return data;
+      }
+      
+      // Si tiene la estructura response.info.data
+      if (data?.info?.data && Array.isArray(data.info.data)) {
+        return data.info.data;
+      }
+      
+      // Si tiene la estructura response.grados
+      if (data?.grados && Array.isArray(data.grados)) {
+        return data.grados;
+      }
+      
+      // Si tiene la estructura response.data
+      if (data?.data && Array.isArray(data.data)) {
+        return data.data;
+      }
+      
+      // Fallback: array vacío
+      return [];
+    }
+  });
+};

@@ -97,7 +97,7 @@ const schema = yup.object({
   idAulaEspecifica: yup.string()
     .when('tipoAsignacionAula', {
       is: 'manual',
-      then: (schema) => schema.required('Debe seleccionar un aula específica'),
+      then: (schema) => schema.required('Debe seleccionar un aula específica cuando el tipo de asignación es manual'),
       otherwise: (schema) => schema.nullable()
     }),
   
@@ -107,7 +107,7 @@ const schema = yup.object({
 });
 
 const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
-  const { matricularEstudiante, loading } = useMatricula();
+  const { matricularEstudiante, loading, creating } = useMatricula();
   
   // Usar el hook con manejo de errores
   let aulasHookData;
@@ -122,7 +122,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
     };
   }
   
-  const { aulas, loadingAulas, fetchAulasPorGrado } = aulasHookData;
+  const { aulas, aulasDisponiblesPorGrado, loadingAulas, loadingAulasPorGrado, fetchAulasPorGrado } = aulasHookData;
   const { apoderados, loadingApoderados, searchApoderados } = useApoderados();
   const { grados, isLoading: loadingGrados, isError: errorGrados } = useGrados();
 
@@ -138,6 +138,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showApoderadoSearch, setShowApoderadoSearch] = useState(false);
   const [selectedApoderado, setSelectedApoderado] = useState(null);
+  const [gradoCargado, setGradoCargado] = useState(null);
 
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue, control } = useForm({
     resolver: yupResolver(schema),
@@ -170,29 +171,56 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   ];
   const tiposDocumento = ['DNI', 'Carnet de Extranjería', 'Pasaporte'];
 
+  // Resetear estado cuando se abre el modal
+  useEffect(() => {
+    if (isOpen) {
+      setGradoCargado(null);
+    }
+  }, [isOpen]);
+
   // Efectos
   useEffect(() => {
     const handleGradoChange = async () => {
       console.log('🔄 useEffect activado - selectedGrado:', selectedGrado);
+      console.log('🔄 gradoCargado:', gradoCargado);
+      console.log('🔄 loadingAulasPorGrado:', loadingAulasPorGrado);
+
+      // Si no hay grado seleccionado o ya se cargó este grado, no hacer nada
+      if (!selectedGrado || gradoCargado === selectedGrado) {
+        console.log('ℹ️ Omitiendo carga - grado ya cargado o no seleccionado');
+        return;
+      }
+
+      // Si estamos cargando, no hacer nada
+      if (loadingAulasPorGrado) {
+        console.log('ℹ️ Omitiendo carga - ya estamos cargando');
+        return;
+      }
+
       console.log('🔄 fetchAulasPorGrado disponible:', typeof fetchAulasPorGrado);
-      
-      if (selectedGrado && fetchAulasPorGrado) {
+
+      if (fetchAulasPorGrado) {
         try {
-          console.log('🎓 Iniciando carga de aulas para grado:', selectedGrado);
+          console.log('🎓 Iniciando carga de aulas disponibles para grado:', selectedGrado);
           await fetchAulasPorGrado(selectedGrado);
-          console.log('✅ Aulas cargadas exitosamente');
+
+          // Marcar que este grado ya se cargó
+          setGradoCargado(selectedGrado);
+
+          // Limpiar la selección de aula cuando cambia el grado
+          setValue('idAulaEspecifica', '');
         } catch (error) {
-          console.error('❌ Error al cargar aulas para grado:', error);
+          console.error('❌ Error al cargar aulas disponibles para grado:', error);
           console.error('❌ Stack trace:', error.stack);
-          toast.error('Error al cargar aulas para el grado seleccionado');
+          toast.error('Error al cargar aulas disponibles para el grado seleccionado');
         }
       } else {
-        console.log('ℹ️ No se ejecutó fetchAulasPorGrado - selectedGrado:', selectedGrado, 'función:', !!fetchAulasPorGrado);
+        console.log('ℹ️ fetchAulasPorGrado no disponible');
       }
     };
 
     handleGradoChange();
-  }, [selectedGrado, fetchAulasPorGrado]);
+  }, [selectedGrado, fetchAulasPorGrado]); // Solo dependencias esenciales // Removido setValue ya que no cambia
 
   useEffect(() => {
     const handleSearchApoderados = async () => {
@@ -217,6 +245,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
     setSearchTerm('');
     setSelectedApoderado(null);
     setShowApoderadoSearch(false);
+    setGradoCargado(null); // Resetear el estado del grado cargado
     onClose();
   };
 
@@ -287,16 +316,55 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         return;
       }
 
+      // Obtener ID real del aula si es asignación manual
+      let idAulaReal = null;
+      if (data.tipoAsignacionAula === 'manual' && data.idAulaEspecifica) {
+        try {
+          console.log('🔍 Buscando ID real del aula para sección:', data.idAulaEspecifica, 'en grado:', data.idGrado);
+          
+          // Importar dinámicamente el servicio de aulas
+          const { aulaService } = await import('../../../../services/aulaService');
+          
+          // Buscar aula por grado y sección
+          const aulaCompleta = await aulaService.getAulaByGradoAndSeccion(data.idGrado, data.idAulaEspecifica);
+          
+          if (aulaCompleta && aulaCompleta.idAula) {
+            idAulaReal = aulaCompleta.idAula;
+            console.log('✅ ID real del aula encontrado:', idAulaReal);
+          } else {
+            console.warn('⚠️ No se pudo encontrar el aula completa para sección:', data.idAulaEspecifica);
+          }
+        } catch (error) {
+          console.error('❌ Error al buscar ID del aula:', error);
+        }
+      }
+
       const matriculaData = {
         // Datos básicos requeridos
         costoMatricula: data.costoMatricula.toString(),
         fechaIngreso: data.fechaIngreso,
         idGrado: data.idGrado,
         metodoPago: data.metodoPago,
+        anioEscolar: "2025", // Año escolar actual
         
         // Incluir idApoderado e idEstudiante explícitamente como null si no existen
         idApoderado: selectedApoderado?.id || null,
         idEstudiante: null,
+        
+        // Obtener ID del usuario actual del localStorage o contexto
+        registradoPor: (() => {
+          try {
+            const token = localStorage.getItem('token');
+            if (token) {
+              // Decodificar el token JWT para obtener el ID del usuario
+              const payload = JSON.parse(atob(token.split('.')[1]));
+              return payload.id || payload.userId || payload.sub || null;
+            }
+          } catch (error) {
+            console.warn('No se pudo obtener el ID del usuario del token:', error);
+          }
+          return null;
+        })(),
         
         // Datos del apoderado (para crear nuevo o actualizar)
         apoderadoData: {
@@ -325,7 +393,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         
         // Asignación de aula
         tipoAsignacionAula: data.tipoAsignacionAula,
-        idAulaEspecifica: data.tipoAsignacionAula === 'manual' && data.idAulaEspecifica ? data.idAulaEspecifica : null,
+        idAulaEspecifica: idAulaReal,
         
         // Motivo de preferencia
         motivoPreferencia: data.motivoPreferencia || null,
@@ -375,16 +443,18 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
       }
 
       // Limpiar campos undefined antes del envío
-      const cleanMatriculaData = JSON.parse(JSON.stringify(matriculaData, (key, value) => 
+      const cleanMatriculaData = JSON.parse(JSON.stringify(matriculaData, (key, value) =>
         value === undefined ? null : value
       ));
-      
+
       console.log('🧹 Datos limpiados para envío:', cleanMatriculaData);
       console.log('🧹 Contactos después de limpiar:', cleanMatriculaData.estudianteData?.contactosEmergencia);
 
       await matricularEstudiante(cleanMatriculaData);
-      
-      toast.success('Estudiante matriculado exitosamente');
+
+      toast.success('Matrícula registrada exitosamente', {
+        description: 'La matrícula ha sido creada y registrada en el sistema financiero'
+      });
       handleClose();
       if (refetch) refetch();
     } catch (error) {
@@ -1035,16 +1105,24 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                             <select
                               {...register('idAulaEspecifica')}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              disabled={loadingAulas}
+                              disabled={loadingAulasPorGrado}
                             >
                               <option value="">
-                                {loadingAulas ? 'Cargando aulas...' : 'Seleccione un aula'}
+                                {loadingAulasPorGrado ? 'Cargando aulas disponibles...' : 'Seleccione un aula disponible'}
                               </option>
-                              {Array.isArray(aulas) && aulas.map((aula) => (
-                                <option key={aula.idAula} value={aula.idAula}>
-                                  Sección {aula.seccion} - {aula.cantidadEstudiantes} estudiantes
-                                </option>
-                              ))}
+                              {Array.isArray(aulasDisponiblesPorGrado) && aulasDisponiblesPorGrado.length > 0 ? (
+                                aulasDisponiblesPorGrado.map((aula, index) => (
+                                  <option key={`${aula.seccion}-${index}`} value={aula.seccion}>
+                                    Sección {aula.seccion} - {aula.cuposDisponibles} cupos disponibles ({aula.estudiantesAsignados}/{aula.cantidadEstudiantes} estudiantes)
+                                  </option>
+                                ))
+                              ) : (
+                                !loadingAulasPorGrado && selectedGrado && (
+                                  <option value="" disabled>
+                                    No hay aulas disponibles para este grado
+                                  </option>
+                                )
+                              )}
                             </select>
                           </FormField>
                         )}
@@ -1088,7 +1166,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                     </button>
                     <button
                       type="submit"
-                      disabled={loading || uploadingVoucher}
+                      disabled={creating || uploadingVoucher}
                       className="px-8 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
                       {uploadingVoucher ? (
@@ -1096,10 +1174,10 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Subiendo voucher...
                         </>
-                      ) : loading ? (
+                      ) : creating ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Matriculando...
+                          Matriculando estudiante...
                         </>
                       ) : (
                         <>
