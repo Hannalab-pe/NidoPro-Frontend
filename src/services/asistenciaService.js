@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
 
 console.log('🔧 API_BASE_URL configurada:', API_BASE_URL);
 
