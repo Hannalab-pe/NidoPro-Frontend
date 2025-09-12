@@ -23,19 +23,18 @@ import cajaService from '../../../../services/cajaService'
 const categoriasIngreso = [
   { value: 'PENSION_MENSUAL', label: 'Pensión Mensual' },
   { value: 'MATRICULA', label: 'Matrícula' },
-  { value: 'MATERIALES', label: 'Materiales' },
-  { value: 'TALLERES', label: 'Talleres' },
-  { value: 'EVENTOS', label: 'Eventos' },
+  { value: 'INGRESO_ADICIONAL', label: 'Ingreso Adicional' },
+  { value: 'MATERIAL_EDUCATIVO', label: 'Material Educativo' },
   { value: 'OTROS_INGRESOS', label: 'Otros Ingresos' }
 ]
 
 const categoriasEgreso = [
-  { value: 'PLANILLA', label: 'Planilla' },
-  { value: 'SERVICIOS', label: 'Servicios' },
-  { value: 'MATERIALES_EDUCATIVOS', label: 'Materiales Educativos' },
-  { value: 'MANTENIMIENTO', label: 'Mantenimiento' },
+  { value: 'PAGO_PLANILLA', label: 'Pago de Planilla' },
+  { value: 'SUELDO_DOCENTE', label: 'Sueldo Docente' },
+  { value: 'GASTOS_OPERATIVOS', label: 'Gastos Operativos' },
   { value: 'GASTOS_ADMINISTRATIVOS', label: 'Gastos Administrativos' },
-  { value: 'OTROS_EGRESOS', label: 'Otros Egresos' }
+  { value: 'INFRAESTRUCTURA', label: 'Infraestructura' },
+  { value: 'OTROS_GASTOS', label: 'Otros Gastos' }
 ]
 
 // Subcategorías por categoría
