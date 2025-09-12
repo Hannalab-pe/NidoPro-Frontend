@@ -247,6 +247,7 @@ const TeacherDashboard = () => {
         <div className="p-4 lg:p-6 h-full overflow-y-auto">
           {activeSection === "overview" && (
             <div className="space-y-6 lg:space-y-8">
+              <h1 className="text-5xl font-bold mb-6 text-gray-700">Bienvenido, {user?.nombre || ''}</h1>
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, index) => {
@@ -272,6 +273,26 @@ const TeacherDashboard = () => {
                     </div>
                   );
                 })}
+              </div>
+
+              <div className="bg-gradient-to-r from-green-700 to-green-600 rounded-xl shadow-sm p-4 lg:p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-green-700 bg-opacity-20 rounded-lg">
+                      <Bot className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">Asistente IA Educativo</h3>
+                      <p className="text-green-100">¿Necesitas ideas para tu próxima clase?</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setActiveSection("ai-chat")}
+                    className="bg-white text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+                  >
+                    Chatear ahora
+                  </button>
+                </div>
               </div>
 
               {/* Metas del Día */}
@@ -408,25 +429,7 @@ const TeacherDashboard = () => {
               </div>
 
               {/* Asistente IA Quick Access */}
-              <div className="bg-gradient-to-r from-green-500 to-green-600 rounded-xl shadow-sm p-4 lg:p-6 text-white">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="p-3 bg-white bg-opacity-20 rounded-lg">
-                      <Bot className="w-8 h-8" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold">Asistente IA Educativo</h3>
-                      <p className="text-green-100">¿Necesitas ideas para tu próxima clase?</p>
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => setActiveSection("ai-chat")}
-                    className="bg-white text-green-600 hover:bg-green-50 px-4 py-2 rounded-lg transition-all duration-200 font-medium"
-                  >
-                    Chatear ahora
-                  </button>
-                </div>
-              </div>
+              
             </div>
           )}
 

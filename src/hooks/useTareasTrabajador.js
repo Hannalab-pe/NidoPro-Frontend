@@ -18,7 +18,7 @@ export const useTareasTrabajador = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Obtener ID del trabajador del token
       const idTrabajador = getIdTrabajadorFromToken();
       if (!idTrabajador) {
@@ -26,11 +26,11 @@ export const useTareasTrabajador = () => {
       }
 
       const tareasArray = await tareaService.obtenerTareasPorTrabajador(idTrabajador);
-      
+
       // Transformar datos si es necesario
       const tareasTransformadas = transformarTareas(tareasArray);
       setTareas(tareasTransformadas || []);
-      
+
     } catch (error) {
       console.error('❌ [HOOK TAREAS TRABAJADOR] Error al cargar tareas:', error);
       setError(error.message);
@@ -57,7 +57,7 @@ export const useTareasTrabajador = () => {
       const totalEstudiantes = tarea.tareaEntregas?.length || 0;
       const entregadas = tarea.tareaEntregas?.filter(entrega => entrega.realizoTarea === true).length || 0;
       const pendientes = totalEstudiantes - entregadas;
-      
+
       return {
         id: tarea.idTarea,
         idTarea: tarea.idTarea,
@@ -66,10 +66,14 @@ export const useTareasTrabajador = () => {
         fechaAsignacion: tarea.fechaAsignacion,
         fechaEntrega: tarea.fechaEntrega,
         estado: mapearEstado(tarea.estado),
-        prioridad: tarea.prioridad || 'media', // Valor por defecto si no viene del backend
-        
+        prioridad: tarea.prioridad || 'media',
+        archivoUrl: tarea.archivoUrl,
+        fechaCreacion: tarea.fechaCreacion,
+        materia: tarea.materia,
+
         // Información del aula
-        aula: `${tarea.aula?.idGrado?.grado || 'Sin grado'} - ${tarea.aula?.seccion || 'Sin sección'}`,
+        aulaNombre: `${tarea.aula?.idGrado?.grado || 'Sin grado'} - ${tarea.aula?.seccion || 'Sin sección'}`,
+        aula: tarea.aula, // Objeto completo del aula
         aulaInfo: {
           idAula: tarea.aula?.idAula,
           seccion: tarea.aula?.seccion,
@@ -77,13 +81,13 @@ export const useTareasTrabajador = () => {
           descripcion: tarea.aula?.idGrado?.descripcion,
           cantidadEstudiantes: tarea.aula?.cantidadEstudiantes
         },
-        
+
         // Estadísticas calculadas
         totalEstudiantes,
         entregadas,
         pendientes,
         calificadas: 0, // Por ahora 0, se puede calcular si hay campo de calificación
-        
+
         // Información del trabajador
         trabajadorInfo: {
           idTrabajador: tarea.idTrabajador?.idTrabajador,
@@ -91,7 +95,8 @@ export const useTareasTrabajador = () => {
           correo: tarea.idTrabajador?.correo,
           rol: tarea.idTrabajador?.idRol?.nombre
         },
-        
+        idTrabajador: tarea.idTrabajador, // Objeto completo del trabajador
+
         // Entregas de estudiantes
         entregas: tarea.tareaEntregas?.map(entrega => ({
           idTareaEntrega: entrega.idTareaEntrega,
@@ -109,7 +114,7 @@ export const useTareasTrabajador = () => {
             imagen: entrega.idEstudiante2?.imagen_estudiante
           }
         })) || [],
-        
+
         // Datos originales para debugging
         _original: tarea
       };
@@ -128,7 +133,7 @@ export const useTareasTrabajador = () => {
       'borrador': 'borrador',
       'draft': 'borrador'
     };
-    
+
     return mapeoEstados[estadoBackend?.toLowerCase()] || 'activa';
   };
 
@@ -145,72 +150,54 @@ export const useTareasTrabajador = () => {
   const crearTarea = async (tareaData) => {
     try {
       console.log('🚀 [HOOK TAREAS TRABAJADOR] Creando nueva tarea:', tareaData);
-      
+
       const nuevaTarea = await tareaService.crearTarea(tareaData);
       console.log('✅ [HOOK TAREAS TRABAJADOR] Tarea creada exitosamente:', nuevaTarea);
-      
-      // Recargar todas las tareas para tener datos actualizados
+
+      // Refrescar la lista de tareas
       await cargarTareasTrabajador();
-      
-      toast.success('Tarea creada exitosamente', {
-        description: 'La tarea ha sido asignada a todos los estudiantes del aula'
-      });
-      
+
       return nuevaTarea;
     } catch (error) {
       console.error('❌ [HOOK TAREAS TRABAJADOR] Error al crear tarea:', error);
-      toast.error('Error al crear la tarea', {
-        description: error.message
-      });
       throw error;
     }
   };
 
   /**
-   * Actualizar tarea y refrescar lista
+   * Actualizar tarea existente
    */
   const actualizarTarea = async (idTarea, tareaData) => {
     try {
       console.log('🔄 [HOOK TAREAS TRABAJADOR] Actualizando tarea:', idTarea, tareaData);
-      
+
       const tareaActualizada = await tareaService.actualizarTarea(idTarea, tareaData);
       console.log('✅ [HOOK TAREAS TRABAJADOR] Tarea actualizada exitosamente:', tareaActualizada);
-      
-      // Recargar todas las tareas para tener datos actualizados
+
+      // Refrescar la lista de tareas
       await cargarTareasTrabajador();
-      
-      toast.success('Tarea actualizada exitosamente');
-      
+
       return tareaActualizada;
     } catch (error) {
       console.error('❌ [HOOK TAREAS TRABAJADOR] Error al actualizar tarea:', error);
-      toast.error('Error al actualizar la tarea', {
-        description: error.message
-      });
       throw error;
     }
   };
 
   /**
-   * Eliminar tarea y refrescar lista
+   * Eliminar tarea
    */
   const eliminarTarea = async (idTarea) => {
     try {
       console.log('🗑️ [HOOK TAREAS TRABAJADOR] Eliminando tarea:', idTarea);
-      
+
       await tareaService.eliminarTarea(idTarea);
       console.log('✅ [HOOK TAREAS TRABAJADOR] Tarea eliminada exitosamente');
-      
-      // Recargar todas las tareas para tener datos actualizados
+
+      // Refrescar la lista de tareas
       await cargarTareasTrabajador();
-      
-      toast.success('Tarea eliminada exitosamente');
-      
     } catch (error) {
       console.error('❌ [HOOK TAREAS TRABAJADOR] Error al eliminar tarea:', error);
-      toast.error('Error al eliminar la tarea', {
-        description: error.message
-      });
       throw error;
     }
   };
@@ -224,7 +211,6 @@ export const useTareasTrabajador = () => {
     tareas,
     loading,
     error,
-    cargarTareasTrabajador,
     refrescarTareas,
     crearTarea,
     actualizarTarea,

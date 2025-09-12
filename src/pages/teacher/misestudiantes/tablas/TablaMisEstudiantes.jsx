@@ -1,244 +1,350 @@
 import React, { useState } from 'react';
-import { 
-  Search, 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Download,
-  Users,
-  MessageSquare,
-  BookOpen,
-  Loader2
-} from 'lucide-react';
+import { Eye, User, Phone, Mail, MapPin, GraduationCap, Users, Loader2 } from 'lucide-react';
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 
-// Componente para generar avatar con iniciales
-const generateAvatar = (nombre, apellido) => {
-  const initials = `${nombre?.charAt(0) || ''}${apellido?.charAt(0) || ''}`.toUpperCase();
-  const colors = [
-    'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 
-    'bg-pink-500', 'bg-indigo-500', 'bg-red-500', 'bg-gray-500'
-  ];
-  const colorIndex = (nombre?.charCodeAt(0) || 0) % colors.length;
-  
+const TablaMisEstudiantes = ({
+  estudiantes = [],
+  loading = false,
+  onView
+}) => {
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+
+  const handleViewStudent = (estudiante) => {
+    setSelectedStudent(estudiante);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedStudent(null);
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-32">
+        <div className="text-center">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-green-600" />
+          <p className="text-sm text-gray-600">Cargando estudiantes...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (estudiantes.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+        <h3 className="text-lg font-medium text-gray-900 mb-2">No hay estudiantes asignados</h3>
+        <p className="text-gray-600">
+          No tienes estudiantes asignados en tus aulas
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className={`w-10 h-10 ${colors[colorIndex]} rounded-full flex items-center justify-center text-white font-medium text-sm`}>
-      {initials || '??'}
-    </div>
+    <>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+        {estudiantes.map((estudiante) => (
+          <div
+            key={estudiante.idEstudiante}
+            className="bg-white rounded-lg border border-gray-200 p-4 sm:p-6 hover:shadow-lg transition-all duration-200 hover:border-green-300"
+          >
+            {/* Header con avatar y nombre */}
+            <div className="flex items-center space-x-3 sm:space-x-4 mb-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                <User className="w-6 h-6 sm:w-7 sm:h-7 text-green-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm sm:text-base font-semibold text-gray-900 truncate">
+                  {estudiante.nombre} {estudiante.apellido}
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-500">
+                  {estudiante.tipoDocumento}: {estudiante.nroDocumento}
+                </p>
+              </div>
+            </div>
+
+            {/* Información del aula */}
+            <div className="mb-4">
+              <div className="flex items-center text-xs sm:text-sm text-gray-600 mb-1">
+                <GraduationCap className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                <span className="font-medium truncate">
+                  {estudiante.infoApoderado?.grado?.grado} - Sección {estudiante.infoApoderado?.aula?.seccion}
+                </span>
+              </div>
+            </div>
+
+            {/* Contacto de emergencia principal */}
+            {estudiante.contactosEmergencia && estudiante.contactosEmergencia.length > 0 && (
+              <div className="mb-4">
+                <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                  <Phone className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{estudiante.contactosEmergencia[0].telefono}</span>
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 ml-5 sm:ml-6 truncate">
+                  {estudiante.contactosEmergencia[0].nombre} ({estudiante.contactosEmergencia[0].tipoContacto})
+                </div>
+              </div>
+            )}
+
+            {/* Apoderado */}
+            {estudiante.infoApoderado?.apoderado && (
+              <div className="mb-4">
+                <div className="flex items-center text-xs sm:text-sm text-gray-600">
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-2 flex-shrink-0" />
+                  <span className="truncate">{estudiante.infoApoderado.apoderado.nombre} {estudiante.infoApoderado.apoderado.apellido}</span>
+                </div>
+                <div className="text-xs sm:text-sm text-gray-500 ml-5 sm:ml-6 truncate">
+                  {estudiante.infoApoderado.apoderado.numero}
+                </div>
+              </div>
+            )}
+
+            {/* Botón de acción */}
+            <button
+              onClick={() => handleViewStudent(estudiante)}
+              className="w-full flex items-center justify-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm bg-green-50 text-green-700 rounded-md hover:bg-green-100 transition-colors font-medium"
+            >
+              <Eye className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+              Ver detalles
+            </button>
+          </div>
+        ))}
+      </div>
+
+      {/* Modal de detalles del estudiante */}
+      <ModalVerEstudiante
+        isOpen={showModal}
+        onClose={closeModal}
+        estudiante={selectedStudent}
+      />
+    </>
   );
 };
 
-const TablaMisEstudiantes = ({ 
-  estudiantes = [], 
-  asignaciones = [],
-  loading = false,
-  onView,
-  onEdit, 
-  onDelete,
-  onExport
-}) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedAula, setSelectedAula] = useState('all');
-
-  console.log('📋 TablaMisEstudiantes - Estudiantes recibidos:', estudiantes);
-  console.log('🏫 TablaMisEstudiantes - Asignaciones recibidas:', asignaciones);
-
-  // Filtrar estudiantes
-  const filteredStudents = estudiantes.filter(student => {
-    const matchesSearch = 
-      (student.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (student.apellido?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-      (student.numeroDocumento?.includes(searchTerm) || false);
-    
-    const matchesAula = selectedAula === 'all' || student.aulaInfo?.idAula?.toString() === selectedAula;
-    
-    return matchesSearch && matchesAula;
-  });
-
-  console.log('🔍 Estudiantes filtrados:', filteredStudents);
+// Componente del modal de ver estudiante
+const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
+  if (!estudiante) return null;
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-      {/* Header con controles */}
-      <div className="p-6 border-b border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Lista de Estudiantes</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              {filteredStudents.length} estudiante{filteredStudents.length !== 1 ? 's' : ''} encontrado{filteredStudents.length !== 1 ? 's' : ''}
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-3">
-            <button 
-              onClick={onExport}
-              className="flex items-center space-x-2 px-3 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/25 backdrop-blur-sm" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
             >
-              <Download className="w-4 h-4" />
-              <span>Exportar</span>
-            </button>
-          </div>
-        </div>
+              <Dialog.Panel className="w-full max-w-4xl mx-4 sm:mx-auto transform overflow-hidden rounded-2xl bg-white text-left align-middle shadow-xl transition-all">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-green-600 to-green-700 px-4 sm:px-8 py-4 sm:py-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3 sm:space-x-4">
+                      <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 flex items-center justify-center">
+                        <User className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                      </div>
+                      <div>
+                        <Dialog.Title as="h3" className="text-lg sm:text-2xl font-bold text-white">
+                          {estudiante.nombre} {estudiante.apellido}
+                        </Dialog.Title>
+                        <p className="text-sm sm:text-base text-green-100">
+                          {estudiante.tipoDocumento}: {estudiante.nroDocumento}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={onClose}
+                      className="text-white hover:bg-white/20 rounded-full p-2 transition-colors flex-shrink-0"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
 
-        {/* Filtros */}
-        <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mt-4">
-          {/* Búsqueda */}
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar por nombre, apellido o documento..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-          </div>
+                {/* Contenido */}
+                <div className="px-4 sm:px-8 py-6 sm:py-8">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8">
+                    {/* Información Personal */}
+                    <div className="space-y-6">
+                      <h4 className="text-lg sm:text-xl font-semibold text-gray-900 border-b pb-2 sm:pb-3">
+                        Información Personal
+                      </h4>
 
-          {/* Filtro por Aula */}
-          <div className="sm:w-48">
-            <select
-              value={selectedAula}
-              onChange={(e) => setSelectedAula(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Todas las aulas</option>
-              {asignaciones.map((asignacion) => {
-                const idAula = asignacion.idAula?.idAula || asignacion.idAula || asignacion.id;
-                const seccion = asignacion.seccion || asignacion.idAula?.seccion;
-                const nombreGrado = asignacion.nombreGrado || asignacion.idAula?.idGrado?.nombre;
-                return (
-                  <option key={idAula} value={idAula.toString()}>
-                    {nombreGrado} - Sección {seccion}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        </div>
-      </div>
-
-      {/* Contenido de la tabla */}
-      {loading ? (
-        <div className="flex items-center justify-center h-32">
-          <div className="text-center">
-            <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
-            <p className="text-sm text-gray-600">Cargando estudiantes...</p>
-          </div>
-        </div>
-      ) : filteredStudents.length === 0 ? (
-        <div className="text-center py-12">
-          <Users className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No se encontraron estudiantes</h3>
-          <p className="text-gray-600">
-            {searchTerm || selectedAula !== 'all' 
-              ? 'Intenta ajustar los filtros de búsqueda' 
-              : 'No hay estudiantes asignados en tus aulas'}
-          </p>
-        </div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Estudiante
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Documento
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Aula
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Grado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contacto Emergencia
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredStudents.map((student, index) => (
-                <tr key={student.idMatriculaAula || student.idMatricula || `${student.idEstudiante}-${index}`} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {generateAvatar(student.nombre, student.apellido)}
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {student.nombre} {student.apellido}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-gray-700">Nombre Completo</label>
+                          <p className="text-sm sm:text-base text-gray-900">{estudiante.nombreCompleto}</p>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          ID: {student.idEstudiante}
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-gray-700">Documento</label>
+                          <p className="text-sm sm:text-base text-gray-900">{estudiante.tipoDocumento}: {estudiante.nroDocumento}</p>
+                        </div>
+                      </div>
+
+                      {estudiante.observaciones && (
+                        <div>
+                          <label className="block text-base font-medium text-gray-700">Observaciones</label>
+                          <p className="text-base text-gray-900">{estudiante.observaciones}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Información Académica */}
+                    <div className="space-y-6">
+                      <h4 className="text-lg sm:text-xl font-semibold text-gray-900 border-b pb-2 sm:pb-3">
+                        Información Académica
+                      </h4>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-gray-700">Grado</label>
+                          <p className="text-sm sm:text-base text-gray-900">{estudiante.infoApoderado?.grado?.grado}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-gray-700">Sección</label>
+                          <p className="text-sm sm:text-base text-gray-900">{estudiante.infoApoderado?.aula?.seccion}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-gray-700">Aula</label>
+                          <p className="text-sm sm:text-base text-gray-900">{estudiante.infoApoderado?.aula?.idAula}</p>
+                        </div>
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-gray-700">Estado Aula</label>
+                          <span className={`inline-flex px-2 py-1 text-xs sm:text-sm font-medium rounded-full ${
+                            estudiante.infoApoderado?.aula?.estado === 'activo'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {estudiante.infoApoderado?.aula?.estado}
+                          </span>
                         </div>
                       </div>
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{student.numeroDocumento || 'No registrado'}</div>
-                    <div className="text-sm text-gray-500">{student.tipoDocumento || 'DNI'}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      Sección {student.aulaInfo?.seccion}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      {student.aulaInfo?.nombreGrado}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{student.contactoEmergencia || 'No registrado'}</div>
-                    <div className="text-sm text-gray-500">{student.numeroEmergencia || ''}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center space-x-2">
-                      <button 
-                        className="text-blue-600 hover:text-blue-900 p-1 rounded transition-colors"
-                        onClick={() => onView(student)}
-                        title="Ver detalles"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-yellow-600 hover:text-yellow-900 p-1 rounded transition-colors"
-                        onClick={() => onEdit(student)}
-                        title="Editar estudiante"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-red-600 hover:text-red-900 p-1 rounded transition-colors"
-                        onClick={() => onDelete(student)}
-                        title="Eliminar asignación"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-green-600 hover:text-green-900 p-1 rounded transition-colors"
-                        title="Enviar mensaje"
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-purple-600 hover:text-purple-900 p-1 rounded transition-colors"
-                        title="Ver notas"
-                      >
-                        <BookOpen className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+                    {/* Información del Apoderado */}
+                    {estudiante.infoApoderado?.apoderado && (
+                      <div className="space-y-6">
+                        <h4 className="text-lg sm:text-xl font-semibold text-gray-900 border-b pb-2 sm:pb-3">
+                          Apoderado Principal
+                        </h4>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                          <div>
+                            <label className="block text-sm sm:text-base font-medium text-gray-700">Nombre</label>
+                            <p className="text-sm sm:text-base text-gray-900">
+                              {estudiante.infoApoderado.apoderado.nombre} {estudiante.infoApoderado.apoderado.apellido}
+                            </p>
+                          </div>
+                          <div>
+                            <label className="block text-sm sm:text-base font-medium text-gray-700">Tipo</label>
+                            <p className="text-sm sm:text-base text-gray-900">{estudiante.infoApoderado.apoderado.tipoApoderado}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm sm:text-base font-medium text-gray-700">Teléfono</label>
+                            <p className="text-sm sm:text-base text-gray-900">{estudiante.infoApoderado.apoderado.numero}</p>
+                          </div>
+                          <div>
+                            <label className="block text-sm sm:text-base font-medium text-gray-700">Email</label>
+                            <p className="text-sm sm:text-base text-gray-900">{estudiante.infoApoderado.apoderado.correo}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm sm:text-base font-medium text-gray-700">Dirección</label>
+                          <p className="text-sm sm:text-base text-gray-900">{estudiante.infoApoderado.apoderado.direccion}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Contactos de Emergencia */}
+                    {estudiante.contactosEmergencia && estudiante.contactosEmergencia.length > 0 && (
+                      <div className="space-y-6">
+                        <h4 className="text-lg sm:text-xl font-semibold text-gray-900 border-b pb-2 sm:pb-3">
+                          Contactos de Emergencia
+                        </h4>
+
+                        <div className="space-y-3">
+                          {estudiante.contactosEmergencia.map((contacto, index) => (
+                            <div key={contacto.idContacto} className="border rounded-lg p-3">
+                              <div className="flex items-center justify-between mb-2">
+                                <h5 className="font-medium text-gray-900">
+                                  {contacto.nombre} {contacto.apellido}
+                                </h5>
+                                {contacto.esPrincipal && (
+                                  <span className="inline-flex px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                    Principal
+                                  </span>
+                                )}
+                              </div>
+
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm sm:text-base">
+                                <div>
+                                  <span className="font-medium text-gray-700">Relación:</span>
+                                  <p className="text-gray-900">{contacto.relacionEstudiante}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-700">Teléfono:</span>
+                                  <p className="text-gray-900">{contacto.telefono}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-700">Email:</span>
+                                  <p className="text-gray-900">{contacto.email}</p>
+                                </div>
+                                <div>
+                                  <span className="font-medium text-gray-700">Tipo:</span>
+                                  <p className="text-gray-900">{contacto.tipoContacto}</p>
+                                </div>
+                              </div>
+
+                              {contacto.observaciones && (
+                                <div className="mt-2">
+                                  <span className="font-medium text-gray-700">Observaciones:</span>
+                                  <p className="text-base text-gray-900">{contacto.observaciones}</p>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="bg-gray-50 px-4 sm:px-8 py-4 sm:py-6 flex justify-end">
+                  <button
+                    onClick={onClose}
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-gray-600 text-white text-sm sm:text-base font-medium rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
         </div>
-      )}
-    </div>
+      </Dialog>
+    </Transition>
   );
 };
 

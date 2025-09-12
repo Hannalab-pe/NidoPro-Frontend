@@ -1,6 +1,6 @@
-// Exportaciones del módulo de clases
-export { default as Clases } from './Clases';
-export { default as TablaClases } from './tablas/TablaClases';
+// Exportaciones del módulo de asignaciones de aula
+export { default as AsignacionAula } from './AsignacionAula';
+export { default as TablaAulas } from './tablas/TablaAula';
 
 // Modales de aulas
 export { default as ModalAgregarAula } from './modales/ModalAgregarAula';

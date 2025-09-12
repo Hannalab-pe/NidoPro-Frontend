@@ -59,7 +59,10 @@ export const useTareasEstudianteQuery = () => {
       // Buscar la entrega del estudiante actual
       const miEntrega = tarea.tareaEntregas?.[0]; // Como es del estudiante específico, debería ser solo una
       
-      return {
+      // Debug: mostrar archivoUrl antes de transformar
+      console.log(`🔍 [HOOK] Tarea ${tarea.idTarea} - archivoUrl original:`, tarea.archivoUrl || tarea.archivo_url || tarea.fileUrl || tarea.file_url);
+      
+      const tareaTransformada = {
         id: tarea.idTarea,
         idTarea: tarea.idTarea,
         title: tarea.titulo,
@@ -106,6 +109,9 @@ export const useTareasEstudianteQuery = () => {
           observaciones: miEntrega?.observaciones
         },
         
+        // Archivo adjunto de la tarea (del profesor)
+        archivoUrl: tarea.archivoUrl || tarea.archivo_url || tarea.fileUrl || tarea.file_url,
+        
         // Estado de entrega
         realizoTarea: miEntrega?.realizoTarea || false,
         completedAt: miEntrega?.realizoTarea ? miEntrega?.fechaEntrega : null,
@@ -118,6 +124,11 @@ export const useTareasEstudianteQuery = () => {
         isOverdue: new Date(tarea.fechaEntrega) < new Date() && !miEntrega?.realizoTarea,
         daysLeft: Math.ceil((new Date(tarea.fechaEntrega) - new Date()) / (1000 * 60 * 60 * 24))
       };
+      
+      // Debug: mostrar archivoUrl mapeado después de crear el objeto
+      console.log(`🔍 [HOOK] Tarea ${tarea.idTarea} - archivoUrl mapeado:`, tareaTransformada.archivoUrl);
+      
+      return tareaTransformada;
     });
   };
 
@@ -159,6 +170,18 @@ export const useTareasEstudianteQuery = () => {
     try {
       const idEstudiante = getIdEstudiante();
       const tareasArray = await tareaService.obtenerTareasPorEstudiante(idEstudiante);
+      
+      // Debug: mostrar datos del backend
+      console.log('🔍 [HOOK] Datos del backend:', tareasArray);
+      if (tareasArray && tareasArray.length > 0) {
+        console.log('🔍 [HOOK] Primera tarea del backend:', tareasArray[0]);
+        console.log('🔍 [HOOK] Campos de archivo en primera tarea:', {
+          archivoUrl: tareasArray[0].archivoUrl,
+          archivo_url: tareasArray[0].archivo_url,
+          fileUrl: tareasArray[0].fileUrl,
+          file_url: tareasArray[0].file_url
+        });
+      }
       
       // Transformar datos
       const tareasTransformadas = transformarTareas(tareasArray);

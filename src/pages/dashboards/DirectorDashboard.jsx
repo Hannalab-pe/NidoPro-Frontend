@@ -21,7 +21,8 @@ import {
 import Estudiantes from '../admin/estudiantes/Estudiantes';
 import Matricula from '../admin/matricula/Matricula';
 import Trabajadores from '../admin/trabajadores/Trabajadores';
-import Clases from '../admin/aulas/Aulas';
+import AsignacionAula from '../admin/aulas/AsignacionAula';
+import Aulas from '../admin/aula/Aulas';
 import Reportes from '../admin/reportes/Reportes';
 import Planificaciones from '../admin/planificaciones/Planificaciones';
 
@@ -35,7 +36,8 @@ const DirectorDashboard = () => {
     { id: "matricula", label: "Matrícula", icon: GraduationCap },
     { id: "trabajadores", label: "Trabajadores", icon: UsersIcon },
     { id: "students", label: "Estudiantes", icon: UsersIcon },
-    { id: "classes", label: "Aulas y Clases", icon: BookOpen },
+    { id: "asignacion-aula", label: "Asignación de Aulas", icon: BookOpen },
+    { id: "aulas", label: "Gestión de Aulas", icon: BookOpen },
     { id: "reports", label: "Reportes", icon: FileText },
     { id: "cronogramas", label: "Cronogramas", icon: Calendar },
     { id: "tareas", label: "Tareas", icon: StickyNote },
@@ -147,6 +149,8 @@ const DirectorDashboard = () => {
           {activeSection === "matricula" && <Matricula />}
           {activeSection === "trabajadores" && <Trabajadores />}
           {activeSection === "classes" && <Clases />}
+          {activeSection === "asignacionAula" && <AsignacionAula />}
+          {activeSection === "aulas" && <Aulas />}
           {activeSection === "reports" && <Reportes />}
           {activeSection === "planificaciones" && <Planificaciones />}
         </div>

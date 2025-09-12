@@ -113,6 +113,114 @@ export const studentsFilters = {
   }
 };
 
+// Configuración de columnas para grados
+export const gradosColumns = [
+  {
+    Header: 'ID Grado',
+    accessor: 'idGrado',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="font-mono text-xs text-gray-600">
+        {value ? value.slice(0, 8) + '...' : 'N/A'}
+      </div>
+    )
+  },
+  {
+    Header: 'Grado',
+    accessor: 'grado',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
+          <span className="text-blue-600 font-bold text-sm">
+            {value?.charAt(0)?.toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">{value}</div>
+          <div className="text-sm text-gray-500">{row.descripcion || 'Sin descripción'}</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Descripción',
+    accessor: 'descripcion',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="max-w-xs truncate">
+        {value || (
+          <span className="text-gray-400 italic">Sin descripción</span>
+        )}
+      </div>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estaActivo',
+    sortable: true,
+    Cell: ({ value }) => {
+      const isActive = value === true || value === 'true' || value === 1;
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          isActive 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      );
+    }
+  },
+  {
+    Header: 'Pensión Asociada',
+    accessor: 'idPension',
+    sortable: true,
+    Cell: ({ value }) => {
+      // El value es el objeto completo de pensión
+      if (!value || typeof value !== 'object') {
+        return (
+          <div className="text-gray-400 italic text-sm">Sin pensión</div>
+        );
+      }
+
+      return (
+        <div className="space-y-1">
+          <div className="font-semibold text-green-600">
+            S/ {value.monto ? parseFloat(value.monto).toFixed(2) : '0.00'}
+          </div>
+          <div className="text-xs text-gray-500">
+            Vence día {value.fechaVencimientoMensual || 'N/A'}
+          </div>
+          <div className="text-xs text-gray-400 font-mono">
+            {value.idPension ? value.idPension.slice(0, 8) + '...' : 'N/A'}
+          </div>
+        </div>
+      );
+    }
+  }
+];
+
+// Filtros para grados
+export const gradosFilters = {
+  status: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'active', label: 'Activo' },
+      { value: 'inactive', label: 'Inactivo' }
+    ]
+  },
+  pension: {
+    label: 'Pensión',
+    placeholder: 'Todas las pensiones',
+    options: [
+      { value: 'assigned', label: 'Con pensión asignada' },
+      { value: 'unassigned', label: 'Sin pensión asignada' }
+    ]
+  }
+};
+
 // Configuración de columnas para informes/reportes
 export const informesColumns = [
   {
@@ -167,13 +275,12 @@ export const informesFilters = {
 // Configuración de columnas para pensiones
 export const pensionesColumns = [
   {
-    Header: 'Estudiante',
-    accessor: 'estudiante',
+    Header: 'ID Pensión',
+    accessor: 'idPension',
     sortable: true,
     Cell: ({ value }) => (
-      <div>
-        <div className="font-medium text-gray-900">{`${value?.nombre || ''} ${value?.apellido || ''}`}</div>
-        <div className="text-sm text-gray-500">{value?.nroDocumento || 'Sin documento'}</div>
+      <div className="font-mono text-xs text-gray-600">
+        {value ? value.slice(0, 8) + '...' : 'N/A'}
       </div>
     )
   },
@@ -182,64 +289,86 @@ export const pensionesColumns = [
     accessor: 'monto',
     sortable: true,
     Cell: ({ value }) => (
-      <span className="font-mono text-sm">S/ {value || '0.00'}</span>
+      <div className="flex items-center">
+        <span className="font-semibold text-green-600 text-lg">
+          S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
+        </span>
+      </div>
     )
   },
   {
-    Header: 'Estado',
-    accessor: 'estado',
+    Header: 'Fecha Vencimiento',
+    accessor: 'fechaVencimientoMensual',
     sortable: true,
     Cell: ({ value }) => (
-      <span
-        className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-          value === 'Pagado'
-            ? 'bg-green-100 text-green-800'
-            : 'bg-red-100 text-red-800'
-        }`}
-      >
-        {value || 'Pendiente'}
+      <div className="text-center">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          Día {value || 'N/A'}
+        </span>
+      </div>
+    )
+  },
+  {
+    Header: 'Mora Diaria',
+    accessor: 'moraDiaria',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className="font-mono text-sm text-red-600">
+        S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
       </span>
     )
   },
   {
-    Header: 'Fecha de Pago',
-    accessor: 'fechaPago',
-    type: 'date',
+    Header: 'Descuento Pago Adelantado',
+    accessor: 'descuentoPagoAdelantado',
     sortable: true,
-    Cell: ({ value }) =>
-      value ? (
-        <span className="text-sm">
-          {new Date(value).toLocaleDateString('es-PE')}
-        </span>
-      ) : (
-        <span className="text-gray-500">Sin fecha</span>
-      )
+    Cell: ({ value }) => (
+      <span className="font-mono text-sm text-green-600">
+        S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
+      </span>
+    )
   },
   {
-    Header: 'Método de Pago',
-    accessor: 'metodoPago',
+    Header: 'Descripción',
+    accessor: 'descripcion',
     sortable: true,
-    Cell: ({ value }) => <span>{value || 'No registrado'}</span>
+    Cell: ({ value }) => (
+      <div className="max-w-xs truncate">
+        {value || (
+          <span className="text-gray-400 italic">Sin descripción</span>
+        )}
+      </div>
+    )
   }
 ];
 
 // Filtros para pensiones
 export const pensionesFilters = {
-  estado: {
-    label: 'Estado',
-    placeholder: 'Todos los estados',
+  monto: {
+    label: 'Rango de Monto',
+    placeholder: 'Todos los montos',
     options: [
-      { value: 'Pagado', label: 'Pagado' },
-      { value: 'Pendiente', label: 'Pendiente' }
+      { value: '0-100', label: 'S/ 0 - S/ 100' },
+      { value: '100-200', label: 'S/ 100 - S/ 200' },
+      { value: '200-300', label: 'S/ 200 - S/ 300' },
+      { value: '300+', label: 'S/ 300+' }
     ]
   },
-  metodoPago: {
-    label: 'Método de Pago',
-    placeholder: 'Todos los métodos',
+  fechaVencimiento: {
+    label: 'Día de Vencimiento',
+    placeholder: 'Todos los días',
     options: [
-      { value: 'Efectivo', label: 'Efectivo' },
-      { value: 'Transferencia', label: 'Transferencia' },
-      { value: 'Tarjeta', label: 'Tarjeta' }
+      { value: '1-10', label: 'Días 1-10' },
+      { value: '11-20', label: 'Días 11-20' },
+      { value: '21-31', label: 'Días 21-31' }
+    ]
+  },
+  descripcion: {
+    label: 'Con Descripción',
+    placeholder: 'Todas',
+    options: [
+      { value: 'con-descripcion', label: 'Con descripción' },
+      { value: 'sin-descripcion', label: 'Sin descripción' }
     ]
   }
 };

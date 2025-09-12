@@ -15,11 +15,12 @@ import {
   BookOpenCheck
 } from "lucide-react";
 import { useTareasEstudianteQuery } from "../../../hooks/useTareasEstudianteQuery";
-import { SubirTareaModal } from "../../../components/tareas";
+import { SubirTareaModal, VerTareaModal } from "../../../components/tareas";
 
 const Tareas = () => {
   const [selectedFilter, setSelectedFilter] = useState("todas");
   const [modalOpen, setModalOpen] = useState(false);
+  const [verTareaModalOpen, setVerTareaModalOpen] = useState(false);
   const [selectedTarea, setSelectedTarea] = useState(null);
   const { tareas, loading, error, refrescarTareas, isRefetching } = useTareasEstudianteQuery();
 
@@ -91,6 +92,16 @@ const Tareas = () => {
     if (diffDays === 0) return 'Vence hoy';
     if (diffDays === 1) return 'Vence mañana';
     return `${diffDays} días restantes`;
+  };
+
+  const handleVerTarea = (tarea) => {
+    setSelectedTarea(tarea);
+    setVerTareaModalOpen(true);
+  };
+
+  const handleVerTareaModalClose = () => {
+    setVerTareaModalOpen(false);
+    setSelectedTarea(null);
   };
 
   const handleSubirTarea = (tarea) => {
@@ -288,9 +299,18 @@ const Tareas = () => {
                     <div className="flex items-start space-x-3 flex-1">
                       <div className="text-xl sm:text-2xl flex-shrink-0">{tarea.emoji}</div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-2 leading-tight">
-                          {tarea.title}
-                        </h3>
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="text-base sm:text-lg font-semibold text-gray-900 leading-tight">
+                            {tarea.title}
+                          </h3>
+                          <button
+                            onClick={() => handleVerTarea(tarea)}
+                            className="flex items-center space-x-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs sm:text-sm hover:bg-blue-200 transition-colors ml-2"
+                          >
+                            <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
+                            <span>Ver Detalles</span>
+                          </button>
+                        </div>
                         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-xs sm:text-sm text-gray-600">
                           <span className="flex items-center space-x-1">
                             <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
@@ -400,6 +420,13 @@ const Tareas = () => {
         onClose={handleModalClose}
         tarea={selectedTarea}
         onSuccess={handleTareaSuccess}
+      />
+
+      {/* Modal para ver detalles de tarea */}
+      <VerTareaModal
+        isOpen={verTareaModalOpen}
+        onClose={handleVerTareaModalClose}
+        tarea={selectedTarea}
       />
     </div>
   );

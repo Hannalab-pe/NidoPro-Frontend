@@ -65,12 +65,18 @@ export const pensionService = {
       const response = await api.get(`/pension?${params.toString()}`);
       console.log('Respuesta del backend - pensiones:', response.data);
       
-      // Extraer el array de pensiones de la respuesta
-      if (response.data.success && response.data.pensiones) {
+      // Extraer el array de pensiones de la respuesta según la estructura real
+      if (response.data?.info?.data && Array.isArray(response.data.info.data)) {
+        return response.data.info.data;
+      } else if (response.data?.pensiones && Array.isArray(response.data.pensiones)) {
         return response.data.pensiones;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else if (Array.isArray(response.data)) {
+        return response.data;
       }
       
-      return response.data;
+      return [];
     } catch (error) {
       console.error('Error al obtener pensiones:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener pensiones');

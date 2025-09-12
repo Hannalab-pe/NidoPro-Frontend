@@ -78,6 +78,15 @@ export const tareaService = {
   },
 
   /**
+   * Crear una nueva tarea (alias para mantener consistencia)
+   * @param {Object} tareaData - Datos de la tarea a crear
+   * @returns {Promise} Respuesta del servidor
+   */
+  createTarea: async (tareaData) => {
+    return tareaService.crearTarea(tareaData);
+  },
+
+  /**
    * Obtener tareas de un trabajador específico
    * @param {string} idTrabajador - ID del trabajador
    * @returns {Promise} Lista de tareas del trabajador

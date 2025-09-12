@@ -32,6 +32,7 @@ import EditarTareaModal from './modales/EditarTareaModal';
 import DetallesTareaModal from './modales/DetallesTareaModal';
 import EliminarTareaModal from './modales/EliminarTareaModal';
 import VerEntregasModal from './modales/VerEntregasModal';
+import TareaCompletaModal from './modales/TareaCompletaModal';
 
 const Tareas = () => {
   // Estados
@@ -46,7 +47,7 @@ const Tareas = () => {
   const [showEditarModal, setShowEditarModal] = useState(false);
   const [showDetallesModal, setShowDetallesModal] = useState(false);
   const [showEliminarModal, setShowEliminarModal] = useState(false);
-  const [showEntregasModal, setShowEntregasModal] = useState(false);
+  const [showTareaCompletaModal, setShowTareaCompletaModal] = useState(false);
   const [tareaSeleccionada, setTareaSeleccionada] = useState(null);
 
   // Hook para obtener tareas del trabajador
@@ -199,7 +200,7 @@ const Tareas = () => {
     });
   };
 
-  const materias = [...new Set(tareas.map(t => t.materia))];
+  const materias = [...new Set(tareas.map(t => t.materia).filter(m => m && m.trim()))];
 
   return (
     <div className="space-y-6">
@@ -338,8 +339,8 @@ const Tareas = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
             >
               <option value="todas">Todas las materias</option>
-              {materias.map(materia => (
-                <option key={materia} value={materia}>{materia}</option>
+              {materias.filter(materia => materia && materia.trim()).map((materia, index) => (
+                <option key={`materia-${index}-${materia}`} value={materia}>{materia}</option>
               ))}
             </select>
           </div>
@@ -488,12 +489,12 @@ const Tareas = () => {
                     <button
                       onClick={() => {
                         setTareaSeleccionada(tarea);
-                        setShowEntregasModal(true);
+                        setShowTareaCompletaModal(true);
                       }}
-                      className="flex-1 flex items-center justify-center space-x-2 bg-indigo-50 text-indigo-600 hover:cursor-pointer px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors"
+                      className="flex-1 flex items-center justify-center space-x-2 bg-green-50 text-green-600 hover:cursor-pointer px-3 py-2 rounded-lg hover:bg-green-100 transition-colors"
                     >
-                      <Users className="w-4 h-4" />
-                      <span>Entregas</span>
+                      <Eye className="w-4 h-4" />
+                      <span>Ver Tarea Completa</span>
                     </button>
                   </div>
                 </div>
@@ -578,9 +579,10 @@ const Tareas = () => {
                           <button
                             onClick={() => {
                               setTareaSeleccionada(tarea);
-                              setShowDetallesModal(true);
+                              setShowTareaCompletaModal(true);
                             }}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-green-600 hover:text-green-900"
+                            title="Ver tarea completa"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -620,30 +622,24 @@ const Tareas = () => {
         onSave={handleTareaCreada}
       />
       
-      <EditarTareaModal 
-        isOpen={showEditarModal} 
+      <EditarTareaModal
+        isOpen={showEditarModal}
         onClose={() => setShowEditarModal(false)}
         tarea={tareaSeleccionada}
         onSave={handleTareaActualizada}
       />
-      
-      <DetallesTareaModal 
-        isOpen={showDetallesModal} 
-        onClose={() => setShowDetallesModal(false)}
-        tarea={tareaSeleccionada}
-      />
-      
-      <EliminarTareaModal 
-        isOpen={showEliminarModal} 
+
+      <EliminarTareaModal
+        isOpen={showEliminarModal}
         onClose={() => setShowEliminarModal(false)}
         tarea={tareaSeleccionada}
         onConfirm={handleTareaEliminada}
       />
 
-      {/* Modal para ver entregas de estudiantes */}
-      <VerEntregasModal 
-        isOpen={showEntregasModal} 
-        onClose={() => setShowEntregasModal(false)}
+      {/* Modal unificado para ver toda la información de la tarea */}
+      <TareaCompletaModal
+        isOpen={showTareaCompletaModal}
+        onClose={() => setShowTareaCompletaModal(false)}
         tarea={tareaSeleccionada}
       />
     </div>

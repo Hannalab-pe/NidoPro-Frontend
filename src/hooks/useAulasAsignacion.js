@@ -1,3 +1,4 @@
+import React, { useState, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { aulaService } from '../services/aulaService';
@@ -8,6 +9,10 @@ import { asignacionAulaService } from '../services/asignacionAulaService';
  */
 export const useAulasAsignacion = () => {
   const queryClient = useQueryClient();
+
+  // Estado para aulas disponibles por grado
+  const [aulasDisponiblesPorGrado, setAulasDisponiblesPorGrado] = useState([]);
+  const [loadingAulasPorGrado, setLoadingAulasPorGrado] = useState(false);
 
   // Query para obtener todas las aulas disponibles
   const {
@@ -147,38 +152,54 @@ export const useAulasAsignacion = () => {
     return aulas;
   };
 
-  // Función para obtener aulas por grado
-  const fetchAulasPorGrado = async (idGrado) => {
+  // Función para obtener aulas disponibles por grado
+  const fetchAulasPorGrado = useCallback(async (idGrado) => {
     try {
-      console.log('🎯 Obteniendo aulas para grado:', idGrado);
+      console.log('🎯 Obteniendo aulas disponibles para grado:', idGrado);
       
-      // Si el idGrado no está definido, no hacer nada
+      // Si el idGrado no está definido, limpiar el estado
       if (!idGrado) {
-        console.log('⚠️ No se proporcionó idGrado');
+        console.log('⚠️ No se proporcionó idGrado, limpiando aulas disponibles');
+        setAulasDisponiblesPorGrado([]);
+        setLoadingAulasPorGrado(false);
         return;
       }
 
-      // Por ahora, simplemente refrescar las aulas existentes
-      // En el futuro se puede implementar un filtro por grado en el backend
-      await refetchAulas();
+      // Evitar llamadas duplicadas si ya estamos cargando
+      if (loadingAulasPorGrado) {
+        console.log('⚠️ Ya estamos cargando aulas, omitiendo llamada duplicada');
+        return;
+      }
+
+      setLoadingAulasPorGrado(true);
       
-      console.log('✅ Aulas refrescadas para grado:', idGrado);
+      // Usar el nuevo endpoint para obtener aulas disponibles por grado
+      const aulasDisponibles = await aulaService.getAulasDisponiblesPorGrado(idGrado);
+      
+      console.log('✅ Aulas disponibles obtenidas:', aulasDisponibles);
+      setAulasDisponiblesPorGrado(aulasDisponibles || []);
+      
     } catch (error) {
-      console.error('❌ Error al obtener aulas por grado:', error);
-      toast.error('Error al cargar aulas para el grado seleccionado');
+      console.error('❌ Error al obtener aulas disponibles por grado:', error);
+      toast.error('Error al cargar aulas disponibles para el grado seleccionado');
+      setAulasDisponiblesPorGrado([]);
+    } finally {
+      setLoadingAulasPorGrado(false);
     }
-  };
+  }, [loadingAulasPorGrado]);
 
   // Log para verificar qué se está retornando
 
   return {
     // Datos
     aulas,
+    aulasDisponiblesPorGrado,
     asignaciones: asignaciones?.asignacionesAula || [],
     aulasDisponibles: getAulasDisponibles(),
     
     // Estados de carga
     loadingAulas,
+    loadingAulasPorGrado,
     loadingAsignaciones,
     loadingAsignacion: createAsignacionMutation.isLoading,
     loadingUpdate: updateAsignacionMutation.isLoading,

@@ -1,0 +1,220 @@
+import React, { useState } from 'react';
+import { School, User, Calendar, Users, Eye, Edit, Trash2 } from 'lucide-react';
+import { DataTable } from '../../../../components/common/DataTable';
+import ModalAgregarAula from '../modales/ModalAgregarAula';
+import ModalVerAula from '../modales/ModalVerAula';
+import ModalEditarAula from '../modales/ModalEditarAula';
+import ModalEliminarAula from '../modales/ModalEliminarAula';
+
+// Definición de columnas para aulas
+const aulasColumns = [
+  {
+    accessor: 'seccion',
+    Header: 'Sección',
+    sortable: true,
+    Cell: ({ row }) => (
+      <div className="flex items-center">
+        <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+          <School className="w-5 h-5 text-blue-600" />
+        </div>
+        <div className="ml-3">
+          <div className="text-sm font-medium text-gray-900">
+            Sección {row.seccion}
+          </div>
+          <div className="text-sm text-gray-500">
+            {row.descripcion || 'Sin descripción'}
+          </div>
+        </div>
+      </div>
+    )
+  },
+  {
+    accessor: 'cantidadEstudiantes',
+    Header: 'Estudiantes',
+    sortable: true,
+    Cell: ({ row }) => (
+      <div className="flex items-center">
+        <Users className="w-4 h-4 text-gray-400 mr-2" />
+        <span className="text-sm text-gray-900">{row.cantidadEstudiantes || 0}</span>
+      </div>
+    )
+  },
+  {
+    accessor: 'ubicacion',
+    Header: 'Ubicación',
+    sortable: true,
+    Cell: ({ row }) => (
+      <span className="text-sm text-gray-900">{row.ubicacion || 'No especificada'}</span>
+    )
+  },
+  {
+    accessor: 'estado',
+    Header: 'Estado',
+    sortable: true,
+    Cell: ({ row }) => (
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+        row.estado === 'activa'
+          ? 'bg-green-100 text-green-800'
+          : 'bg-red-100 text-red-800'
+      }`}>
+        {row.estado === 'activa' ? 'Activa' : 'Inactiva'}
+      </span>
+    )
+  },
+  {
+    accessor: 'acciones',
+    Header: 'Acciones',
+    Cell: ({ row }) => (
+      <div className="flex items-center space-x-2">
+        <button
+          onClick={() => onView(row)}
+          className="text-blue-600 hover:text-blue-900 p-1"
+          title="Ver detalles"
+        >
+          <Eye className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onEdit(row)}
+          className="text-yellow-600 hover:text-yellow-900 p-1"
+          title="Editar"
+        >
+          <Edit className="w-4 h-4" />
+        </button>
+        <button
+          onClick={() => onDelete(row)}
+          className="text-red-600 hover:text-red-900 p-1"
+          title="Eliminar"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
+    )
+  }
+];
+
+const TablaAulas = ({
+  aulas = [],
+  loading = false,
+  onAdd,
+  onEdit,
+  onDelete,
+  onView,
+  onRefresh
+}) => {
+  // Estados para modales
+  const [showAulaModal, setShowAulaModal] = useState(false);
+  const [showViewAulaModal, setShowViewAulaModal] = useState(false);
+  const [showEditAulaModal, setShowEditAulaModal] = useState(false);
+  const [showDeleteAulaModal, setShowDeleteAulaModal] = useState(false);
+  const [selectedAula, setSelectedAula] = useState(null);
+
+  // Funciones para manejar acciones
+  const handleAddAula = () => {
+    if (onAdd) onAdd();
+    else setShowAulaModal(true);
+  };
+
+  const handleEditAula = (aula) => {
+    setSelectedAula(aula);
+    if (onEdit) onEdit(aula);
+    else setShowEditAulaModal(true);
+  };
+
+  const handleDeleteAula = (aula) => {
+    setSelectedAula(aula);
+    if (onDelete) onDelete(aula);
+    else setShowDeleteAulaModal(true);
+  };
+
+  const handleViewAula = (aula) => {
+    setSelectedAula(aula);
+    if (onView) onView(aula);
+    else setShowViewAulaModal(true);
+  };
+
+  const handleRefresh = () => {
+    if (onRefresh) onRefresh();
+  };
+
+  // Configuración de filtros para la tabla
+  const aulasFilters = [
+    {
+      key: 'estado',
+      label: 'Estado',
+      options: [
+        { value: 'activa', label: 'Activa' },
+        { value: 'inactiva', label: 'Inactiva' }
+      ]
+    }
+  ];
+
+  return (
+    <div className="bg-white rounded-lg shadow-sm">
+      <DataTable
+        data={aulas}
+        columns={aulasColumns}
+        loading={loading}
+        title="Lista de Aulas"
+        icon={School}
+        searchPlaceholder="Buscar por sección, ubicación..."
+        onAdd={handleAddAula}
+        onEdit={handleEditAula}
+        onDelete={handleDeleteAula}
+        onView={handleViewAula}
+        onRefresh={handleRefresh}
+        actions={{
+          add: true,
+          edit: true,
+          delete: true,
+          view: true,
+          import: false,
+          export: true,
+          refresh: true
+        }}
+        filters={aulasFilters}
+        addButtonText="Nueva Aula"
+        loadingMessage="Cargando aulas..."
+        emptyMessage="No hay aulas registradas"
+        itemsPerPage={10}
+        enablePagination={true}
+        enableSearch={true}
+        enableSort={true}
+      />
+
+      {/* Modales de Aulas */}
+      <ModalAgregarAula
+        isOpen={showAulaModal}
+        onClose={() => setShowAulaModal(false)}
+      />
+
+      <ModalVerAula
+        isOpen={showViewAulaModal}
+        onClose={() => {
+          setShowViewAulaModal(false);
+          setSelectedAula(null);
+        }}
+        aula={selectedAula}
+      />
+
+      <ModalEditarAula
+        isOpen={showEditAulaModal}
+        onClose={() => {
+          setShowEditAulaModal(false);
+          setSelectedAula(null);
+        }}
+        aula={selectedAula}
+      />
+
+      <ModalEliminarAula
+        isOpen={showDeleteAulaModal}
+        onClose={() => {
+          setShowDeleteAulaModal(false);
+          setSelectedAula(null);
+        }}
+        aula={selectedAula}
+      />
+    </div>
+  );
+};
+
+export default TablaAulas;
