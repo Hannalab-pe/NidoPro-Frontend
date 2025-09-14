@@ -52,7 +52,8 @@ const CalendarioHorarios = ({
   date, 
   onNavigate, 
   isMobile: propIsMobile,
-  readOnly = false 
+  readOnly = false,
+  onEventCreated // Nueva prop para manejar creación de eventos
 }) => {
   // Estado para los modales
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -159,8 +160,10 @@ const CalendarioHorarios = ({
 
   const handleEventCreated = (newEvent) => {
     console.log('Nuevo evento creado:', newEvent);
-    // El refetch se maneja desde el componente padre
-    // No necesitamos hacer nada aquí ya que los datos vienen de props
+    // Llamar a la función del componente padre si existe
+    if (onEventCreated) {
+      onEventCreated(newEvent);
+    }
   };
 
   // Personalizar el formato de los eventos

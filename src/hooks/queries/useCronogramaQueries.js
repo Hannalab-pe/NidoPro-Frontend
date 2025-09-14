@@ -55,9 +55,10 @@ export const useCronogramaMultiplesAulas = (idsAulas, options = {}) => {
       }
     },
     enabled: !!idsAulas && Array.isArray(idsAulas) && idsAulas.length > 0,
-    staleTime: 2 * 60 * 1000, // 2 minutos
+    staleTime: 0, // Forzar actualización inmediata
     gcTime: 5 * 60 * 1000, // 5 minutos
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
     ...options
   });
 };
@@ -92,5 +93,8 @@ export const useCronogramaDocente = (aulasTrabajadorData, options = {}) => {
   return useCronogramaMultiplesAulas(idsAulas, {
     ...options,
     enabled: !!aulasTrabajador && Array.isArray(aulasTrabajador) && aulasTrabajador.length > 0,
+    staleTime: 0, // Forzar actualización inmediata
+    refetchOnWindowFocus: true,
+    refetchOnMount: true
   });
 };

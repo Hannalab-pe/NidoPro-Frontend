@@ -301,8 +301,9 @@ export const useEstudiantesByTrabajadorAulas = (idTrabajador, options = {}) => {
   console.log('🏫 Aulas del trabajador:', aulasData);
 
   // Extraemos los IDs de las aulas
-  const aulaIds = aulasData?.aulas?.map(aula => aula.id_aula) || [];
-  console.log('🆔 IDs de aulas:', aulaIds);
+  const aulaIds = aulasData?.aulas?.map(aula => aula.id_aula || aula.idAula || aula.idAula) || [];
+  console.log('🆔 IDs de aulas extraídos:', aulaIds);
+  console.log('🏫 Estructura completa de aulas:', aulasData?.aulas);
 
   // Obtenemos los estudiantes de cada aula usando useQuery para cada una
   const estudiantesQueries = useQuery({
@@ -326,8 +327,8 @@ export const useEstudiantesByTrabajadorAulas = (idTrabajador, options = {}) => {
         .filter(resultado => resultado?.estudiantes)
         .flatMap(resultado => resultado.estudiantes)
         .filter((estudiante, index, array) => 
-          // Eliminar duplicados basados en id_estudiante
-          index === array.findIndex(e => e.id_estudiante === estudiante.id_estudiante)
+          // Eliminar duplicados basados en idEstudiante (la propiedad correcta del backend)
+          index === array.findIndex(e => e.idEstudiante === estudiante.idEstudiante)
         );
 
       console.log('✅ Total estudiantes combinados:', todosLosEstudiantes);

@@ -324,11 +324,13 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                           <option value="">
                             {loadingRoles ? 'Cargando roles...' : 'Seleccione un rol'}
                           </option>
-                          {Array.isArray(roles) && roles.map((rol) => (
-                            <option key={rol.idRol} value={rol.idRol}>
-                              {rol.nombre}
-                            </option>
-                          ))}
+                          {Array.isArray(roles) && roles
+                            .filter(rol => rol.nombre?.toLowerCase() !== 'secretaria' && rol.nombre?.toLowerCase() !== 'estudiante')
+                            .map((rol) => (
+                              <option key={rol.idRol} value={rol.idRol}>
+                                {rol.nombre}
+                              </option>
+                            ))}
                         </select>
                       </FormField>
 

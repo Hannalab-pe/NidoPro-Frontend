@@ -232,9 +232,9 @@ const ModalAgregarNota = ({ isOpen, onClose, onSuccess }) => {
               >
                 <option value="">Seleccionar estudiante...</option>
                 {estudiantesData?.estudiantes?.map((student) => (
-                  <option key={student.id_estudiante} value={student.id_estudiante}>
+                  <option key={student.idEstudiante} value={student.idEstudiante}>
                     {student.nombre} {student.apellido}
-                    {student.seccion && ` - Sección ${student.seccion}`}
+                    {student.infoApoderado?.aula?.seccion && ` - Sección ${student.infoApoderado.aula.seccion}`}
                   </option>
                 ))}
               </select>
