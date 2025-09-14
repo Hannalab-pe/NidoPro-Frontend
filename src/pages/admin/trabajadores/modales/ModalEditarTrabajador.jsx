@@ -286,11 +286,13 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
                           <option value="">
                             {loadingRoles ? 'Cargando roles...' : 'Seleccione un rol'}
                           </option>
-                          {Array.isArray(roles) && roles.map((rol) => (
-                            <option key={rol.idRol} value={rol.idRol}>
-                              {rol.nombre}
-                            </option>
-                          ))}
+                          {Array.isArray(roles) && roles
+                            .filter(rol => rol.nombre?.toLowerCase() !== 'secretaria' && rol.nombre?.toLowerCase() !== 'estudiante')
+                            .map((rol) => (
+                              <option key={rol.idRol} value={rol.idRol}>
+                                {rol.nombre}
+                              </option>
+                            ))}
                         </select>
                         <p className="text-xs text-gray-500 mt-1">
                           ℹ️ El rol no se puede modificar una vez creado el trabajador

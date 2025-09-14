@@ -21,85 +21,40 @@ import cajaService from '../../../../services/cajaService'
 
 // Categorías por tipo de movimiento
 const categoriasIngreso = [
-  { value: 'PENSION_MENSUAL', label: 'Pensión Mensual' },
-  { value: 'MATRICULA', label: 'Matrícula' },
-  { value: 'INGRESO_ADICIONAL', label: 'Ingreso Adicional' },
-  { value: 'MATERIAL_EDUCATIVO', label: 'Material Educativo' },
-  { value: 'OTROS_INGRESOS', label: 'Otros Ingresos' }
-]
+  'INGRESO_ADICIONAL',
+  'MATERIAL_EDUCATIVO',
+  'OTROS_INGRESOS'
+];
 
 const categoriasEgreso = [
-  { value: 'PAGO_PLANILLA', label: 'Pago de Planilla' },
-  { value: 'SUELDO_DOCENTE', label: 'Sueldo Docente' },
-  { value: 'GASTOS_OPERATIVOS', label: 'Gastos Operativos' },
-  { value: 'GASTOS_ADMINISTRATIVOS', label: 'Gastos Administrativos' },
-  { value: 'INFRAESTRUCTURA', label: 'Infraestructura' },
-  { value: 'OTROS_GASTOS', label: 'Otros Gastos' }
-]
+  'SUELDO_DOCENTE',
+  'GASTOS_OPERATIVOS',
+  'GASTOS_ADMINISTRATIVOS',
+  'INFRAESTRUCTURA',
+  'OTROS_GASTOS'
+];
 
-// Subcategorías por categoría
-const subcategoriasPorCategoria = {
-  // Subcategorías de Ingresos
-  'PENSION_MENSUAL': [
-    { value: 'PENSION_REGULAR', label: 'Pensión Regular' },
-    { value: 'PENSION_ESPECIAL', label: 'Pensión Especial' }
-  ],
-  'MATRICULA': [
-    { value: 'MATRICULA_NUEVA', label: 'Matrícula Nueva' },
-    { value: 'MATRICULA_RENOVACION', label: 'Renovación Matrícula' }
-  ],
-  'MATERIALES': [
-    { value: 'LIBROS', label: 'Libros' },
-    { value: 'UNIFORMES', label: 'Uniformes' },
-    { value: 'UTILES', label: 'Útiles Escolares' }
-  ],
-  'TALLERES': [
-    { value: 'DEPORTIVOS', label: 'Deportivos' },
-    { value: 'ARTISTICOS', label: 'Artísticos' },
-    { value: 'ACADEMICOS', label: 'Académicos' }
-  ],
-  'EVENTOS': [
-    { value: 'PROMOCION', label: 'Promoción' },
-    { value: 'ACTUACIONES', label: 'Actuaciones' },
-    { value: 'CONCURSOS', label: 'Concursos' }
-  ],
-  'OTROS_INGRESOS': [
-    { value: 'DONACIONES', label: 'Donaciones' },
-    { value: 'VARIOS', label: 'Varios' }
-  ],
+// Función para obtener el label legible de una categoría
+const getCategoriaLabel = (categoria) => {
+  const labels = {
+    // Ingresos
+    'PENSION_MENSUAL': 'Pensión Mensual',
+    'MATRICULA': 'Matrícula',
+    'INGRESO_ADICIONAL': 'Ingreso Adicional',
+    'MATERIAL_EDUCATIVO': 'Material Educativo',
+    'OTROS_INGRESOS': 'Otros Ingresos',
+    
+    // Egresos
+    'PAGO_PLANILLA': 'Pago de Planilla',
+    'SUELDO_DOCENTE': 'Sueldo Docente RH',
+    'GASTOS_OPERATIVOS': 'Gastos Operativos',
+    'GASTOS_ADMINISTRATIVOS': 'Gastos Administrativos',
+    'INFRAESTRUCTURA': 'Infraestructura',
+    'OTROS_GASTOS': 'Otros Gastos'
+  };
   
-  // Subcategorías de Egresos
-  'PLANILLA': [
-    { value: 'SUELDOS_DOCENTES', label: 'Sueldos Docentes' },
-    { value: 'SUELDOS_ADMINISTRATIVOS', label: 'Sueldos Administrativos' },
-    { value: 'BONIFICACIONES', label: 'Bonificaciones' }
-  ],
-  'SERVICIOS': [
-    { value: 'LUZ', label: 'Luz' },
-    { value: 'AGUA', label: 'Agua' },
-    { value: 'INTERNET', label: 'Internet' },
-    { value: 'TELEFONO', label: 'Teléfono' }
-  ],
-  'MATERIALES_EDUCATIVOS': [
-    { value: 'LIBROS_DOCENTES', label: 'Libros para Docentes' },
-    { value: 'MATERIAL_DIDACTICO', label: 'Material Didáctico' },
-    { value: 'TECNOLOGIA', label: 'Tecnología' }
-  ],
-  'MANTENIMIENTO': [
-    { value: 'INFRAESTRUCTURA', label: 'Infraestructura' },
-    { value: 'EQUIPOS', label: 'Equipos' },
-    { value: 'LIMPIEZA', label: 'Limpieza' }
-  ],
-  'GASTOS_ADMINISTRATIVOS': [
-    { value: 'PAPELERIA', label: 'Papelería' },
-    { value: 'TRANSPORTE', label: 'Transporte' },
-    { value: 'CAPACITACIONES', label: 'Capacitaciones' }
-  ],
-  'OTROS_EGRESOS': [
-    { value: 'IMPREVISTOS', label: 'Imprevistos' },
-    { value: 'VARIOS_EGRESOS', label: 'Varios' }
-  ]
-}
+  return labels[categoria] || categoria;
+};
 
 const MovimientosCaja = () => {
   const [activeTab, setActiveTab] = useState('nuevo')
@@ -224,14 +179,6 @@ const MovimientosCaja = () => {
         ...prev,
         [name]: value,
         categoria: '',
-        subcategoria: ''
-      }))
-    } 
-    // Si cambia la categoría, limpiar subcategoría
-    else if (name === 'categoria') {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
         subcategoria: ''
       }))
     } else {
@@ -368,14 +315,6 @@ const MovimientosCaja = () => {
         ...prev,
         [name]: value,
         categoria: '',
-        subcategoria: ''
-      }))
-    } 
-    // Si cambia la categoría, limpiar subcategoría
-    else if (name === 'categoria') {
-      setEditFormData(prev => ({
-        ...prev,
-        [name]: value,
         subcategoria: ''
       }))
     } else {
@@ -675,13 +614,13 @@ const MovimientosCaja = () => {
                           {!formData.tipo ? 'Primero selecciona el tipo' : 'Seleccionar categoría'}
                         </option>
                         {formData.tipo === 'INGRESO' && categoriasIngreso.map(categoria => (
-                          <option key={categoria.value} value={categoria.value}>
-                            {categoria.label}
+                          <option key={categoria} value={categoria}>
+                            {getCategoriaLabel(categoria)}
                           </option>
                         ))}
                         {formData.tipo === 'EGRESO' && categoriasEgreso.map(categoria => (
-                          <option key={categoria.value} value={categoria.value}>
-                            {categoria.label}
+                          <option key={categoria} value={categoria}>
+                            {getCategoriaLabel(categoria)}
                           </option>
                         ))}
                       </select>
@@ -694,22 +633,14 @@ const MovimientosCaja = () => {
                       <label className="block text-sm font-medium text-gray-700 mb-2">
                         Subcategoría
                       </label>
-                      <select
+                      <input
+                        type="text"
                         name="subcategoria"
                         value={formData.subcategoria}
                         onChange={handleInputChange}
                         className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        disabled={!formData.categoria}
-                      >
-                        <option value="">
-                          {!formData.categoria ? 'Primero selecciona la categoría' : 'Seleccionar subcategoría'}
-                        </option>
-                        {formData.categoria && subcategoriasPorCategoria[formData.categoria]?.map(subcategoria => (
-                          <option key={subcategoria.value} value={subcategoria.value}>
-                            {subcategoria.label}
-                          </option>
-                        ))}
-                      </select>
+                        placeholder="Ej: Pago especial, Material didáctico, etc."
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1184,7 +1115,7 @@ const MovimientosCaja = () => {
                               {/* Categoría */}
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div className="text-sm text-gray-900">
-                                  {movimiento.categoria || '-'}
+                                  {getCategoriaLabel(movimiento.categoria) || '-'}
                                 </div>
                                 {movimiento.subcategoria && (
                                   <div className="text-xs text-gray-500">
@@ -1344,13 +1275,13 @@ const MovimientosCaja = () => {
                       {!editFormData.tipo ? 'Primero selecciona el tipo' : 'Seleccionar categoría'}
                     </option>
                     {editFormData.tipo === 'INGRESO' && categoriasIngreso.map(categoria => (
-                      <option key={categoria.value} value={categoria.value}>
-                        {categoria.label}
+                      <option key={categoria} value={categoria}>
+                        {getCategoriaLabel(categoria)}
                       </option>
                     ))}
                     {editFormData.tipo === 'EGRESO' && categoriasEgreso.map(categoria => (
-                      <option key={categoria.value} value={categoria.value}>
-                        {categoria.label}
+                      <option key={categoria} value={categoria}>
+                        {getCategoriaLabel(categoria)}
                       </option>
                     ))}
                   </select>
@@ -1363,22 +1294,14 @@ const MovimientosCaja = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Subcategoría
                   </label>
-                  <select
+                  <input
+                    type="text"
                     name="subcategoria"
                     value={editFormData.subcategoria || ''}
                     onChange={handleEditInputChange}
                     className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    disabled={!editFormData.categoria}
-                  >
-                    <option value="">
-                      {!editFormData.categoria ? 'Primero selecciona la categoría' : 'Seleccionar subcategoría'}
-                    </option>
-                    {editFormData.categoria && subcategoriasPorCategoria[editFormData.categoria]?.map(subcategoria => (
-                      <option key={subcategoria.value} value={subcategoria.value}>
-                        {subcategoria.label}
-                      </option>
-                    ))}
-                  </select>
+                    placeholder="Ej: Pago especial, Material didáctico, etc."
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">

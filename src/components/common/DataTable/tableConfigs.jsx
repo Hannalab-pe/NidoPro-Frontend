@@ -426,12 +426,8 @@ export const trabajadoresColumns = [
         switch (roleName) {
           case 'DOCENTE':
             return 'bg-blue-100 text-blue-800';
-          case 'SECRETARIA':
-            return 'bg-purple-100 text-purple-800';
           case 'DIRECTORA':
             return 'bg-green-100 text-green-800';
-          case 'ESTUDIANTE':
-            return 'bg-yellow-100 text-yellow-800';
           default:
             return 'bg-gray-100 text-gray-800';
         }
@@ -441,8 +437,6 @@ export const trabajadoresColumns = [
         switch (roleName) {
           case 'DOCENTE':
             return 'Docente';
-          case 'SECRETARIA':
-            return 'Secretaria';
           case 'DIRECTORA':
             return 'Directora';
           default:
@@ -484,7 +478,6 @@ export const trabajadoresFilters = {
     placeholder: 'Todos los roles',
     options: [
       { value: 'DOCENTE', label: 'Docente' },
-      { value: 'SECRETARIA', label: 'Secretaria' },
       { value: 'DIRECTORA', label: 'Directora' },
     ]
   },

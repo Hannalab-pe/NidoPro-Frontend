@@ -238,7 +238,7 @@ const TareaCompletaModal = ({ isOpen, onClose, tarea }) => {
                     </div>
                     <button
                       onClick={handleClose}
-                      className="text-white hover:bg-white hover:bg-opacity-20 rounded-lg p-2 transition-colors"
+                      className="text-white hover:bg-green-600 hover:bg-opacity-20 rounded-lg p-2 transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -353,18 +353,6 @@ const TareaCompletaModal = ({ isOpen, onClose, tarea }) => {
                                 {tarea?.descripcion || 'Sin descripción'}
                               </p>
                             </div>
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Fecha de Creación</label>
-                              <p className="mt-1 text-sm text-gray-900">
-                                {formatFecha(tarea?.fechaCreacion)}
-                              </p>
-                            </div>
-                            <div>
-                              <label className="text-sm font-medium text-gray-500">Fecha Límite</label>
-                              <p className="mt-1 text-sm text-gray-900">
-                                {formatFecha(tarea?.fechaLimite)}
-                              </p>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -463,15 +451,15 @@ const TareaCompletaModal = ({ isOpen, onClose, tarea }) => {
                                 <div className="flex items-center space-x-3">
                                   <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                                     <span className="text-green-600 font-semibold text-sm">
-                                      {entrega.idEstudiante2?.nombre?.charAt(0)}{entrega.idEstudiante2?.apellido?.charAt(0)}
+                                      {entrega.estudiante?.nombre?.charAt(0)}{entrega.estudiante?.apellido?.charAt(0)}
                                     </span>
                                   </div>
                                   <div>
                                     <p className="font-medium text-gray-900">
-                                      {entrega.idEstudiante2?.nombre} {entrega.idEstudiante2?.apellido}
+                                      {entrega.estudiante?.nombre} {entrega.estudiante?.apellido}
                                     </p>
                                     <p className="text-sm text-gray-600">
-                                      DNI: {entrega.idEstudiante2?.nroDocumento}
+                                      DNI: {entrega.estudiante?.nroDocumento}
                                     </p>
                                   </div>
                                 </div>
@@ -501,7 +489,7 @@ const TareaCompletaModal = ({ isOpen, onClose, tarea }) => {
                                       <span>Ver</span>
                                     </button>
                                     <button
-                                      onClick={() => descargarArchivo(entrega.archivoUrl, `entrega_${entrega.idEstudiante2?.nombre}_${entrega.idEstudiante2?.apellido}`)}
+                                      onClick={() => descargarArchivo(entrega.archivoUrl, `entrega_${entrega.estudiante?.nombre}_${entrega.estudiante?.apellido}`)}
                                       className="flex items-center space-x-1 px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 transition-colors text-xs"
                                     >
                                       <Download className="w-3 h-3" />
@@ -542,15 +530,15 @@ const TareaCompletaModal = ({ isOpen, onClose, tarea }) => {
                                 <div className="flex items-center space-x-3">
                                   <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
                                     <span className="text-yellow-600 font-semibold text-sm">
-                                      {entrega.idEstudiante2?.nombre?.charAt(0)}{entrega.idEstudiante2?.apellido?.charAt(0)}
+                                      {entrega.estudiante?.nombre?.charAt(0)}{entrega.estudiante?.apellido?.charAt(0)}
                                     </span>
                                   </div>
                                   <div>
                                     <p className="font-medium text-gray-900">
-                                      {entrega.idEstudiante2?.nombre} {entrega.idEstudiante2?.apellido}
+                                      {entrega.estudiante?.nombre} {entrega.estudiante?.apellido}
                                     </p>
                                     <p className="text-sm text-gray-600">
-                                      DNI: {entrega.idEstudiante2?.nroDocumento}
+                                      DNI: {entrega.estudiante?.nroDocumento}
                                     </p>
                                   </div>
                                 </div>
