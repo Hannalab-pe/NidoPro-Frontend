@@ -10,19 +10,17 @@ const planificacionApi = axios.create({
 });
 
 export const planificacionService = {
-  async crearPlanificacion(data) {
+  async getPlanificaciones(params = {}) {
     const token = localStorage.getItem('token');
-    const response = await planificacionApi.post('/planificacion', data, {
-      headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
-      }
-    });
-    return response.data;
-  },
+    const queryParams = new URLSearchParams();
+    
+    if (params.idTrabajador) {
+      queryParams.append('idTrabajador', params.idTrabajador);
+    }
 
-  async getAulasTrabajador(idTrabajador) {
-    const token = localStorage.getItem('token');
-    const response = await planificacionApi.get(`/trabajador/aulas/${idTrabajador}`, {
+    const url = `/planificacion${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    
+    const response = await planificacionApi.get(url, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'accept': '*/*'
@@ -31,15 +29,39 @@ export const planificacionService = {
     return response.data;
   },
 
-  async getPlanificaciones({ idTrabajador } = {}) {
+  async getAulasTrabajador(idTrabajador) {
     const token = localStorage.getItem('token');
-    let url = '/programacion-mensual';
-    if (idTrabajador) {
-      url = `/programacion-mensual/trabajador/${idTrabajador}`;
+    console.log('🔑 Token para petición de aulas:', token ? 'Presente' : 'No encontrado');
+    console.log('👤 ID del trabajador:', idTrabajador);
+    console.log('🌐 URL completa:', `${API_BASE_URL}/trabajador/aulas/${idTrabajador}`);
+
+    try {
+      const response = await planificacionApi.get(`/trabajador/aulas/${idTrabajador}`, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'accept': '*/*'
+        }
+      });
+      console.log('📨 Respuesta completa del API:', response);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error en la petición de aulas:', error);
+      console.error('❌ Detalles del error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      throw error;
     }
-    const response = await planificacionApi.get(url, {
+  },
+
+  async getPlanificacionesTrabajador(idTrabajador) {
+    const token = localStorage.getItem('token');
+    const response = await planificacionApi.get(`/planificacion/trabajador/${idTrabajador}`, {
       headers: {
-        'Authorization': token ? `Bearer ${token}` : ''
+        'Authorization': token ? `Bearer ${token}` : '',
+        'accept': '*/*'
       }
     });
     return response.data;
