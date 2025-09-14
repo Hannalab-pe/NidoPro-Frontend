@@ -202,7 +202,7 @@ const ModalAgregarActividad = ({ isOpen, onClose, selectedDate = null, onEventCr
         onEventCreated(calendarEvent);
       }
 
-      queryClient.invalidateQueries({ queryKey: ['cronogramas'] });
+      queryClient.invalidateQueries({ queryKey: ['cronograma'] });
       handleClose();
     },
     onError: (error) => {

@@ -12,13 +12,25 @@ const planificacionApi = axios.create({
 export const planificacionService = {
   async crearPlanificacion(data) {
     const token = localStorage.getItem('token');
-    const response = await planificacionApi.post('/programacion-mensual', data, {
+    const response = await planificacionApi.post('/planificacion', data, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : ''
       }
     });
     return response.data;
   },
+
+  async getAulasTrabajador(idTrabajador) {
+    const token = localStorage.getItem('token');
+    const response = await planificacionApi.get(`/trabajador/aulas/${idTrabajador}`, {
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : '',
+        'accept': '*/*'
+      }
+    });
+    return response.data;
+  },
+
   async getPlanificaciones({ idTrabajador } = {}) {
     const token = localStorage.getItem('token');
     let url = '/programacion-mensual';

@@ -55,7 +55,8 @@ const Horarios = () => {
     { 
       enabled: !!trabajadorId,
       refetchOnMount: true,
-      staleTime: 0, // Forzar refetch
+      staleTime: 0, // Forzar actualización inmediata
+      refetchOnWindowFocus: true,
     }
   );
   
@@ -73,10 +74,13 @@ const Horarios = () => {
   });
   
   // Obtener cronograma de todas las aulas asignadas
-  const { data: cronogramaData = [], isLoading: loadingCronograma, error: errorCronograma } = useCronogramaDocente(
+  const { data: cronogramaData = [], isLoading: loadingCronograma, error: errorCronograma, refetch: refetchCronograma } = useCronogramaDocente(
     aulasTrabajador,
     { 
-      enabled: !!(aulasTrabajador?.aulas?.length > 0 || (Array.isArray(aulasTrabajador) && aulasTrabajador.length > 0))
+      enabled: !!(aulasTrabajador?.aulas?.length > 0 || (Array.isArray(aulasTrabajador) && aulasTrabajador.length > 0)),
+      staleTime: 0, // Forzar actualización inmediata
+      refetchOnWindowFocus: true,
+      refetchOnMount: true
     }
   );
 
@@ -123,10 +127,11 @@ const Horarios = () => {
     // Aquí puedes abrir un modal para crear nueva clase
   };
 
-  const handleEventCreated = (newEvent) => {
+  const handleEventCreated = async (newEvent) => {
     console.log('Nueva actividad creada:', newEvent);
-    // Aquí podrías actualizar el estado local si es necesario
-    // Por ahora, el refetch de datos debería ser suficiente
+    // Forzar refetch inmediato del cronograma
+    await refetchCronograma();
+    console.log('✅ Cronograma actualizado después de crear nueva actividad');
   };
 
   const handleViewChange = (view) => {
@@ -336,6 +341,7 @@ const Horarios = () => {
             date={currentWeek}
             onNavigate={handleNavigate}
             isMobile={isMobile}
+            onEventCreated={handleEventCreated}
           />
         ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">

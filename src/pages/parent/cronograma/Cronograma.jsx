@@ -308,45 +308,11 @@ const Cronograma = () => {
       {/* Quick Stats */}
       {!isLoading && !hasError && eventosCalendario.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Calendar className="w-5 h-5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Total de actividades</p>
-                <p className="text-xl font-semibold text-gray-900">{eventosCalendario.length}</p>
-              </div>
-            </div>
-          </div>
+
           
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <BookOpen className="w-5 h-5 text-green-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Aula asignada</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {aulaInfo?.grado} {aulaInfo?.seccion}
-                </p>
-              </div>
-            </div>
-          </div>
+
           
-          <div className="bg-white p-4 rounded-lg border border-gray-200">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <Users className="w-5 h-5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600">Compañeros de clase</p>
-                <p className="text-xl font-semibold text-gray-900">
-                  {aulaInfo?.cantidadEstudiantes || 'N/A'}
-                </p>
-              </div>
-            </div>
-          </div>
+
         </div>
       )}
     </div>

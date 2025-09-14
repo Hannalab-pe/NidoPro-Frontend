@@ -12,7 +12,6 @@ import {
   GraduationCap,
   School,
   LogOut,
-  Bell,
   Search,
   TrendingUp,
   Clock,
@@ -133,7 +132,7 @@ const TeacherDashboard = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Mobile close button */}
@@ -151,34 +150,36 @@ const TeacherDashboard = () => {
         </div>
         
         {/* Navigation */}
-        <nav className="mt-6 px-3">
-          {menuItems.map((item) => {
-            const IconComponent = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
-                  isActive 
-                    ? "bg-green-600 text-white" 
-                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                }`}
-                onClick={() => handleMenuItemClick(item.id)}
-              >
-                <div className="flex items-center space-x-3">
-                  <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
-              </button>
-            );
-          })}
+        <nav className="mt-6 px-3 flex-1 overflow-y-auto">
+          <div className="space-y-1 pb-4">
+            {menuItems.map((item) => {
+              const IconComponent = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
+                    isActive 
+                      ? "bg-green-600 text-white" 
+                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  }`}
+                  onClick={() => handleMenuItemClick(item.id)}
+                >
+                  <div className="flex items-center space-x-3">
+                    <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
+                </button>
+              );
+            })}
+          </div>
         </nav>
         
         {/* User Info Card & Logout Button */}
-        <div className="absolute bottom-6 left-3 right-3 w-58 flex flex-col gap-3">
+        <div className="mt-auto p-3 border-t border-gray-200">
           {/* User Info */}
-           <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-2 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-green-100 cursor-pointer">
+           <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-3 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-green-100 cursor-pointer">
              <img
                src={'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
                alt="Foto de usuario"
@@ -234,11 +235,7 @@ const TeacherDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {/* Notifications */}
-              <button className="relative p-2 text-white border-white border hover:text-gray-900 hover:bg-white rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">2</span>
-              </button>
+              
             </div>
           </div>
         </header>

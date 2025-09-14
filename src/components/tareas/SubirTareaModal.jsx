@@ -4,6 +4,7 @@ import { Fragment } from 'react';
 import { X, Upload, FileText, Camera, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import tareaService from '../../services/tareaService';
+import { FirebaseStorageService } from '../../services/firebaseStorageService';
 
 const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
   });
   const [loading, setLoading] = useState(false);
   const [archivo, setArchivo] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const handleClose = () => {
     setFormData({
@@ -21,10 +23,11 @@ const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
       realizoTarea: true
     });
     setArchivo(null);
+    setUploadingFile(false);
     onClose();
   };
 
-  const handleFileSelect = (event) => {
+  const handleFileSelect = async (event) => {
     const file = event.target.files[0];
     if (file) {
       // Validar tipo de archivo
@@ -42,13 +45,27 @@ const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
       }
 
       setArchivo(file);
-      
-      // Aquí simularemos la subida. En producción sería a Cloudinary
-      const simulatedUrl = `https://cloudinary.com/uploads/${file.name}`;
-      setFormData(prev => ({
-        ...prev,
-        archivoUrl: simulatedUrl
-      }));
+      setUploadingFile(true);
+
+      try {
+        // Subir archivo a Firebase Storage
+        const uploadResult = await FirebaseStorageService.uploadFile(file, 'tareas');
+        
+        console.log('✅ Archivo subido exitosamente a Firebase:', uploadResult);
+        
+        setFormData(prev => ({
+          ...prev,
+          archivoUrl: uploadResult.url
+        }));
+        
+        toast.success('Archivo subido exitosamente');
+      } catch (error) {
+        console.error('❌ Error al subir archivo a Firebase:', error);
+        toast.error('Error al subir el archivo. Inténtalo de nuevo.');
+        setArchivo(null);
+      } finally {
+        setUploadingFile(false);
+      }
     }
   };
 
@@ -197,7 +214,15 @@ const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
                       Adjuntar archivo (opcional)
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                      {archivo ? (
+                      {uploadingFile ? (
+                        <div className="flex items-center justify-center space-x-3">
+                          <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Subiendo archivo...</p>
+                            <p className="text-xs text-gray-500">Por favor espera</p>
+                          </div>
+                        </div>
+                      ) : archivo ? (
                         <div className="flex items-center justify-center space-x-3">
                           <FileText className="w-8 h-8 text-blue-600" />
                           <div>
@@ -211,6 +236,7 @@ const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
                             onClick={() => {
                               setArchivo(null);
                               setFormData(prev => ({ ...prev, archivoUrl: '' }));
+                              setUploadingFile(false);
                             }}
                             className="p-1 hover:bg-red-100 rounded-full transition-colors"
                           >
@@ -228,11 +254,12 @@ const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
                             id="archivo"
                             accept="image/*,.pdf,.doc,.docx"
                             onChange={handleFileSelect}
+                            disabled={uploadingFile}
                             className="hidden"
                           />
                           <label
                             htmlFor="archivo"
-                            className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer"
+                            className={`inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors cursor-pointer ${uploadingFile ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <Upload className="w-4 h-4 mr-2" />
                             Seleccionar archivo
@@ -266,13 +293,13 @@ const SubirTareaModal = ({ isOpen, onClose, tarea, onSuccess }) => {
                       type="button"
                       onClick={handleClose}
                       className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-                      disabled={loading}
+                      disabled={loading || uploadingFile}
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      disabled={loading || !formData.observaciones.trim()}
+                      disabled={loading || uploadingFile || !formData.observaciones.trim()}
                       className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
                     >
                       {loading ? (

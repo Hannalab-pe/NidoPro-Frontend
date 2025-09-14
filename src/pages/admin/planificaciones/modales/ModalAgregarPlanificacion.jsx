@@ -1,28 +1,20 @@
 
-import { Fragment, useEffect } from 'react';
+import { Fragment, useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Dialog, Transition } from '@headlessui/react';
-import { FileText, Loader2, Save, X, Upload } from 'lucide-react';
-import { useAuthStore } from '../../../../store';
-import { useTrabajadores } from '../../../../hooks/useTrabajadores';
-import useAulasHook from '../../../../hooks/useAulas';
-import { useBimestreActual } from '../../../../hooks/useBimestreActual';
+import { FileText, Loader2, Save, X, Upload, File, Eye, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { usePlanificaciones } from '../../../../hooks/usePlanificaciones';
+import { useAuthStore } from '../../../../store';
+import { planificacionService } from '../../../../services/planificacionService';
+import FirebaseStorageService from '../../../../services/firebaseStorageService';
 
 const validationSchema = yup.object({
-  titulo: yup.string().required('El título es requerido'),
-  descripcion: yup.string().required('La descripción es requerida'),
-  mes: yup.number().min(1).max(12).required('El mes es requerido'),
-  anio: yup.number().min(2020).max(2100).required('El año es requerido'),
-  idTrabajador: yup.string().required('El trabajador es requerido'),
-  idBimestre: yup.string().required('El bimestre es requerido'),
-  idAula: yup.string().required('El aula es requerida'),
-  archivoUrl: yup.string().url('Debe ser una URL válida').required('El archivo es requerido'),
-  estado: yup.string().required('El estado es requerido'),
-  observaciones: yup.string()
+  tipoPlanificacion: yup.string().required('El tipo de planificación es requerido'),
+  fechaPlanificacion: yup.string().required('La fecha de planificación es requerida'),
+  archivo: yup.mixed().required('Debe seleccionar un archivo'),
+  observaciones: yup.string().required('Las observaciones son requeridas')
 });
 
 const FormField = ({ label, error, required, children, className = "" }) => (
@@ -38,57 +30,244 @@ const FormField = ({ label, error, required, children, className = "" }) => (
 
 const ModalAgregarPlanificacion = ({ open, onClose }) => {
   const { user } = useAuthStore();
-  const { trabajadores, loading: loadingTrabajadores } = useTrabajadores();
-  const { aulas, loading: loadingAulas } = useAulasHook();
-  const { bimestre, loading: loadingBimestre } = useBimestreActual();
+  const [aulas, setAulas] = useState([]);
+  const [loadingAulas, setLoadingAulas] = useState(false);
+  const [selectedAulaId, setSelectedAulaId] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
 
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
-    reset
+    reset,
+    watch
   } = useForm({
     resolver: yupResolver(validationSchema),
     defaultValues: {
-      titulo: '',
-      descripcion: '',
-      mes: '',
-      anio: new Date().getFullYear(),
-      idTrabajador: user?.id || '',
-      idBimestre: '',
-      idAula: '',
-      archivoUrl: '',
-      estado: 'PENDIENTE',
+      tipoPlanificacion: '',
+      fechaPlanificacion: '',
+      archivo: null,
       observaciones: ''
     }
   });
 
-  // Buscar el idTrabajador real según el usuario logueado
+  // Registrar el campo archivo manualmente
   useEffect(() => {
-    if (user?.id && trabajadores?.length) {
-      const trabajador = trabajadores.find(t => t.id_Usuario_Tabla === user.id || t.idUsuario?.idUsuario === user.id);
-      if (trabajador?.idTrabajador) setValue('idTrabajador', trabajador.idTrabajador);
-    }
-    if (bimestre?.idBimestre) setValue('idBimestre', bimestre.idBimestre);
-  }, [user, trabajadores, bimestre, setValue]);
+    register('archivo');
+  }, [register]);
 
-  const { crearPlanificacion } = usePlanificaciones();
+  // Función para generar UUID
+  const generateUUID = () => {
+    if (crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    // Fallback para navegadores que no soportan crypto.randomUUID
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
+  // Función para formatear UUID sin guiones (por si el backend lo espera así)
+  const formatUUID = (uuid) => {
+    return uuid.replace(/-/g, '');
+  };
+
+  // Limpiar archivo cuando se cierra el modal
+  useEffect(() => {
+    if (!open) {
+      setSelectedFile(null);
+      setFilePreview(null);
+    }
+  }, [open]);
+
+  const fetchAulasTrabajador = async () => {
+    try {
+      setLoadingAulas(true);
+      const response = await planificacionService.getAulasTrabajador(user.entidadId);
+
+      if (response.success && response.aulas.length > 0) {
+        setAulas(response.aulas);
+        // Si solo hay una aula, la seleccionamos automáticamente
+        if (response.aulas.length === 1) {
+          setSelectedAulaId(response.aulas[0].id_aula);
+        }
+      } else {
+        toast.error('No se encontraron aulas asignadas al trabajador');
+      }
+    } catch (error) {
+      console.error('Error al obtener aulas:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Error al cargar las aulas asignadas';
+      toast.error(errorMessage);
+    } finally {
+      setLoadingAulas(false);
+    }
+  };
+
+  // Manejar selección de archivo
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validar tipo de archivo
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'image/jpeg',
+      'image/png',
+      'image/gif'
+    ];
+
+    if (!FirebaseStorageService.validateFileType(file, allowedTypes)) {
+      toast.error('Tipo de archivo no permitido. Use PDF, Word, Excel o imágenes.');
+      return;
+    }
+
+    // Validar tamaño (máximo 10MB)
+    if (!FirebaseStorageService.validateFileSize(file, 10)) {
+      toast.error('El archivo es demasiado grande. Máximo 10MB.');
+      return;
+    }
+
+    setSelectedFile(file);
+    setValue('archivo', file);
+
+    // Crear preview del archivo
+    const fileInfo = FirebaseStorageService.getFileInfo(file);
+    setFilePreview(fileInfo);
+  };
+
+  // Remover archivo seleccionado
+  const handleRemoveFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+    setValue('archivo', null);
+    // Limpiar el input file
+    const fileInput = document.getElementById('archivo-input');
+    if (fileInput) fileInput.value = '';
+  };
 
   const onSubmit = async (data) => {
-    console.log('📤 Enviando planificación:', data);
-    const result = await crearPlanificacion(data);
-    if (result.success) {
+    if (!selectedAulaId) {
+      toast.error('Debe seleccionar un aula');
+      return;
+    }
+
+    if (!selectedFile) {
+      toast.error('Debe seleccionar un archivo');
+      return;
+    }
+
+    if (!user?.entidadId) {
+      toast.error('No se pudo obtener la información del usuario');
+      return;
+    }
+
+    try {
+      setUploadingFile(true);
+      toast.loading('Subiendo archivo a Firebase...', { id: 'upload' });
+
+      // Subir archivo a Firebase
+      const uploadResult = await FirebaseStorageService.uploadFile(
+        selectedFile,
+        'planificaciones',
+        user?.entidadId || 'anonymous'
+      );
+
+      toast.dismiss('upload');
+      toast.success('Archivo subido exitosamente');
+
+      const payload = {
+        idPlanificacion: formatUUID(generateUUID()), // UUID sin guiones
+        tipoPlanificacion: data.tipoPlanificacion === 'Anual' ? 'Planificación Anual' :
+                          data.tipoPlanificacion === 'Mensual' ? 'Planificación Mensual' :
+                          data.tipoPlanificacion === 'Semanal' ? 'Planificación Semanal' :
+                          'Planificación Diaria', // Formato esperado por el backend
+        fechaPlanificacion: data.fechaPlanificacion + 'T00:00:00.000Z', // Formato ISO completo
+        archivoUrl: uploadResult.url,
+        observaciones: data.observaciones || '', // Asegurar que no sea null
+        idTrabajador: user.entidadId,
+        idAula: selectedAulaId
+      };
+
+      console.log('📤 Enviando planificación:', payload);
+      console.log('🔍 Valores antes de enviar:', {
+        selectedAulaId,
+        userEntidadId: user?.entidadId,
+        selectedFile: !!selectedFile,
+        uploadResultUrl: uploadResult?.url
+      });
+      console.log('🔍 Detalles del payload:', {
+        idPlanificacion: payload.idPlanificacion,
+        tipoPlanificacion: payload.tipoPlanificacion,
+        fechaPlanificacion: payload.fechaPlanificacion,
+        archivoUrl: payload.archivoUrl?.substring(0, 50) + '...',
+        observaciones: payload.observaciones,
+        idTrabajador: payload.idTrabajador,
+        idAula: payload.idAula,
+        tipos: {
+          idPlanificacion: typeof payload.idPlanificacion,
+          tipoPlanificacion: typeof payload.tipoPlanificacion,
+          fechaPlanificacion: typeof payload.fechaPlanificacion,
+          archivoUrl: typeof payload.archivoUrl,
+          observaciones: typeof payload.observaciones,
+          idTrabajador: typeof payload.idTrabajador,
+          idAula: typeof payload.idAula
+        }
+      });
+
+      // Validar que todos los campos requeridos estén presentes y sean válidos
+      if (!payload.idPlanificacion || typeof payload.idPlanificacion !== 'string') {
+        throw new Error('ID de planificación inválido');
+      }
+      if (!payload.tipoPlanificacion || typeof payload.tipoPlanificacion !== 'string') {
+        throw new Error('Tipo de planificación inválido');
+      }
+      if (!payload.fechaPlanificacion || typeof payload.fechaPlanificacion !== 'string') {
+        throw new Error('Fecha de planificación inválida');
+      }
+      if (!payload.archivoUrl || typeof payload.archivoUrl !== 'string') {
+        throw new Error('URL del archivo inválida');
+      }
+      if (!payload.idTrabajador || typeof payload.idTrabajador !== 'string') {
+        throw new Error('ID del trabajador inválido');
+      }
+      if (!payload.idAula || typeof payload.idAula !== 'string') {
+        throw new Error('ID del aula inválido');
+      }
+
+      // Enviar datos al API
+      await planificacionService.crearPlanificacion(payload);
       toast.success('Planificación registrada correctamente');
+
       reset();
+      setSelectedAulaId('');
+      setSelectedFile(null);
+      setFilePreview(null);
       onClose();
-    } else {
-      toast.error(result.error || 'Error al registrar la planificación');
+
+    } catch (error) {
+      console.error('Error al crear planificación:', error);
+      toast.dismiss('upload');
+      const errorMessage = error.response?.data?.message || error.message || 'Error al registrar la planificación';
+      toast.error(errorMessage);
+    } finally {
+      setUploadingFile(false);
     }
   };
 
   const handleClose = () => {
     reset();
+    setSelectedAulaId('');
+    setSelectedFile(null);
+    setFilePreview(null);
     onClose();
   };
 
@@ -122,8 +301,8 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-lg">
-                      <FileText className="w-6 h-6 text-blue-600" />
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <FileText className="w-6 h-6 text-green-600" />
                     </div>
                     <div>
                       <Dialog.Title className="text-lg font-semibold text-gray-900">
@@ -144,51 +323,103 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField label="Título" error={errors.titulo?.message} required>
-                      <input {...register('titulo')} type="text" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: Programación Mensual - Marzo 2025 - Aula A" />
-                    </FormField>
-                    <FormField label="Mes" error={errors.mes?.message} required>
-                      <input {...register('mes')} type="number" min={1} max={12} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: 3" />
-                    </FormField>
-                    <FormField label="Año" error={errors.anio?.message} required>
-                      <input {...register('anio')} type="number" min={2020} max={2100} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej: 2025" />
-                    </FormField>
-                    {/* Mostrar nombre del docente y campo oculto para id */}
-                    <FormField label="Docente" error={undefined} required>
-                      <input value={user?.nombre || ''} readOnly className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700" />
-                      <input {...register('idTrabajador')} type="hidden" />
-                    </FormField>
-                    <FormField label="Bimestre" error={errors.idBimestre?.message} required>
-                      <input value={loadingBimestre ? 'Cargando...' : bimestre?.nombreBimestre || ''} readOnly className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-700" />
-                      <input {...register('idBimestre')} type="hidden" />
-                    </FormField>
-                    <FormField label="Aula" error={errors.idAula?.message} required>
-                      <select {...register('idAula')} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                        <option value="">Selecciona un aula</option>
-                        {loadingAulas && <option>Cargando aulas...</option>}
-                        {aulas && aulas.map((aula) => (
-                          <option key={aula.idAula} value={aula.idAula}>
-                            Sección {aula.seccion} ({aula.cantidadEstudiantes} estudiantes)
-                          </option>
-                        ))}
+                    <FormField label="Tipo de Planificación" error={errors.tipoPlanificacion?.message} required>
+                      <select {...register('tipoPlanificacion')} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Seleccionar tipo</option>
+                        <option value="Diaria">Diaria</option>
+                        <option value="Semanal">Semanal</option>
+                        <option value="Mensual">Mensual</option>
+                        <option value="Anual">Anual</option>
                       </select>
                     </FormField>
+                    <FormField label="Fecha de Planificación" error={errors.fechaPlanificacion?.message} required>
+                      <input {...register('fechaPlanificacion')} type="date" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    </FormField>
                   </div>
-                  <FormField label="Descripción" error={errors.descripcion?.message} required>
-                    <textarea {...register('descripcion')} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Descripción de la planificación" />
-                  </FormField>
-                  <FormField label="Archivo (URL)" error={errors.archivoUrl?.message} required>
-                    <input {...register('archivoUrl')} type="url" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://storage.com/programacion-marzo-2025.pdf" />
-                  </FormField>
-                  <FormField label="Estado" error={errors.estado?.message} required>
-                    <select {...register('estado')} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option value="PENDIENTE">PENDIENTE</option>
-                      <option value="APROBADO">APROBADO</option>
-                      <option value="RECHAZADO">RECHAZADO</option>
+                  <FormField label="Aula" error={!selectedAulaId ? 'Debe seleccionar un aula' : undefined} required>
+                    <select
+                      value={selectedAulaId}
+                      onChange={(e) => setSelectedAulaId(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={loadingAulas}
+                    >
+                      <option value="">
+                        {loadingAulas ? 'Cargando aulas...' : 'Seleccionar aula'}
+                      </option>
+                      {aulas.map((aula) => (
+                        <option key={aula.id_aula} value={aula.id_aula}>
+                          {aula.nombre} - {aula.seccion} ({aula.grado})
+                        </option>
+                      ))}
                     </select>
                   </FormField>
-                  <FormField label="Observaciones" error={errors.observaciones?.message}>
-                    <textarea {...register('observaciones')} rows={2} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Observaciones adicionales" />
+                  <FormField label="Archivo" error={errors.archivo?.message} required>
+                    <div className="space-y-3">
+                      {!selectedFile ? (
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-blue-400 transition-colors">
+                          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                          <p className="text-sm text-gray-600 mb-2">
+                            Arrastra un archivo aquí o haz clic para seleccionar
+                          </p>
+                          <p className="text-xs text-gray-500 mb-4">
+                            PDF, Word, Excel, imágenes (máx. 10MB)
+                          </p>
+                          <input
+                            id="archivo-input"
+                            type="file"
+                            onChange={handleFileSelect}
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif"
+                            className="hidden"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => document.getElementById('archivo-input').click()}
+                            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                          >
+                            Seleccionar Archivo
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <div className="p-2 bg-blue-100 rounded-lg">
+                                <File className="w-5 h-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-gray-900">
+                                  {filePreview?.name}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                  {filePreview?.sizeFormatted}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <button
+                                type="button"
+                                onClick={() => window.open(URL.createObjectURL(selectedFile), '_blank')}
+                                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                title="Vista previa"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={handleRemoveFile}
+                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                                title="Remover archivo"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </FormField>
+                  <FormField label="Observaciones" error={errors.observaciones?.message} required>
+                    <textarea {...register('observaciones')} rows={4} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Observaciones adicionales..." />
                   </FormField>
                   <div className="flex justify-end space-x-3 pt-4 border-t">
                     <button
@@ -200,13 +431,13 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
                     </button>
                     <button
                       type="submit"
-                      disabled={isSubmitting}
-                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      disabled={isSubmitting || !selectedAulaId || loadingAulas || uploadingFile || !selectedFile}
+                      className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                      {isSubmitting ? (
+                      {isSubmitting || uploadingFile ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
-                          Guardando...
+                          {uploadingFile ? 'Subiendo archivo...' : 'Guardando...'}
                         </>
                       ) : (
                         <>

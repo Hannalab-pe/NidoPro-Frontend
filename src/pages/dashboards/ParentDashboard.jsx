@@ -288,7 +288,7 @@ const ParentDashboard = () => {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         {/* Mobile close button */}
         <div className="flex items-center bg-yellow-600 justify-between p-7 border-b border-gray-200 lg:justify-start">
           <div className="flex items-center space-x-3 ">
@@ -303,7 +303,7 @@ const ParentDashboard = () => {
           </button>
         </div>
         {/* Navigation */}
-        <nav className="mt-6 px-3">
+        <nav className="mt-6 px-3 flex-1 overflow-y-auto">
           {menuItems.map((item) => {
             const IconComponent = item.icon;
             const isActive = activeSection === item.id;
@@ -327,7 +327,7 @@ const ParentDashboard = () => {
           })}
         </nav>
         {/* User Info Card & Logout Button */}
-        <div className="absolute bottom-6 left-3 right-3 w-58 flex flex-col gap-3">
+        <div className="mt-auto px-3 pb-6 flex flex-col gap-3">
           {/* User Info */}
            <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-2 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-yellow-100 cursor-pointer">
              <img
@@ -384,11 +384,7 @@ const ParentDashboard = () => {
               </p>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
-              {/* Notifications */}
-              <button className="relative p-2 text-white border-white border hover:text-gray-900 hover:bg-white rounded-lg transition-colors">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
-              </button>
+              
             </div>
           </div>
         </header>

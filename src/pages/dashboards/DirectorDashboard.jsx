@@ -57,7 +57,7 @@ const DirectorDashboard = () => {
         <div className="fixed inset-0 z-40 bg-black/30 bg-opacity-50 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
       )}
       {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="flex items-center bg-blue-600 justify-between p-7 border-b border-gray-200 lg:justify-start">
           <div className="flex items-center space-x-3 ">
             <Baby className="w-8 h-8 text-white" />
@@ -67,27 +67,29 @@ const DirectorDashboard = () => {
             <X className="w-6 h-6" />
           </button>
         </div>
-        <nav className="mt-6 px-3">
-          {menuItems.map((item) => {
-            const IconComponent = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <button
-                key={item.id}
-                className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
-                onClick={() => { setActiveSection(item.id); setIsMobileMenuOpen(false); }}
-              >
-                <div className="flex items-center space-x-3">
-                  <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
-                  <span className="font-medium">{item.label}</span>
-                </div>
-                <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
-              </button>
-            );
-          })}
+        <nav className="mt-6 px-3 flex-1 overflow-y-auto">
+          <div className="space-y-1 pb-4">
+            {menuItems.map((item) => {
+              const IconComponent = item.icon;
+              const isActive = activeSection === item.id;
+              return (
+                <button
+                  key={item.id}
+                  className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${isActive ? "bg-blue-600 text-white" : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"}`}
+                  onClick={() => { setActiveSection(item.id); setIsMobileMenuOpen(false); }}
+                >
+                  <div className="flex items-center space-x-3">
+                    <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
+                    <span className="font-medium">{item.label}</span>
+                  </div>
+                  <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
+                </button>
+              );
+            })}
+          </div>
         </nav>
-        <div className="absolute bottom-6 left-3 right-3 w-58 flex flex-col gap-3">
-          <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-2 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-blue-100 cursor-pointer">
+        <div className="mt-auto p-3 border-t border-gray-200">
+          <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-3 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-blue-100 cursor-pointer">
             <img src={'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'} alt="Foto de usuario" className="w-11 h-11 object-cover rounded-full border-2 border-blue-500 shadow bg-white" />
             <div className="flex flex-col min-w-0">
               <span className="font-semibold text-gray-900 text-sm truncate">{user?.nombre || ''} {user?.apellido || ''}</span>
