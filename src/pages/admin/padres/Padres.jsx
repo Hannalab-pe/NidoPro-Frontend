@@ -87,7 +87,7 @@ const Padres = () => {
             </div>
           </div>
           
-          <div className="bg-green-50 p-4 rounded-lg">
+          {/* <div className="bg-green-50 p-4 rounded-lg">
             <div className="flex items-center">
               <UserPlus className="w-8 h-8 text-green-600" />
               <div className="ml-3">
@@ -95,7 +95,7 @@ const Padres = () => {
                 <p className="text-2xl font-bold text-green-900">{statistics.active}</p>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
