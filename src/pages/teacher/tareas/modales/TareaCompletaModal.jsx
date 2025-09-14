@@ -116,7 +116,7 @@ const TareaCompletaModal = ({ isOpen, onClose, tarea }) => {
         console.log('🔄 No hay entregas en la tarea, intentando obtener del servicio...');
         try {
           const response = await tareaService.obtenerEntregasPorTarea(tarea.idTarea);
-          const entregasServicio = response.data || response || [];
+          const entregasServicio = response.data?.entregas || response?.entregas || [];
           console.log('📋 Entregas obtenidas del servicio:', entregasServicio);
           
           // Filtrar entregas - considerar tanto realizoTarea como estado

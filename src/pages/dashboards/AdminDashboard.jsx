@@ -21,7 +21,8 @@ import {
   Clock,
   ChevronRight,
   Menu,
-  X
+  X,
+  ClipboardList
 } from "lucide-react";
 
 // Importar todos los componentes de administración
@@ -43,6 +44,8 @@ import Planificaciones from '../admin/planificaciones/Planificaciones';
 import Grados from '../admin/grados/aulas';
 import Pensiones from '../admin/pensiones/pensiones';
 import Cursos from '../admin/cursos/Cursos';
+import Contratos from '../admin/contratos/Contratos';
+import Planilla from '../admin/planilla/Planilla';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -67,6 +70,8 @@ const AdminDashboard = () => {
     { id: "finances", label: "Finanzas", icon: DollarSign },
     { id: "matricula", label: "Matrícula", icon: GraduationCap },
     { id: "trabajadores", label: "Trabajadores", icon: UsersIcon },
+    { id: "contratos", label: "Contratos", icon: FileText },
+    { id: "planilla", label: "Planilla", icon: ClipboardList },
     { id: "students", label: "Estudiantes", icon: CircleUser },
     { id: "parents", label: "Padres de Familia", icon: UserCheck },
     { id: "asignacion-aula", label: "Asignación de Aulas", icon: BookOpen },
@@ -329,6 +334,8 @@ const AdminDashboard = () => {
           {activeSection === "students" && <Estudiantes />}
           {activeSection === "matricula" && <Matricula />}
           {activeSection === "trabajadores" && <Trabajadores />}
+          {activeSection === "contratos" && <Contratos />}
+          {activeSection === "planilla" && <Planilla />}
           {activeSection === "parents" && <Padres />}
           {activeSection === "asignacion-aula" && <AsignacionAula />}
           {activeSection === "aulas" && <Aulas />}

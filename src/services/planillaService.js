@@ -132,37 +132,97 @@ const planillaService = {
   },
 
   /**
-   * Obtener detalle de una planilla específica
-   * @param {string} idPlanilla - ID de la planilla
-   * @returns {Promise<Object>} Detalle de la planilla
+   * Generar planillas mensuales con trabajadores específicos
+   * @param {Object} datosGeneracion - Datos para generar las planillas
+   * @param {number} datosGeneracion.mes - Mes para las planillas
+   * @param {number} datosGeneracion.anio - Año para las planillas
+   * @param {string} datosGeneracion.fechaPagoProgramada - Fecha programada de pago
+   * @param {Array} datosGeneracion.trabajadores - Array de IDs de trabajadores
+   * @param {string} datosGeneracion.generadoPor - ID del trabajador que genera
+   * @returns {Promise<Object>} Respuesta de la generación
    */
-  obtenerDetallePlanilla: async (idPlanilla) => {
+  generarPlanillasConTrabajadores: async (datosGeneracion) => {
     try {
-      console.log('📋 Obteniendo detalle de planilla:', idPlanilla);
-      
-      if (!idPlanilla) {
-        throw new Error('ID de planilla es requerido');
+      console.log('📝 Generando planillas con trabajadores...', datosGeneracion);
+
+      // Validaciones básicas
+      if (!datosGeneracion.trabajadores || datosGeneracion.trabajadores.length === 0) {
+        throw new Error('Debe seleccionar al menos un trabajador');
       }
-      
-      const response = await api.get(`/planilla-mensual/${idPlanilla}`);
-      
-      console.log('✅ Detalle de planilla obtenido:', response.data);
-      
+
+      if (!datosGeneracion.generadoPor) {
+        throw new Error('ID del generador es requerido');
+      }
+
+      if (!datosGeneracion.mes || !datosGeneracion.anio) {
+        throw new Error('Mes y año son requeridos');
+      }
+
+      const payload = {
+        mes: datosGeneracion.mes,
+        anio: datosGeneracion.anio,
+        fechaPagoProgramada: datosGeneracion.fechaPagoProgramada,
+        trabajadores: datosGeneracion.trabajadores,
+        generadoPor: datosGeneracion.generadoPor
+      };
+
+      const response = await api.post('/planilla-mensual/generar-con-trabajadores', payload);
+
+      console.log('✅ Planillas generadas exitosamente:', response.data);
+
       return {
         success: true,
-        planilla: response.data.planilla || response.data,
-        message: response.data.message || 'Detalle obtenido correctamente'
+        data: response.data,
+        message: response.data.message || 'Planillas generadas exitosamente'
       };
     } catch (error) {
-      console.error('❌ Error al obtener detalle de planilla:', error);
-      
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          'Error al obtener el detalle de la planilla';
-      
+      console.error('❌ Error al generar planillas:', error);
+
+      const errorMessage = error.response?.data?.message ||
+                          error.response?.data?.error ||
+                          'Error al generar las planillas';
+
       throw new Error(errorMessage);
     }
-  }
+  },
+
+  /**
+   * Obtener trabajadores sin detalle de planilla asociado
+   * @param {Object} filters - Filtros opcionales
+   * @returns {Promise<Array>} Lista de trabajadores sin planilla
+   */
+  obtenerTrabajadoresSinPlanilla: async (filters = {}) => {
+    try {
+      console.log('👥 Obteniendo trabajadores sin planilla...', filters);
+
+      const params = new URLSearchParams();
+
+      // Agregar filtros a los parámetros
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value);
+        }
+      });
+
+      const response = await api.get(`/trabajador/sin-planilla?${params.toString()}`);
+      console.log('✅ Respuesta del backend para trabajadores sin planilla:', response.data);
+
+      // La respuesta ya es un array de trabajadores
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      // Si viene envuelto en un objeto
+      if (response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al obtener trabajadores sin planilla:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener trabajadores sin planilla');
+    }
+  },
 };
 
 export default planillaService;

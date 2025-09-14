@@ -28,8 +28,13 @@ const FormField = ({ label, error, required, children, className = "" }) => (
 );
 
 
-const ModalAgregarPlanificacion = ({ open, onClose }) => {
+const ModalAgregarPlanificacion = ({ open, onClose, onSuccess }) => {
   const { user } = useAuthStore();
+  
+  console.log('🎯 ModalAgregarPlanificacion - Props recibidas:', { open, hasOnClose: !!onClose, hasOnSuccess: !!onSuccess });
+  console.log('👤 Usuario del store:', user);
+  console.log('🔑 Estado de autenticación:', { open, hasUser: !!user, entidadId: user?.entidadId });
+
   const [aulas, setAulas] = useState([]);
   const [loadingAulas, setLoadingAulas] = useState(false);
   const [selectedAulaId, setSelectedAulaId] = useState('');
@@ -59,24 +64,6 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
     register('archivo');
   }, [register]);
 
-  // Función para generar UUID
-  const generateUUID = () => {
-    if (crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    // Fallback para navegadores que no soportan crypto.randomUUID
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
-
-  // Función para formatear UUID sin guiones (por si el backend lo espera así)
-  const formatUUID = (uuid) => {
-    return uuid.replace(/-/g, '');
-  };
-
   // Limpiar archivo cuando se cierra el modal
   useEffect(() => {
     if (!open) {
@@ -85,22 +72,38 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
     }
   }, [open]);
 
+  // Obtener aulas del trabajador cuando se abre el modal
+  useEffect(() => {
+    console.log('🔍 useEffect ejecutándose:', { open, userEntidadId: user?.entidadId, user });
+    if (open && user?.entidadId) {
+      console.log('🚀 Llamando a fetchAulasTrabajador con id:', user.entidadId);
+      fetchAulasTrabajador();
+    } else {
+      console.log('❌ No se ejecuta fetchAulasTrabajador:', { open, hasUser: !!user, hasEntidadId: !!user?.entidadId, user });
+    }
+  }, [open, user?.entidadId]);
+
   const fetchAulasTrabajador = async () => {
     try {
+      console.log('📡 Iniciando petición de aulas para trabajador:', user.entidadId);
       setLoadingAulas(true);
       const response = await planificacionService.getAulasTrabajador(user.entidadId);
+      console.log('📨 Respuesta del API de aulas:', response);
 
       if (response.success && response.aulas.length > 0) {
+        console.log('✅ Aulas encontradas:', response.aulas);
         setAulas(response.aulas);
         // Si solo hay una aula, la seleccionamos automáticamente
         if (response.aulas.length === 1) {
           setSelectedAulaId(response.aulas[0].id_aula);
+          console.log('🎯 Aula seleccionada automáticamente:', response.aulas[0].id_aula);
         }
       } else {
+        console.log('⚠️ No se encontraron aulas:', response);
         toast.error('No se encontraron aulas asignadas al trabajador');
       }
     } catch (error) {
-      console.error('Error al obtener aulas:', error);
+      console.error('❌ Error al obtener aulas:', error);
       const errorMessage = error.response?.data?.message || error.message || 'Error al cargar las aulas asignadas';
       toast.error(errorMessage);
     } finally {
@@ -185,7 +188,6 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
       toast.success('Archivo subido exitosamente');
 
       const payload = {
-        idPlanificacion: formatUUID(generateUUID()), // UUID sin guiones
         tipoPlanificacion: data.tipoPlanificacion === 'Anual' ? 'Planificación Anual' :
                           data.tipoPlanificacion === 'Mensual' ? 'Planificación Mensual' :
                           data.tipoPlanificacion === 'Semanal' ? 'Planificación Semanal' :
@@ -205,7 +207,6 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
         uploadResultUrl: uploadResult?.url
       });
       console.log('🔍 Detalles del payload:', {
-        idPlanificacion: payload.idPlanificacion,
         tipoPlanificacion: payload.tipoPlanificacion,
         fechaPlanificacion: payload.fechaPlanificacion,
         archivoUrl: payload.archivoUrl?.substring(0, 50) + '...',
@@ -213,7 +214,6 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
         idTrabajador: payload.idTrabajador,
         idAula: payload.idAula,
         tipos: {
-          idPlanificacion: typeof payload.idPlanificacion,
           tipoPlanificacion: typeof payload.tipoPlanificacion,
           fechaPlanificacion: typeof payload.fechaPlanificacion,
           archivoUrl: typeof payload.archivoUrl,
@@ -224,9 +224,6 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
       });
 
       // Validar que todos los campos requeridos estén presentes y sean válidos
-      if (!payload.idPlanificacion || typeof payload.idPlanificacion !== 'string') {
-        throw new Error('ID de planificación inválido');
-      }
       if (!payload.tipoPlanificacion || typeof payload.tipoPlanificacion !== 'string') {
         throw new Error('Tipo de planificación inválido');
       }
@@ -246,6 +243,12 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
       // Enviar datos al API
       await planificacionService.crearPlanificacion(payload);
       toast.success('Planificación registrada correctamente');
+
+      // Llamar a onSuccess si está definido
+      if (onSuccess) {
+        console.log('🔄 Llamando onSuccess después de crear planificación');
+        onSuccess();
+      }
 
       reset();
       setSelectedAulaId('');
@@ -270,6 +273,8 @@ const ModalAgregarPlanificacion = ({ open, onClose }) => {
     setFilePreview(null);
     onClose();
   };
+
+  console.log('🎨 Renderizando modal:', { open, aulasCount: aulas.length, loadingAulas });
 
   return (
     <Transition appear show={open} as={Fragment}>

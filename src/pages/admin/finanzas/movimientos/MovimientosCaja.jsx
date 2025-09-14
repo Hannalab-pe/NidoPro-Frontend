@@ -1,20 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import { 
-  ArrowLeft,
-  Plus,
-  DollarSign,
-  Minus,
-  Banknote,
   Save,
   Loader2,
-  Calendar,
-  User,
-  CreditCard,
-  FileText,
-  Eye,
   Edit,
-  Filter,
-  Search
+  Plus,
+  Minus,
+  DollarSign,
+  Calendar,
+  FileText,
+  ArrowLeft
 } from 'lucide-react'
 import { toast } from 'sonner'
 import cajaService from '../../../../services/cajaService'
@@ -90,7 +84,7 @@ const MovimientosCaja = () => {
     metodoPago: 'EFECTIVO',
     comprobante: '',
     estado: 'CONFIRMADO',
-    fecha: new Date().toISOString().split('T')[0],
+    fecha: new Date().toLocaleDateString('en-CA'),
     numeroTransaccion: '',
     referenciaExterna: ''
   })
@@ -262,14 +256,15 @@ const MovimientosCaja = () => {
           metodoPago: 'EFECTIVO',
           comprobante: '',
           estado: 'CONFIRMADO',
-          fecha: new Date().toISOString().split('T')[0],
+          fecha: new Date().toLocaleDateString('en-CA'),
           numeroTransaccion: '',
           referenciaExterna: ''
         })
         
-        // Recargar historial si está activo
+        // Recargar historial y saldo si está activo
         if (activeTab === 'historial') {
           cargarMovimientos()
+          cargarSaldoCaja()
         }
       }
       
@@ -301,7 +296,8 @@ const MovimientosCaja = () => {
       comprobante: movimiento.comprobante || '',
       fecha: movimiento.fecha,
       numeroTransaccion: movimiento.numeroTransaccion || '',
-      referenciaExterna: movimiento.referenciaExterna || ''
+      referenciaExterna: movimiento.referenciaExterna || '',
+      estado: movimiento.estado
     })
     setIsEditModalOpen(true)
   }
@@ -377,8 +373,9 @@ const MovimientosCaja = () => {
         setMovimientoToEdit(null)
         setEditFormData({})
         
-        // Recargar movimientos
+        // Recargar movimientos y saldo
         cargarMovimientos()
+        cargarSaldoCaja()
       }
 
     } catch (error) {
@@ -405,8 +402,9 @@ const MovimientosCaja = () => {
       
       if (fecha.includes('-')) {
         // Formato ISO: 2025-09-10
+        // Para evitar problemas de zona horaria, creamos la fecha como UTC
         const [year, month, day] = fecha.split('-');
-        fechaObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+        fechaObj = new Date(Date.UTC(parseInt(year), parseInt(month) - 1, parseInt(day)));
       } else {
         // Formato estándar
         fechaObj = new Date(fecha);
@@ -418,7 +416,9 @@ const MovimientosCaja = () => {
         return fecha;
       }
       
-      return fechaObj.toLocaleDateString('es-ES', {
+      // Mostrar la fecha en zona horaria de Perú (America/Lima)
+      return fechaObj.toLocaleDateString('es-PE', {
+        timeZone: 'America/Lima',
         day: '2-digit',
         month: '2-digit', 
         year: 'numeric'
@@ -432,8 +432,31 @@ const MovimientosCaja = () => {
   const formatHora = (hora) => {
     if (!hora) return ''
     try {
-      // Remover microsegundos si existen
-      return hora.split('.')[0]
+      // Si la hora viene en formato HH:MM:SS, convertirla a zona horaria de Perú
+      let horaObj;
+      
+      if (hora.includes(':')) {
+        // Formato HH:MM:SS o HH:MM:SS.mmm
+        const [timePart] = hora.split('.');
+        const [hours, minutes, seconds] = timePart.split(':');
+        
+        // Crear fecha con la hora actual en zona horaria de Perú
+        const now = new Date();
+        horaObj = new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+        horaObj.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0));
+      } else {
+        // Si no tiene formato esperado, devolver como está
+        return hora;
+      }
+      
+      // Formatear la hora en zona horaria de Perú
+      return horaObj.toLocaleTimeString('es-PE', {
+        timeZone: 'America/Lima',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
     } catch (error) {
       console.error('Error al formatear hora:', hora, error)
       return hora
@@ -569,11 +592,6 @@ const MovimientosCaja = () => {
                           onClick={() => setFormData(prev => ({ ...prev, tipo: tipo.id.toUpperCase() }))}
                         >
                           <div className="flex items-center justify-center">
-                            {tipo.id === 'ingreso' ? (
-                              <Plus className={`h-8 w-8 ${tipo.color} mr-3`} />
-                            ) : (
-                              <Minus className={`h-8 w-8 ${tipo.color} mr-3`} />
-                            )}
                             <span className={`text-lg font-medium ${tipo.color}`}>
                               {tipo.label}
                             </span>
@@ -787,7 +805,7 @@ const MovimientosCaja = () => {
                           metodoPago: 'EFECTIVO',
                           comprobante: '',
                           estado: 'CONFIRMADO',
-                          fecha: new Date().toISOString().split('T')[0],
+                          fecha: new Date().toLocaleDateString('en-CA'),
                           numeroTransaccion: '',
                           referenciaExterna: ''
                         })
@@ -840,42 +858,31 @@ const MovimientosCaja = () => {
                     
                     {/* Buscador */}
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="text"
                         placeholder="Buscar movimientos..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
+                        className="pl-4 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-64"
                       />
                     </div>
                     
                     {/* Botones de acción */}
                     <div className="flex space-x-2">
                       <button
-                        onClick={cargarSaldoCaja}
-                        disabled={loadingSaldo}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 disabled:opacity-50 flex items-center space-x-2"
-                      >
-                        {loadingSaldo ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Banknote className="w-4 h-4" />
-                        )}
-                        <span>Saldo</span>
-                      </button>
-                      
-                      <button
-                        onClick={cargarMovimientos}
+                        onClick={() => {
+                          cargarMovimientos()
+                          cargarSaldoCaja()
+                        }}
                         disabled={loadingHistorial}
                         className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center space-x-2"
                       >
                         {loadingHistorial ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <DollarSign className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         )}
-                        <span>Movimientos</span>
+                        <span>Actualizar Movimientos</span>
                       </button>
                     </div>
                   </div>
@@ -889,7 +896,6 @@ const MovimientosCaja = () => {
                         <p className="text-green-100 text-sm font-medium">Total Ingresos</p>
                         <p className="text-2xl font-bold">{formatMonto(saldoData.ingresos)}</p>
                       </div>
-                      <Plus className="w-8 h-8 text-green-200" />
                     </div>
                   </div>
                   
@@ -899,7 +905,6 @@ const MovimientosCaja = () => {
                         <p className="text-red-100 text-sm font-medium">Total Egresos</p>
                         <p className="text-2xl font-bold">{formatMonto(saldoData.egresos)}</p>
                       </div>
-                      <Minus className="w-8 h-8 text-red-200" />
                     </div>
                   </div>
                   
@@ -917,9 +922,6 @@ const MovimientosCaja = () => {
                         </p>
                         <p className="text-2xl font-bold">{formatMonto(saldoData.saldo)}</p>
                       </div>
-                      <Banknote className={`w-8 h-8 ${
-                        saldoData.saldo >= 0 ? 'text-blue-200' : 'text-orange-200'
-                      }`} />
                     </div>
                   </div>
                 </div>
@@ -979,7 +981,7 @@ const MovimientosCaja = () => {
                         <div className="flex items-center">
                           <div className="flex-shrink-0">
                             <div className="w-8 h-8 bg-yellow-100 rounded-md flex items-center justify-center">
-                              <Banknote className="w-4 h-4 text-yellow-600" />
+                              <DollarSign className="w-4 h-4 text-yellow-600" />
                             </div>
                           </div>
                           <div className="ml-3">
@@ -1010,7 +1012,7 @@ const MovimientosCaja = () => {
                   </div>
                 ) : filteredMovimientos.length === 0 ? (
                   <div className="bg-gray-100 rounded-lg p-8 text-center">
-                    <Banknote className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <DollarSign className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-600 mb-2">
                       {movimientos.length === 0 ? 'No hay movimientos registrados' : 'No se encontraron movimientos'}
                     </h3>
@@ -1171,14 +1173,6 @@ const MovimientosCaja = () => {
                                   >
                                     <Edit className="w-4 h-4" />
                                     <span>Editar</span>
-                                  </button>
-                                  
-                                  <button
-                                    className="text-gray-600 hover:text-gray-900 flex items-center space-x-1"
-                                    title="Ver detalles del movimiento"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    <span>Ver</span>
                                   </button>
                                 </div>
                               </td>
@@ -1410,6 +1404,23 @@ const MovimientosCaja = () => {
                   className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Referencia externa"
                 />
+              </div>
+
+              {/* Estado del movimiento */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Estado del Movimiento
+                </label>
+                <select
+                  name="estado"
+                  value={editFormData.estado || 'CONFIRMADO'}
+                  onChange={handleEditInputChange}
+                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="PENDIENTE">Pendiente</option>
+                  <option value="CONFIRMADO">Confirmado</option>
+                  <option value="CANCELADO">Cancelado</option>
+                </select>
               </div>
 
               {/* Botones */}
