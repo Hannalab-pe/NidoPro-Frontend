@@ -35,7 +35,6 @@ const TablaEstudiantes = ({
         delete: true,
         view: true,
         import: false, // Import manejado por matrícula
-        export: true
       }}
       filters={studentsFilters}
       addButtonText="Agregar Estudiante"

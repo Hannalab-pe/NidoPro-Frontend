@@ -204,11 +204,11 @@ const TablaAulas = ({
         title="Gestión de Asignaciones de Aula"
         icon={School}
         searchPlaceholder="Buscar por aula, docente o sección..."
-        onAdd={handleAddAula}
-        onEdit={handleEditAula}
-        onDelete={handleDeleteAula}
-        onView={handleViewAula}
-        onImport={handleImportAulas}
+        // onAdd={handleAddAula}
+        // onEdit={handleEditAula}
+        // onDelete={handleDeleteAula}
+        // onView={handleViewAula}
+        // onImport={handleImportAulas}
         onExport={handleExportAulas}
         onRefresh={onRefresh}
         actions={{
@@ -217,7 +217,7 @@ const TablaAulas = ({
           delete: false,
           view: false,
           import: false,
-          export: true,
+          export: false,
           refresh: true
         }}
         filters={asignacionesFilters}

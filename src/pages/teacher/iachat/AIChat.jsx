@@ -382,14 +382,14 @@ const AIChat = () => {
                 rows="1"
                 style={{ minHeight: '44px' }}
               />
-              <div className="absolute right-2 bottom-2 flex space-x-1">
+              {/* <div className="absolute right-2 bottom-2 flex space-x-1">
                 <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
                   <Paperclip className="w-4 h-4" />
                 </button>
                 <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
                   <Mic className="w-4 h-4" />
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
           

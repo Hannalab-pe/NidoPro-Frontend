@@ -32,11 +32,10 @@ const TablaPadres = ({
         onExport={onExport}
         actions={{
           add: false, // Los padres se agregan solo a través de matrícula
-          edit: false, // Edición deshabilitada - no existe endpoint en backend
+          edit: true, // Edición deshabilitada - no existe endpoint en backend
           delete: false,
           view: true,
           import: false, // Import manejado por matrícula
-          export: true
         }}
         filters={parentsFilters}
         loadingMessage="Cargando padres..."

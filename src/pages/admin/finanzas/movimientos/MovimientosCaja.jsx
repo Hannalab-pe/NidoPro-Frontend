@@ -1173,13 +1173,13 @@ const MovimientosCaja = () => {
                                     <span>Editar</span>
                                   </button>
                                   
-                                  <button
+                                  {/* <button
                                     className="text-gray-600 hover:text-gray-900 flex items-center space-x-1"
                                     title="Ver detalles del movimiento"
                                   >
                                     <Eye className="w-4 h-4" />
                                     <span>Ver</span>
-                                  </button>
+                                  </button> */}
                                 </div>
                               </td>
                             </tr>
