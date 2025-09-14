@@ -14,14 +14,15 @@ export const usePlanificaciones = (rol, idTrabajadorUsuario) => {
       if (rol === 'PROFESOR' && idTrabajadorUsuario) {
         response = await planificacionService.getPlanificaciones({ idTrabajador: idTrabajadorUsuario });
         console.log(`Planificaciones para idTrabajador: ${idTrabajadorUsuario}`, response);
-        // Workaround: filtrar por idTrabajador por si el backend falla
-        setPlanificaciones((response.programaciones || []).filter(p => p.idTrabajador === idTrabajadorUsuario));
+        // Filtrar por idTrabajador si es necesario
+        setPlanificaciones(Array.isArray(response) ? response.filter(p => p.idTrabajador === idTrabajadorUsuario) : []);
       } else {
         response = await planificacionService.getPlanificaciones();
-        console.log('Respuesta endpoint /api/v1/programacion-mensual:', response);
-        setPlanificaciones(response.programaciones || []);
+        console.log('Respuesta endpoint /api/v1/planificacion:', response);
+        setPlanificaciones(Array.isArray(response) ? response : []);
       }
     } catch (err) {
+      console.error('Error al obtener planificaciones:', err);
       setError(err.response?.data?.message || 'Error al obtener planificaciones');
     } finally {
       setIsLoading(false);

@@ -16,6 +16,7 @@ import {
   validateMatriculaData,
   generateDataSummary 
 } from '../../../../utils/matriculaValidation';
+import FirebaseStorageService from '../../../../services/firebaseStorageService';
 
 const schema = yup.object({
   // Información de Matrícula
@@ -28,6 +29,16 @@ const schema = yup.object({
     .required('El grado es requerido'),
   metodoPago: yup.string()
     .required('El método de pago es requerido'),
+  voucherFile: yup.mixed()
+    .required('El voucher de pago es requerido')
+    .test('fileSize', 'El archivo no puede superar los 5MB', (value) => {
+      if (!value) return false;
+      return value.size <= 5 * 1024 * 1024; // 5MB
+    })
+    .test('fileType', 'Solo se permiten archivos de imagen', (value) => {
+      if (!value) return false;
+      return value.type.startsWith('image/');
+    }),
   
   // Información del Estudiante
   estudianteNombre: yup.string()
@@ -281,24 +292,26 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
 
       if (voucherFile) {
         setUploadingVoucher(true);
-        const formData = new FormData();
-        formData.append('image', voucherFile);
+        toast.loading('Subiendo voucher a Firebase...', { id: 'upload' });
 
-        const uploadResponse = await fetch('http://localhost:3000/api/v1/upload/cloudinary', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: formData
-        });
+        try {
+          // Subir archivo a Firebase Storage
+          const uploadResult = await FirebaseStorageService.uploadFile(
+            voucherFile,
+            'vouchers-matricula',
+            'matricula-' + Date.now() // ID único para el voucher
+          );
 
-        if (!uploadResponse.ok) {
-          throw new Error('Error al subir el voucher');
+          voucherUrl = uploadResult.url;
+          toast.dismiss('upload');
+          toast.success('Voucher subido exitosamente');
+        } catch (error) {
+          toast.dismiss('upload');
+          console.error('Error al subir voucher a Firebase:', error);
+          throw new Error('Error al subir el voucher a Firebase');
+        } finally {
+          setUploadingVoucher(false);
         }
-
-        const uploadResult = await uploadResponse.json();
-        voucherUrl = uploadResult.secure_url;
-        setUploadingVoucher(false);
       }
 
       // Procesar y validar contactos de emergencia usando las utilidades
@@ -606,61 +619,63 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                       </div>
 
                       {/* Voucher de Pago */}
-                      <div className="mt-6">
-                        <FormField label="Voucher de Pago" className="mb-4">
-                          <div className="relative w-full">
-                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors hover:cursor-pointer h-84 flex flex-col items-center justify-center">
-                              {voucherImage ? (
-                                <div className="relative">
-                                  <img
-                                    src={voucherImage}
-                                    alt="Voucher"
-                                    className="max-h-32 mx-auto rounded-lg object-contain"
-                                  />
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setVoucherImage(null);
-                                      setVoucherFile(null);
-                                    }}
-                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                  >
-                                    <X className="w-4 h-4" />
-                                  </button>
-                                </div>
-                              ) : (
-                                <>
-                                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                  <p className="text-sm text-gray-600 mb-2">
-                                    Subir voucher de pago
-                                  </p>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                      const file = e.target.files[0];
-                                      if (file) {
-                                        setVoucherFile(file);
-                                        const reader = new FileReader();
-                                        reader.onload = (e) => setVoucherImage(e.target.result);
-                                        reader.readAsDataURL(file);
-                                      }
-                                    }}
-                                    className="hidden"
-                                    id="voucher-upload"
-                                  />
-                                  <label
-                                    htmlFor="voucher-upload"
-                                    className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors w-50"
-                                  >
-                                    Seleccionar archivo
-                                  </label>
-                                </>
-                              )}
-                            </div>
+                      <FormField
+                        label="Voucher de Pago"
+                        error={errors.voucherFile?.message}
+                        required
+                      >
+                        <div className="relative w-full">
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors hover:cursor-pointer h-84 flex flex-col items-center justify-center">
+                            {voucherImage ? (
+                              <div className="relative">
+                                <img
+                                  src={voucherImage}
+                                  alt="Voucher"
+                                  className="max-h-32 mx-auto rounded-lg object-contain"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setVoucherImage(null);
+                                    setVoucherFile(null);
+                                  }}
+                                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            ) : (
+                              <>
+                                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                                <p className="text-sm text-gray-600 mb-2">
+                                  Subir voucher de pago *
+                                </p>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files[0];
+                                    if (file) {
+                                      setVoucherFile(file);
+                                      const reader = new FileReader();
+                                      reader.onload = (e) => setVoucherImage(e.target.result);
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                  className="hidden"
+                                  id="voucher-upload"
+                                />
+                                <label
+                                  htmlFor="voucher-upload"
+                                  className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors w-50"
+                                >
+                                  Seleccionar archivo
+                                </label>
+                              </>
+                            )}
                           </div>
-                        </FormField>
-                      </div>
+                        </div>
+                      </FormField>
                     </div>
 
                     {/* CUADRANTE SUPERIOR DERECHO: INFORMACIÓN DEL ESTUDIANTE */}

@@ -5,7 +5,7 @@ import {
 } from 'lucide-react';
 import { useTrabajadores } from '../../../hooks/useTrabajadores';
 import TablaTrabajadores from './tablas/TablaTrabajadores';
-import ModalAgregarTrabajador from './modales/ModalAgregarTrabajador';
+import ModalAgregarTrabajador from './modales/ModalAgregarTrabajadorCompleto';
 import ModalVerTrabajador from './modales/ModalVerTrabajador';
 import ModalEditarTrabajador from './modales/ModalEditarTrabajador';
 import ModalEliminarTrabajador from './modales/ModalEliminarTrabajador';

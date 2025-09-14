@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserPlus, Users, GraduationCap, TrendingUp, Calendar } from 'lucide-react';
 import TablaMatricula from './tablas/TablaMatricula';
 import ModalAgregarMatricula from './modales/ModalAgregarMatricula';
@@ -7,6 +7,7 @@ import ModalEditarMatricula from './modales/ModalEditarMatricula';
 import ModalEliminarMatricula from './modales/ModalEliminarMatricula';
 import ModalErrorBoundary from '../../../components/common/ModalErrorBoundary';
 import { useMatricula } from '../../../hooks/useMatricula';
+import { storage } from '../../../utils';
 
 const Matricula = () => {
   // Usar hook con TanStack Query
