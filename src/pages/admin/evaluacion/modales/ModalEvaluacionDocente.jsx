@@ -75,6 +75,8 @@ const ModalEvaluacionDocente = ({
 
     if (!formData.descripcion.trim()) {
       newErrors.descripcion = 'La descripción es obligatoria';
+    } else if (formData.descripcion.trim().length < 10) {
+      newErrors.descripcion = 'La descripción debe tener mínimo 10 caracteres';
     }
 
     if (!formData.idTrabajador) {
@@ -306,7 +308,7 @@ const ModalEvaluacionDocente = ({
                       <textarea
                         value={formData.descripcion}
                         onChange={(e) => handleChange('descripcion', e.target.value)}
-                        placeholder="Describa detalladamente la evaluación del docente..."
+                        placeholder="Describa detalladamente la evaluación del docente (mínimo 10 caracteres)..."
                         rows={4}
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none ${
                           errors.descripcion ? 'border-red-500' : 'border-gray-300'
@@ -314,6 +316,14 @@ const ModalEvaluacionDocente = ({
                         disabled={saving}
                       />
                       <MessageSquare className="absolute right-3 top-2.5 w-4 h-4 text-gray-400" />
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <p className="text-xs text-gray-500">
+                        Mínimo 10 caracteres
+                      </p>
+                      <p className={`text-xs ${formData.descripcion.length < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                        {formData.descripcion.length}/10 caracteres
+                      </p>
                     </div>
                     {errors.descripcion && (
                       <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
