@@ -38,6 +38,7 @@ import MisAulas from "../teacher/misaulas/MisAulas";
 import Clases from "../teacher/clases/Clases";
 import TeacherPlanificaciones from '../teacher/planificaciones/TeacherPlanificaciones';
 import { Tareas } from '../teacher/tareas';
+import Evaluaciones from '../teacher/evaluaciones/Evaluaciones';
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -54,7 +55,8 @@ const TeacherDashboard = () => {
     { id: "games", label: "Juegos", icon: Gamepad2 },
     { id: "students", label: "Mis Alumnos", icon: Users },
     { id: "classrooms", label: "Mis Aulas", icon: School },
-    { id: "planificaciones", label: "Planificaciones", icon: FileText }
+    { id: "planificaciones", label: "Planificaciones", icon: FileText },
+    { id: "evaluaciones", label: "Mis Evaluaciones", icon: FileText }
   ];
 
   const stats = [
@@ -441,6 +443,7 @@ const TeacherDashboard = () => {
           {activeSection === "students" && <MisEstudiantes />}
           {activeSection === "classrooms" && <MisAulas />}
           {activeSection === "planificaciones" && <TeacherPlanificaciones />}
+          {activeSection === "evaluaciones" && <Evaluaciones />}
         </div>
       </main>
     </div>

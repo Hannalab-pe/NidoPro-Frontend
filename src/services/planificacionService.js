@@ -66,4 +66,30 @@ export const planificacionService = {
     });
     return response.data;
   },
+
+  async crearPlanificacion(planificacionData) {
+    const token = localStorage.getItem('token');
+    console.log('📤 Enviando datos de planificación:', planificacionData);
+    
+    try {
+      const response = await planificacionApi.post('/planificacion', planificacionData, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+          'Content-Type': 'application/json',
+          'accept': '*/*'
+        }
+      });
+      console.log('✅ Planificación creada exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al crear planificación:', error);
+      console.error('❌ Detalles del error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        url: error.config?.url
+      });
+      throw error;
+    }
+  },
 };

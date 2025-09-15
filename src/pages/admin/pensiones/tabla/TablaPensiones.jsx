@@ -26,10 +26,10 @@ const TablaPensiones = ({
       onDelete={onDelete}
       onView={onView}
       actions={{
-        add: true,
-        edit: true,
-        delete: true,
-        view: true,
+        add: false,
+        edit: false,
+        delete: false,
+        view: false,
         import: false,
         export: true
       }}

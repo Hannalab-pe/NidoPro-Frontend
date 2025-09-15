@@ -3,7 +3,7 @@ import {
   Users,
   UserPlus
 } from 'lucide-react';
-import { useTrabajadores } from '../../../hooks/useTrabajadores';
+import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
 import TablaTrabajadores from './tablas/TablaTrabajadores';
 import ModalAgregarTrabajador from './modales/ModalAgregarTrabajadorCompleto';
 import ModalVerTrabajador from './modales/ModalVerTrabajador';
@@ -13,12 +13,22 @@ import ModalEliminarTrabajador from './modales/ModalEliminarTrabajador';
 const Trabajadores = () => {
   // Hook personalizado para gestión de trabajadores
   const { 
-    trabajadores, 
-    loading,
-    refreshTrabajadores,
-    statistics,
-    error // <-- Agregué 'error' para la depuración
+    data: trabajadoresData,
+    isLoading: loading,
+    error,
+    refetch: refreshTrabajadores
   } = useTrabajadores();
+
+  // Extraer el array de trabajadores
+  const trabajadores = Array.isArray(trabajadoresData) ? trabajadoresData :
+                       trabajadoresData?.trabajadores ? trabajadoresData.trabajadores :
+                       trabajadoresData?.data ? trabajadoresData.data : [];
+
+  // Calcular estadísticas localmente
+  const statistics = {
+    total: trabajadores.length,
+    active: trabajadores.filter(t => t.estaActivo).length
+  };
 
   // Estados locales solo para UI
   const [showModal, setShowModal] = useState(false);
@@ -30,7 +40,8 @@ const Trabajadores = () => {
   // --- Console.log para depuración ---
   console.log('--- Renderizando Componente Trabajadores ---');
   console.log('Estado de carga (loading):', loading);
-  console.log('Datos recibidos (trabajadores):', trabajadores);
+  console.log('Datos recibidos (trabajadoresData):', trabajadoresData);
+  console.log('Trabajadores procesados:', trabajadores);
   console.log('Estadísticas calculadas:', statistics);
   if (error) {
     console.error('Error del hook useTrabajadores:', error);
@@ -39,9 +50,10 @@ const Trabajadores = () => {
   // Puedes usar useEffect para ver los cambios en los datos y el estado
   useEffect(() => {
     console.log('El hook useTrabajadores ha actualizado sus datos.');
-    console.log('Datos actuales:', trabajadores);
+    console.log('Datos actuales:', trabajadoresData);
+    console.log('Trabajadores procesados:', trabajadores);
     console.log('Estadísticas actuales:', statistics);
-  }, [trabajadores, statistics]);
+  }, [trabajadoresData, trabajadores, statistics]);
 
   // Funciones para manejar las acciones de la tabla
   const handleAdd = () => {

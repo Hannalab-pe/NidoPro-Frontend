@@ -327,18 +327,6 @@ export const pensionesColumns = [
         S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
       </span>
     )
-  },
-  {
-    Header: 'Descripción',
-    accessor: 'descripcion',
-    sortable: true,
-    Cell: ({ value }) => (
-      <div className="max-w-xs truncate">
-        {value || (
-          <span className="text-gray-400 italic">Sin descripción</span>
-        )}
-      </div>
-    )
   }
 ];
 

@@ -3,7 +3,7 @@ import { Filter, X } from "lucide-react";
 import ModalAgregarPlanificacion from "./modales/ModalAgregarPlanificacion";
 import { usePlanificaciones } from '../../../hooks/usePlanificaciones';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { useTrabajadores } from '../../../hooks/useTrabajadores';
+import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
 
 const Planificaciones = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);

@@ -22,7 +22,8 @@ import {
   ChevronRight,
   Menu,
   X,
-  ClipboardList
+  ClipboardList,
+  Award
 } from "lucide-react";
 
 // Importar todos los componentes de administración
@@ -47,6 +48,7 @@ import Cursos from '../admin/cursos/Cursos';
 import Contratos from '../admin/contratos/Contratos';
 import Planilla from '../admin/planilla/Planilla';
 import Cronogramas from '../admin/cronogramas/Cronogramas';
+import EvaluacionDocente from '../admin/evaluacion/EvaluacionDocente';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -78,7 +80,6 @@ const AdminDashboard = () => {
     { id: "students", label: "Estudiantes", icon: CircleUser, category: "personas" },
     { id: "parents", label: "Padres de Familia", icon: UserCheck, category: "personas" },
     { id: "trabajadores", label: "Trabajadores", icon: UsersIcon, category: "personas" },
-    { id: "users", label: "Gestión de Usuarios", icon: UsersIcon, category: "personas" },
     
     // 📚 ACADÉMICO
     { id: "matricula", label: "Matrícula", icon: GraduationCap, category: "academico" },
@@ -86,6 +87,7 @@ const AdminDashboard = () => {
     { id: "grados", label: "Grados Académicos", icon: School, category: "academico" },
     { id: "planificaciones", label: "Planificaciones", icon: FileText, category: "academico" },
     { id: "cronogramas", label: "Cronogramas", icon: Calendar, category: "academico" },
+    { id: "evaluacion-docente", label: "Evaluación Docente", icon: Award, category: "academico" },
     
     // 🏫 INFRAESTRUCTURA
     { id: "aulas", label: "Gestión de Aulas", icon: School, category: "infraestructura" },
@@ -391,6 +393,7 @@ const AdminDashboard = () => {
           {activeSection === "planificaciones" && <Planificaciones />}
           {activeSection === "grados" && <Grados />}
           {activeSection === "cronogramas" && <Cronogramas />}
+          {activeSection === "evaluacion-docente" && <EvaluacionDocente />}
         </div>
       </main>
     </div>

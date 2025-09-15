@@ -18,7 +18,7 @@ import {
   MapPin,
   CheckCircle
 } from 'lucide-react';
-import { useTrabajadores } from '../../../../hooks/useTrabajadores';
+import { useCreateTrabajador } from 'src/hooks/queries/useTrabajadoresQueries';
 import { useRoles } from '../../../../hooks/useRoles';
 import { useAulasAsignacion } from '../../../../hooks/useAulasAsignacion';
 import { useTiposContrato } from '../../../../hooks/useTiposContrato';
@@ -98,7 +98,7 @@ const FormSection = ({ title, icon: Icon, iconColor, children, description }) =>
 
 const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   // Hook personalizado para gestión de trabajadores
-  const { createTrabajador, creating, uploading } = useTrabajadores();
+  const { mutateAsync: createTrabajador, isPending: creating } = useCreateTrabajador();
 
   // Hook para obtener los roles disponibles
   const { roles, isLoading: loadingRoles } = useRoles();
@@ -248,7 +248,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
     }`;
 
   // Estado de carga general
-  const isLoading = creating || uploading || loadingRoles || asignandoAula || loadingTiposContrato;
+  const isLoading = creating || loadingRoles || asignandoAula || loadingTiposContrato;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -716,7 +716,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        {uploading ? 'Subiendo archivos...' : asignandoAula ? 'Asignando aula...' : 'Guardando...'}
+                        {asignandoAula ? 'Asignando aula...' : 'Guardando...'}
                       </>
                     ) : (
                       <>

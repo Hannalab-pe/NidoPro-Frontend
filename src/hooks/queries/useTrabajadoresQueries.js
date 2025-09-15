@@ -28,6 +28,33 @@ export const useTrabajadores = (filters = {}, options = {}) => {
 };
 
 /**
+ * Hook específico para obtener solo los docentes (trabajadores con rol DOCENTE)
+ * @param {Object} filters - Filtros opcionales adicionales para la consulta
+ * @param {Object} options - Opciones adicionales para useQuery
+ */
+export const useDocentes = (filters = {}, options = {}) => {
+  return useQuery({
+    queryKey: [...trabajadoresKeys.list(filters), 'docentes'],
+    queryFn: async () => {
+      const response = await trabajadorService.getAllTrabajadores(filters);
+
+      // Filtrar solo los trabajadores con rol DOCENTE
+      if (response && Array.isArray(response)) {
+        return response.filter(trabajador =>
+          trabajador.idRol?.nombre === 'DOCENTE' ||
+          trabajador.rol?.nombre === 'DOCENTE'
+        );
+      }
+
+      return [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
+    ...options,
+  });
+};
+
+/**
  * Hook para obtener un trabajador específico por ID
  * @param {string|number} id - ID del trabajador
  * @param {Object} options - Opciones adicionales para useQuery
@@ -210,23 +237,160 @@ export const useToggleTrabajadorStatus = () => {
 };
 
 /**
- * Hook para invalidar manualmente el cache de trabajadores
+ * Hook para obtener todos los comentarios docentes
+ * @param {Object} options - Opciones adicionales para useQuery
  */
-export const useInvalidateTrabajadores = () => {
+export const useComentariosDocentes = (options = {}) => {
+  return useQuery({
+    queryKey: ['comentarios-docentes'],
+    queryFn: async () => {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        throw new Error('No se encontró token de autenticación');
+      }
+
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+
+      const response = await fetch(`${API_BASE_URL}/comentario-docente`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Token de autenticación inválido o expirado');
+        }
+        throw new Error('Error al cargar comentarios docentes');
+      }
+
+      const data = await response.json();
+
+      // El API devuelve un array directamente, no dentro de una propiedad
+      const comentarios = Array.isArray(data) ? data : data?.comentarios || data?.data || [];
+
+      // Transformar los datos para que coincidan con lo que espera el frontend
+      return comentarios.map(comentario => ({
+        idComentario: comentario.idEvaluacionDocente,
+        motivo: comentario.motivo,
+        descripcion: comentario.descripcion,
+        archivoUrl: comentario.archivoUrl,
+        fechaCreacion: comentario.fechaCreacion,
+        idTrabajador: comentario.trabajador || {
+          idTrabajador: comentario.idTrabajador,
+          nombre: comentario.trabajador?.nombre || 'N/A',
+          apellido: comentario.trabajador?.apellido || ''
+        },
+        idCoordinador: comentario.coordinador || {
+          idCoordinador: comentario.idCoordinador,
+          nombre: comentario.coordinador?.nombre || 'N/A',
+          apellido: comentario.coordinador?.apellido || ''
+        }
+      }));
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    gcTime: 10 * 60 * 1000, // 10 minutos
+    ...options,
+  });
+};
+
+/**
+ * Hook para crear un comentario docente
+ */
+export const useCreateComentarioDocente = () => {
   const queryClient = useQueryClient();
-  
-  return {
-    invalidateAll: () => {
-      queryClient.invalidateQueries({ queryKey: trabajadoresKeys.all });
-      console.log('🗑️ Cache completo de trabajadores invalidado');
+
+  return useMutation({
+    mutationFn: async (comentarioData) => {
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+
+      const response = await fetch(`${API_BASE_URL}/comentario-docente`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(comentarioData)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al crear comentario docente');
+      }
+
+      return response.json();
     },
-    invalidateLists: () => {
-      queryClient.invalidateQueries({ queryKey: trabajadoresKeys.lists() });
-      console.log('🗑️ Cache de listas de trabajadores invalidado');
+    onSuccess: () => {
+      // Invalidar y refetch todos los comentarios docentes
+      queryClient.invalidateQueries({ queryKey: ['comentarios-docentes'] });
     },
-    invalidateDetail: (id) => {
-      queryClient.invalidateQueries({ queryKey: trabajadoresKeys.detail(id) });
-      console.log(`🗑️ Cache de trabajador ${id} invalidado`);
+  });
+};
+
+/**
+ * Hook para actualizar un comentario docente
+ */
+export const useUpdateComentarioDocente = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+
+      // Usar idEvaluacionDocente para el endpoint del backend
+      const response = await fetch(`${API_BASE_URL}/comentario-docente/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al actualizar comentario docente');
+      }
+
+      return response.json();
     },
-  };
+    onSuccess: () => {
+      // Invalidar y refetch todos los comentarios docentes
+      queryClient.invalidateQueries({ queryKey: ['comentarios-docentes'] });
+    },
+  });
+};
+
+/**
+ * Hook para eliminar un comentario docente
+ */
+export const useDeleteComentarioDocente = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+
+      // Usar idEvaluacionDocente para el endpoint del backend
+      const response = await fetch(`${API_BASE_URL}/comentario-docente/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al eliminar comentario docente');
+      }
+    },
+    onSuccess: () => {
+      // Invalidar y refetch todos los comentarios docentes
+      queryClient.invalidateQueries({ queryKey: ['comentarios-docentes'] });
+    },
+  });
 };

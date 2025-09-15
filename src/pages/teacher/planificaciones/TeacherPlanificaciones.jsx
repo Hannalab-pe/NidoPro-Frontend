@@ -2,7 +2,8 @@ import React, { useState, useMemo, useEffect } from "react";
 import ModalAgregarPlanificacion from "../../admin/planificaciones/modales/ModalAgregarPlanificacion";
 import { usePlanificacionesTrabajador } from '../../../hooks/usePlanificacionesTrabajador';
 import { useAuthStore } from '../../../store/useAuthStore';
-import { useTrabajadores } from '../../../hooks/useTrabajadores';
+import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
+import { formatFechaEvaluacion } from '../../../utils/dateUtils';
 
 const TeacherPlanificaciones = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -58,13 +59,13 @@ const TeacherPlanificaciones = () => {
                 </div>
                 <div className="flex-1">
                   <div className="font-bold text-xl text-blue-800">{plan.tipoPlanificacion}</div>
-                  <div className="text-sm text-gray-500">{new Date(plan.fechaCreacion).toLocaleDateString()}</div>
+                  <div className="text-sm text-gray-500">{formatFechaEvaluacion(plan.fechaCreacion)}</div>
                 </div>
               </div>
 
               <div className="mb-4 text-gray-700">
                 <div className="font-medium text-gray-800 mb-1">Fecha de planificación:</div>
-                <div className="text-sm">{new Date(plan.fechaPlanificacion).toLocaleDateString()}</div>
+                <div className="text-sm">{formatFechaEvaluacion(plan.fechaPlanificacion)}</div>
               </div>
 
               <div className="mb-4">

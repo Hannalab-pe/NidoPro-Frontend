@@ -11,7 +11,7 @@ import {
 import { useAuthStore } from '../../../../store/useAuthStore'
 import { useAnotaciones } from '../../../../hooks/useAnotaciones'
 import { useCursos } from '../../../../hooks/useCursos'
-import { useTrabajadores as useTrabajadoresQuery } from '../../../../hooks/queries/useTrabajadoresQueries'
+import { useTrabajadores as useTrabajadoresQuery } from 'src/hooks/queries/useTrabajadoresQueries'
 import { useEstudiantesByTrabajadorAulas } from '../../../../hooks/queries/useAulasQueries'
 import { getIdTrabajadorFromToken } from '../../../../utils/tokenUtils'
 

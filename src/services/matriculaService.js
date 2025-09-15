@@ -708,30 +708,20 @@ export const matriculaService = {
   },
 
   /**
-   * Actualizar voucher de matrícula
-   * @param {string|number} id - ID de la matrícula
-   * @param {string} voucherImg - URL del voucher
-   * @returns {Promise<Object>} Matrícula actualizada
+   * Obtener estadísticas de matrícula
+   * @returns {Promise<Object>} Estadísticas de matrícula
    */
-  async updateMatriculaVoucher(id, voucherImg) {
+  async getMatriculaStats() {
     try {
-      console.log('� Actualizando voucher de matrícula:', id, voucherImg);
-      
-      const payload = {
-        voucherImg: voucherImg,
-        fechaActualizacion: new Date().toISOString()
-      };
-
-      console.log('📋 Payload para actualizar voucher:', payload);
-
-      const response = await api.patch(`/matricula/${id}`, payload);
-      console.log('✅ Voucher de matrícula actualizado exitosamente:', response.data);
+      console.log('📊 Obteniendo estadísticas de matrícula...');
+      const response = await api.get('/matricula/stats');
+      console.log('✅ Estadísticas obtenidas');
       return response.data;
     } catch (error) {
-      console.error('❌ Error al actualizar voucher de matrícula:', error);
-      throw new Error(error.response?.data?.message || 'Error al actualizar voucher de matrícula');
+      console.error('❌ Error al obtener estadísticas:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener estadísticas');
     }
-  },
+  }
 };
 
 export default matriculaService;

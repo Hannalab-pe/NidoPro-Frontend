@@ -12,7 +12,7 @@ import {
   Clock,
   Award
 } from 'lucide-react';
-import { useTrabajadores } from '../../../../hooks/useTrabajadores';
+import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
 
 const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => {
   // Hook personalizado para gestión de trabajadores

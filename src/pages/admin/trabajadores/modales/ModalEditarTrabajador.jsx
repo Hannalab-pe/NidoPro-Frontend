@@ -20,7 +20,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
-import { useTrabajadores } from '../../../../hooks/useTrabajadores';
+import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
 import { useRoles } from '../../../../hooks/useRoles';
 
 // Esquema de validación con Yup (solo campos reales del backend)

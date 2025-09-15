@@ -12,7 +12,7 @@ import {
   Briefcase,
   School
 } from 'lucide-react';
-import { useTrabajadores } from '../../../../hooks/useTrabajadores';
+import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
 import { useRoles } from '../../../../hooks/useRoles';
 import { useAulasAsignacion } from '../../../../hooks/useAulasAsignacion';
 
