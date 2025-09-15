@@ -38,57 +38,6 @@ const aulasColumns = [
         <span className="text-sm text-gray-900">{row.cantidadEstudiantes || 0}</span>
       </div>
     )
-  },
-  {
-    accessor: 'ubicacion',
-    Header: 'Ubicación',
-    sortable: true,
-    Cell: ({ row }) => (
-      <span className="text-sm text-gray-900">{row.ubicacion || 'No especificada'}</span>
-    )
-  },
-  {
-    accessor: 'estado',
-    Header: 'Estado',
-    sortable: true,
-    Cell: ({ row }) => (
-      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-        row.estado === 'activa'
-          ? 'bg-green-100 text-green-800'
-          : 'bg-red-100 text-red-800'
-      }`}>
-        {row.estado === 'activa' ? 'Activa' : 'Inactiva'}
-      </span>
-    )
-  },
-  {
-    accessor: 'acciones',
-    Header: 'Acciones',
-    Cell: ({ row }) => (
-      <div className="flex items-center space-x-2">
-        <button
-          onClick={() => onView(row)}
-          className="text-blue-600 hover:text-blue-900 p-1"
-          title="Ver detalles"
-        >
-          <Eye className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onEdit(row)}
-          className="text-yellow-600 hover:text-yellow-900 p-1"
-          title="Editar"
-        >
-          <Edit className="w-4 h-4" />
-        </button>
-        <button
-          onClick={() => onDelete(row)}
-          className="text-red-600 hover:text-red-900 p-1"
-          title="Eliminar"
-        >
-          <Trash2 className="w-4 h-4" />
-        </button>
-      </div>
-    )
   }
 ];
 
@@ -158,18 +107,14 @@ const TablaAulas = ({
         icon={School}
         searchPlaceholder="Buscar por sección, ubicación..."
         onAdd={handleAddAula}
-        onEdit={handleEditAula}
-        onDelete={handleDeleteAula}
-        onView={handleViewAula}
-        onRefresh={handleRefresh}
         actions={{
           add: true,
-          edit: true,
-          delete: true,
-          view: true,
+          edit: false,
+          delete: false,
+          view: false,
           import: false,
-          export: true,
-          refresh: true
+          export: false,
+          refresh: false
         }}
         filters={aulasFilters}
         addButtonText="Nueva Aula"

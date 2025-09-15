@@ -10,15 +10,29 @@ export class FirebaseStorageService {
    * Sube un archivo a Firebase Storage
    * @param {File} file - El archivo a subir
    * @param {string} folder - La carpeta donde se guardará el archivo (ej: 'tareas', 'materiales')
-   * @param {string} userId - ID del usuario para organizar los archivos
+   * @param {string} userId - ID del usuario para organizar los archivos (opcional)
    * @returns {Promise<string>} - URL del archivo subido
    */
   static async uploadFile(file, folder = 'uploads', userId = 'anonymous') {
     try {
+      // Si userId es null, undefined o vacío, usar 'anonymous'
+      const safeUserId = userId && userId.trim() ? userId : 'anonymous';
+      
       // Crear un nombre único para el archivo
       const timestamp = Date.now();
-      const fileName = `${timestamp}_${file.name}`;
-      const filePath = `${folder}/${userId}/${fileName}`;
+      const randomId = Math.random().toString(36).substring(2, 15);
+      const fileName = `${timestamp}_${randomId}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+      const filePath = `${folder}/${safeUserId}/${fileName}`;
+
+      console.log('📤 Iniciando subida a Firebase:', {
+        originalName: file.name,
+        fileName: fileName,
+        filePath: filePath,
+        folder: folder,
+        userId: safeUserId,
+        size: file.size,
+        type: file.type
+      });
 
       // Crear referencia al archivo en Storage
       const storageRef = ref(storage, filePath);

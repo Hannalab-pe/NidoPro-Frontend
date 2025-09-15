@@ -1,5 +1,6 @@
 // src/services/api/trabajadorService.js
 import axios from 'axios';
+import { FirebaseStorageService } from './firebaseStorageService';
 
 // Base URL del API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
@@ -115,24 +116,83 @@ export const trabajadorService = {
   },
 
   /**
-   * Crear un nuevo trabajador
+   * Crear un nuevo trabajador con subida de archivos a Firebase
    * @param {Object} trabajadorData - Datos del trabajador
    * @returns {Promise<Object>} Trabajador creado
    */
   async createTrabajador(trabajadorData) {
     try {
       console.log('📤 Enviando datos del trabajador al backend:', trabajadorData);
-      
+
       // Validar datos requeridos según el backend
       const requiredFields = ['nombre', 'apellido', 'tipoDocumento', 'nroDocumento', 'direccion', 'correo', 'telefono', 'idRol'];
       const missingFields = requiredFields.filter(field => !trabajadorData[field]);
-      
+
       if (missingFields.length > 0) {
         throw new Error(`Campos requeridos faltantes: ${missingFields.join(', ')}`);
       }
 
-      // Preparar datos exactamente como espera el backend
+      // Extraer archivos del formulario si existen
+      const archivos = trabajadorData.archivos;
+      let archivoContratoUrl = null;
+      let archivoFirmadoUrl = null;
+
+      // Si hay archivos, subirlos a Firebase Storage
+      if (archivos && archivos.length > 0) {
+        console.log('📤 Iniciando subida de archivos a Firebase...');
+
+        // Filtrar archivos por tipo (contrato y firmado)
+        const archivoContrato = Array.from(archivos).find(file =>
+          file.name.toLowerCase().includes('contrato') ||
+          file.name.toLowerCase().includes('contract')
+        );
+
+        const archivoFirmado = Array.from(archivos).find(file =>
+          file.name.toLowerCase().includes('firmado') ||
+          file.name.toLowerCase().includes('signed') ||
+          file.name.toLowerCase().includes('firma')
+        );
+
+        // Subir archivo de contrato si existe
+        if (archivoContrato) {
+          console.log('📄 Subiendo archivo de contrato...');
+          const contratoResult = await FirebaseStorageService.uploadFile(
+            archivoContrato,
+            'trabajadores/contratos',
+            trabajadorData.correo || 'anonymous'
+          );
+          archivoContratoUrl = contratoResult.url;
+          console.log('✅ Archivo de contrato subido:', contratoResult.url);
+        }
+
+        // Subir archivo firmado si existe
+        if (archivoFirmado) {
+          console.log('📝 Subiendo archivo firmado...');
+          const firmadoResult = await FirebaseStorageService.uploadFile(
+            archivoFirmado,
+            'trabajadores/firmados',
+            trabajadorData.correo || 'anonymous'
+          );
+          archivoFirmadoUrl = firmadoResult.url;
+          console.log('✅ Archivo firmado subido:', firmadoResult.url);
+        }
+
+        // Si no se encontraron archivos específicos, subir el primer archivo como contrato
+        if (!archivoContrato && !archivoFirmado && archivos.length > 0) {
+          console.log('📄 Subiendo primer archivo como contrato...');
+          const contratoResult = await FirebaseStorageService.uploadFile(
+            archivos[0],
+            'trabajadores/contratos',
+            trabajadorData.correo || 'anonymous'
+          );
+          archivoContratoUrl = contratoResult.url;
+          console.log('✅ Archivo subido como contrato:', contratoResult.url);
+        }
+      }
+
+      // Preparar datos exactamente como espera el backend para el endpoint transactional
       const payload = {
+        idTrabajador: null,
         nombre: trabajadorData.nombre.trim(),
         apellido: trabajadorData.apellido.trim(),
         tipoDocumento: trabajadorData.tipoDocumento || 'DNI',
@@ -141,20 +201,64 @@ export const trabajadorService = {
         correo: trabajadorData.correo.trim(),
         telefono: trabajadorData.telefono.trim(),
         estaActivo: trabajadorData.estaActivo !== undefined ? trabajadorData.estaActivo : true,
-        idRol: trabajadorData.idRol // Usar el rol seleccionado en el formulario
+        imagenUrl: null,
+        idRol: trabajadorData.idRol, // Usar el rol seleccionado en el formulario
+
+        // Objeto contrato anidado con URLs de archivos
+        contrato: trabajadorData.idTipoContrato ? {
+          idTipoContrato: trabajadorData.idTipoContrato,
+          numeroContrato: trabajadorData.numeroContrato,
+          fechaInicio: trabajadorData.fechaInicio,
+          fechaFin: trabajadorData.fechaFin,
+          jornadaLaboral: ["COMPLETA", "PARCIAL", "FLEXIBLE"].includes(trabajadorData.jornadaLaboral?.toUpperCase())
+            ? trabajadorData.jornadaLaboral.toUpperCase()
+            : "COMPLETA",
+          horasSemanales: parseInt(trabajadorData.horasSemanales) || 40,
+          cargoContrato: trabajadorData.cargoContrato || trabajadorData.descripcionFunciones || "Trabajador",
+          descripcionFunciones: trabajadorData.descripcionFunciones || "",
+          lugarTrabajo: trabajadorData.lugarTrabajo || "",
+          estadoContrato: "ACTIVO",
+          fechaFinalizacionReal: trabajadorData.fechaFin,
+          archivoContratoUrl: archivoContratoUrl,
+          archivoFirmadoUrl: archivoFirmadoUrl,
+          renovacionAutomatica: trabajadorData.renovacion || false,
+          diasAvisoRenovacion: parseInt(trabajadorData.diasAviso) || 30,
+          fechaAprobacion: trabajadorData.fechaAprobacion,
+          creadoEn: new Date().toISOString().split('T')[0]
+        } : null,
+
+        // Objeto sueldoBase anidado
+        sueldoBase: trabajadorData.sueldoBase ? {
+          sueldoBase: parseFloat(trabajadorData.sueldoBase).toFixed(2),
+          bonificacionFamiliar: trabajadorData.bonificacion ? parseFloat(trabajadorData.bonificacion).toFixed(2) : "0.00",
+          asignacionFamiliar: trabajadorData.asignacion ? parseFloat(trabajadorData.asignacion).toFixed(2) : "0.00",
+          fechaAsignacion: trabajadorData.fechaAsignacion,
+          fechaVigenciaDesde: trabajadorData.fechaVigenciaDesde,
+          fechaVigenciaHasta: trabajadorData.fechaHasta,
+          observaciones: trabajadorData.observacionesSueldo || "Sueldo inicial de contratación",
+          estaActivo: trabajadorData.estaActivoSueldo !== undefined ? trabajadorData.estaActivoSueldo : true,
+          creadoPor: "459b0eb9-1a9f-474d-91b1-3c3a037673cd",
+          actualizadoPor: null
+        } : null
       };
 
-      const response = await api.post('/trabajador', payload);
+      const response = await api.post('/trabajador/transactional', payload);
       console.log('✅ Trabajador creado exitosamente:', response.data);
-      
+
       // Extraer el trabajador de la respuesta del backend
       if (response.data.trabajador) {
         return response.data.trabajador;
       }
-      
+
       return response.data;
     } catch (error) {
       console.error('❌ Error al crear trabajador:', error);
+
+      // Si hay error y ya se subieron archivos, intentar limpiarlos
+      if (error.response?.data) {
+        console.error('Detalles del error del backend:', error.response.data);
+      }
+
       throw new Error(error.response?.data?.message || 'Error al crear trabajador');
     }
   },

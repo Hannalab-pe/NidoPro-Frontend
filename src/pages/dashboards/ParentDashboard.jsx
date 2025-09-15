@@ -47,10 +47,10 @@ const ParentDashboard = () => {
   // Datos del hijo/estudiante
   const studentData = {
     name: `${user?.nombre || ''} ${user?.apellido || ''}`,
-    grade: "5to Grado A",
+    grade: "Los Pequeños Exploradores",
     photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1755701581/estudiantes/zoslqzw97fnfnuxfhcmj.gif",
-    age: 10,
-    teacher: "Prof. Carmen López"
+    age: 0,
+    teacher: ""
   };
 
   const quickStats = [
@@ -152,7 +152,7 @@ const ParentDashboard = () => {
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900">{studentData.name}</h3>
           <p className="text-blue-600 font-medium">{studentData.grade}</p>
-          <p className="text-gray-600">{studentData.age} años • {studentData.teacher}</p>
+          <p className="text-gray-600"></p>
         </div>
         <div className="text-right">
           <div className="text-3xl mb-1">🌟</div>

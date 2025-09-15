@@ -28,7 +28,7 @@ export const useMatricula = () => {
   } = useMatriculas(filters);
   
   
-  const { data: stats = {} } = {}; // useMatriculaStats(); // Comentado - endpoint no existe
+  const stats = {}; // useMatriculaStats(); // Comentado - endpoint no existe
   
   // Mutations
   const createMatriculaMutation = useCreateMatricula();

@@ -29,7 +29,15 @@ const Matricula = () => {
   // Handlers para modales
   const handleAdd = () => setShowAddModal(true);
   
+  // Debug: Verificar datos de matrículas
+  useEffect(() => {
+    console.log('📊 Matriculas en Matricula.jsx:', matriculas);
+    console.log('📊 Loading:', loading);
+    console.log('📊 Stats:', stats);
+  }, [matriculas, loading, stats]);
+
   const handleView = (matricula) => {
+    console.log('👁️ Intentando ver matrícula:', matricula);
     setSelectedMatricula(matricula);
     setShowViewModal(true);
   };

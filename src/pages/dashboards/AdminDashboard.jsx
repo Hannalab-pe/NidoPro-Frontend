@@ -46,6 +46,7 @@ import Pensiones from '../admin/pensiones/pensiones';
 import Cursos from '../admin/cursos/Cursos';
 import Contratos from '../admin/contratos/Contratos';
 import Planilla from '../admin/planilla/Planilla';
+import Cronogramas from '../admin/cronogramas/Cronogramas';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -66,21 +67,33 @@ const AdminDashboard = () => {
   }, []);
 
   const menuItems = [
-    { id: "overview", label: "Resumen General", icon: BarChart3},
-    { id: "finances", label: "Finanzas", icon: DollarSign },
-    { id: "matricula", label: "Matrícula", icon: GraduationCap },
-    { id: "trabajadores", label: "Trabajadores", icon: UsersIcon },
-    { id: "contratos", label: "Contratos", icon: FileText },
-    { id: "planilla", label: "Planilla", icon: ClipboardList },
-    { id: "students", label: "Estudiantes", icon: CircleUser },
-    { id: "parents", label: "Padres de Familia", icon: UserCheck },
-    { id: "asignacion-aula", label: "Asignación de Aulas", icon: BookOpen },
-    { id: "aulas", label: "Gestión de Aulas", icon: School },
-    { id: "cursos", label: "Gestión de Cursos", icon: BookOpen },
-    { id: "pensiones", label: "Pensiones", icon: BanknoteArrowUp },
-    { id: "planificaciones", label: "Planificaciones", icon: FileText },
-    { id: "grados", label: "Grados Académicos", icon: School },
-      { id: "users", label: "Gestión de Usuarios", icon: UsersIcon },
+    // 📊 DASHBOARD
+    { id: "overview", label: "Resumen General", icon: BarChart3, category: "dashboard" },
+    
+    // 💰 FINANZAS
+    { id: "finances", label: "Finanzas", icon: DollarSign, category: "finanzas" },
+    { id: "pensiones", label: "Pensiones", icon: BanknoteArrowUp, category: "finanzas" },
+    
+    // 👥 GESTIÓN DE PERSONAS
+    { id: "students", label: "Estudiantes", icon: CircleUser, category: "personas" },
+    { id: "parents", label: "Padres de Familia", icon: UserCheck, category: "personas" },
+    { id: "trabajadores", label: "Trabajadores", icon: UsersIcon, category: "personas" },
+    { id: "users", label: "Gestión de Usuarios", icon: UsersIcon, category: "personas" },
+    
+    // 📚 ACADÉMICO
+    { id: "matricula", label: "Matrícula", icon: GraduationCap, category: "academico" },
+    { id: "cursos", label: "Gestión de Cursos", icon: BookOpen, category: "academico" },
+    { id: "grados", label: "Grados Académicos", icon: School, category: "academico" },
+    { id: "planificaciones", label: "Planificaciones", icon: FileText, category: "academico" },
+    { id: "cronogramas", label: "Cronogramas", icon: Calendar, category: "academico" },
+    
+    // 🏫 INFRAESTRUCTURA
+    { id: "aulas", label: "Gestión de Aulas", icon: School, category: "infraestructura" },
+    { id: "asignacion-aula", label: "Asignación de Aulas", icon: BookOpen, category: "infraestructura" },
+    
+    // 📄 ADMINISTRATIVO
+    { id: "contratos", label: "Contratos", icon: FileText, category: "administrativo" },
+    { id: "planilla", label: "Planilla", icon: ClipboardList, category: "administrativo" },
   ];
 
   const stats = [
@@ -143,6 +156,19 @@ const AdminDashboard = () => {
     }
   };
 
+  // Función para obtener la etiqueta de categoría
+  const getCategoryLabel = (category) => {
+    const labels = {
+      dashboard: "Dashboard",
+      finanzas: "Finanzas",
+      personas: "Personas",
+      academico: "Académico",
+      infraestructura: "Infraestructura",
+      administrativo: "Administrativo"
+    };
+    return labels[category] || category;
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 border-r">
       {/* Mobile menu overlay */}
@@ -174,25 +200,42 @@ const AdminDashboard = () => {
         {/* Navigation */}
         <nav className="mt-6 px-3 flex-1 overflow-y-auto">
           <div className="space-y-1 pb-4">
-            {menuItems.map((item) => {
+            {menuItems.map((item, index) => {
               const IconComponent = item.icon;
               const isActive = activeSection === item.id;
+              
+              // Determinar si mostrar separador de categoría
+              const prevItem = index > 0 ? menuItems[index - 1] : null;
+              const showCategorySeparator = prevItem && prevItem.category !== item.category;
+              
               return (
-                <button
-                  key={item.id}
-                  className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
-                    isActive 
-                      ? "bg-blue-800 text-white" 
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                  onClick={() => handleMenuItemClick(item.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
-                    <span className="font-medium">{item.label}</span>
-                  </div>
-                  <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
-                </button>
+                <div key={item.id}>
+                  {/* Separador de categoría */}
+                  {showCategorySeparator && (
+                    <div className="my-4 px-4 ">
+                      <div className="h-px bg-gray-400"></div>
+                      <div className="text-sm font-bold text-blue-900 uppercase tracking-wider mt-2 mb-1">
+                        {getCategoryLabel(item.category)}
+                      </div>
+                      <div className="h-px bg-gray-400"></div>
+                    </div>
+                  )}
+                  
+                  <button
+                    className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
+                      isActive 
+                        ? "bg-blue-800 text-white" 
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                    onClick={() => handleMenuItemClick(item.id)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
+                      <span className="font-medium">{item.label}</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -347,6 +390,7 @@ const AdminDashboard = () => {
           {activeSection === "settings" && <Configuraciones />}
           {activeSection === "planificaciones" && <Planificaciones />}
           {activeSection === "grados" && <Grados />}
+          {activeSection === "cronogramas" && <Cronogramas />}
         </div>
       </main>
     </div>

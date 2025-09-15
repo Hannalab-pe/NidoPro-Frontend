@@ -29,15 +29,13 @@ const schema = yup.object({
     .required('El grado es requerido'),
   metodoPago: yup.string()
     .required('El método de pago es requerido'),
+  
+  // Voucher - requerido para métodos de pago que no sean efectivo
   voucherFile: yup.mixed()
-    .required('El voucher de pago es requerido')
-    .test('fileSize', 'El archivo no puede superar los 5MB', (value) => {
-      if (!value) return false;
-      return value.size <= 5 * 1024 * 1024; // 5MB
-    })
-    .test('fileType', 'Solo se permiten archivos de imagen', (value) => {
-      if (!value) return false;
-      return value.type.startsWith('image/');
+    .when('metodoPago', {
+      is: (metodoPago) => metodoPago && metodoPago !== 'Efectivo',
+      then: (schema) => schema.required('El voucher es requerido para este método de pago'),
+      otherwise: (schema) => schema.nullable()
     }),
   
   // Información del Estudiante
@@ -129,7 +127,9 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
     aulasHookData = {
       aulas: [],
       loadingAulas: false,
-      fetchAulasPorGrado: () => Promise.resolve()
+      fetchAulasPorGrado: () => Promise.resolve(),
+      aulasDisponiblesPorGrado: [],
+      loadingAulasPorGrado: false
     };
   }
   
@@ -159,7 +159,8 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
       apoderadoTipoDoc: 'DNI',
       tipoAsignacionAula: 'manual',
       fechaIngreso: new Date().toISOString().split('T')[0],
-      contactosEmergencia: [{ nombre: '', apellido: '', telefono: '', email: '', tipoContacto: '', esPrincipal: true, prioridad: 1 }]
+      contactosEmergencia: [{ nombre: '', apellido: '', telefono: '', email: '', tipoContacto: '', esPrincipal: true, prioridad: 1 }],
+      voucherFile: null
     }
   });
 
@@ -294,28 +295,56 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         setUploadingVoucher(true);
         toast.loading('Subiendo voucher a Firebase...', { id: 'upload' });
 
+        console.log('📤 Iniciando subida de voucher:', {
+          fileName: voucherFile.name,
+          fileSize: voucherFile.size,
+          fileType: voucherFile.type,
+          metodoPago: watch('metodoPago')
+        });
+
         try {
           // Subir archivo a Firebase Storage
           const uploadResult = await FirebaseStorageService.uploadFile(
             voucherFile,
             'vouchers-matricula',
-            'matricula-' + Date.now() // ID único para el voucher
+            'matricula-' + Date.now() // Usar como identificador único en lugar de userId
           );
 
           voucherUrl = uploadResult.url;
+          console.log('✅ Voucher subido exitosamente:', {
+            url: voucherUrl,
+            path: uploadResult.path,
+            originalName: uploadResult.originalName
+          });
+          
           toast.dismiss('upload');
           toast.success('Voucher subido exitosamente');
         } catch (error) {
+          console.error('❌ Error completo al subir voucher:', error);
           toast.dismiss('upload');
-          console.error('Error al subir voucher a Firebase:', error);
-          throw new Error('Error al subir el voucher a Firebase');
+          throw new Error(`Error al subir el voucher: ${error.message}`);
         } finally {
           setUploadingVoucher(false);
         }
+      } else {
+                console.log('ℹ️ No hay voucher para subir (método de pago:', watch('metodoPago'), ')');
       }
 
-      // Procesar y validar contactos de emergencia usando las utilidades
-      console.log('🔍 Contactos originales del formulario:', data.contactosEmergencia);
+      // Validar que el voucher se haya subido si se seleccionó un archivo
+      if (data.voucherFile && !voucherUrl) {
+        toast.error('Error de validación', {
+          description: 'El voucher debe subirse correctamente antes de continuar'
+        });
+        return;
+      }
+
+      // Si no hay voucher pero es requerido por el método de pago, mostrar error
+      if (!data.voucherFile && watch('metodoPago') !== 'Efectivo') {
+        toast.error('Error de validación', {
+          description: 'El voucher es requerido para métodos de pago que no sean efectivo'
+        });
+        return;
+      }
       
       let contactosEmergenciaLimpios = validateAndCleanContactos(data.contactosEmergencia || []);
       contactosEmergenciaLimpios = ensurePrimaryContact(contactosEmergenciaLimpios);
@@ -357,12 +386,14 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         costoMatricula: data.costoMatricula.toString(),
         fechaIngreso: data.fechaIngreso,
         idGrado: data.idGrado,
-        metodoPago: data.metodoPago,
+        metodoPago: watch('metodoPago'),
         anioEscolar: "2025", // Año escolar actual
         
         // Incluir idApoderado e idEstudiante explícitamente como null si no existen
-        idApoderado: selectedApoderado?.id || null,
-        idEstudiante: null,
+        // NOTA: El backend debería manejar estos campos opcionales
+        ...(selectedApoderado?.id && { idApoderado: selectedApoderado.id }),
+        // idEstudiante siempre será null para nuevos estudiantes
+        // ...(false && { idEstudiante: null }), // Comentado para evitar enviar null
         
         // Obtener ID del usuario actual del localStorage o contexto
         registradoPor: (() => {
@@ -415,7 +446,13 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
         voucherImg: voucherUrl || ""
       };
 
-      console.log('📋 Datos preparados para backend:', generateDataSummary(matriculaData));
+      console.log('📋 Datos COMPLETOS preparados para backend:', JSON.stringify(matriculaData, null, 2));
+      console.log('🎫 Información específica del voucher:', {
+        voucherFile: !!voucherFile,
+        voucherUrl: voucherUrl,
+        metodoPago: matriculaData.metodoPago,
+        voucherImg: matriculaData.voucherImg
+      });
       
       // Validar datos completos antes del envío
       const validation = validateMatriculaData(matriculaData);
@@ -476,18 +513,47 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
       
       // Mostrar error más específico
       let errorMessage = 'Error al matricular estudiante';
+      let errorDescription = 'Ha ocurrido un error inesperado. Por favor, inténtelo nuevamente.';
+      
       if (error.message) {
         errorMessage = error.message;
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
+        errorDescription = error.response.data.details || error.response.data.error || 'Error del servidor';
       } else if (error.response?.data?.error) {
         errorMessage = error.response.data.error;
+        errorDescription = error.response.data.details || 'Error del servidor';
+      } else if (error.response?.status === 500) {
+        errorMessage = 'Error interno del servidor';
+        errorDescription = 'El servidor encontró un error interno. Por favor, contacte al administrador del sistema.';
+      } else if (error.response?.status === 400) {
+        errorMessage = 'Datos inválidos';
+        errorDescription = 'Los datos enviados no son válidos. Por favor, revise la información e inténtelo nuevamente.';
+      } else if (error.response?.status === 401) {
+        errorMessage = 'Sesión expirada';
+        errorDescription = 'Su sesión ha expirado. Por favor, inicie sesión nuevamente.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'Permisos insuficientes';
+        errorDescription = 'No tiene permisos para realizar esta operación.';
       }
       
-      toast.error('Error al matricular estudiante', {
-        description: errorMessage
+      toast.error(errorMessage, {
+        description: errorDescription,
+        duration: 6000
       });
-      setUploadingVoucher(false);
+      
+      // Log detallado para debugging
+      console.error('❌ Detalles completos del error:', {
+        message: error.message,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          baseURL: error.config?.baseURL
+        }
+      });
     }
   };
 
@@ -619,63 +685,69 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                       </div>
 
                       {/* Voucher de Pago */}
-                      <FormField
-                        label="Voucher de Pago"
-                        error={errors.voucherFile?.message}
-                        required
-                      >
-                        <div className="relative w-full">
-                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors hover:cursor-pointer h-84 flex flex-col items-center justify-center">
-                            {voucherImage ? (
-                              <div className="relative">
-                                <img
-                                  src={voucherImage}
-                                  alt="Voucher"
-                                  className="max-h-32 mx-auto rounded-lg object-contain"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setVoucherImage(null);
-                                    setVoucherFile(null);
-                                  }}
-                                  className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                              </div>
-                            ) : (
-                              <>
-                                <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-                                <p className="text-sm text-gray-600 mb-2">
-                                  Subir voucher de pago *
-                                </p>
-                                <input
-                                  type="file"
-                                  accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files[0];
-                                    if (file) {
-                                      setVoucherFile(file);
-                                      const reader = new FileReader();
-                                      reader.onload = (e) => setVoucherImage(e.target.result);
-                                      reader.readAsDataURL(file);
-                                    }
-                                  }}
-                                  className="hidden"
-                                  id="voucher-upload"
-                                />
-                                <label
-                                  htmlFor="voucher-upload"
-                                  className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors w-50"
-                                >
-                                  Seleccionar archivo
-                                </label>
-                              </>
-                            )}
+                      <div className="mt-6">
+                        <FormField 
+                          label={`Voucher de Pago${watch('metodoPago') !== 'Efectivo' ? ' *' : ''}`} 
+                          error={errors.voucherFile?.message}
+                        >
+                          <div className="relative w-full">
+                            <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors hover:cursor-pointer h-84 flex flex-col items-center justify-center">
+                              {voucherImage ? (
+                                <div className="relative">
+                                  <img
+                                    src={voucherImage}
+                                    alt="Voucher"
+                                    className="max-h-32 mx-auto rounded-lg object-contain"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setVoucherImage(null);
+                                      setVoucherFile(null);
+                                    }}
+                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ) : (
+                                <>
+                                  <Upload className="w-8 h-8 mx-auto text-gray-400 mb-2" />
+                                  <p className="text-sm text-gray-600 mb-2">
+                                    Subir voucher de pago
+                                  </p>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files[0];
+                                      if (file) {
+                                        setVoucherFile(file);
+                                        setValue('voucherFile', file); // Registrar en el formulario
+                                        const reader = new FileReader();
+                                        reader.onload = (e) => setVoucherImage(e.target.result);
+                                        reader.readAsDataURL(file);
+                                      } else {
+                                        setVoucherFile(null);
+                                        setValue('voucherFile', null); // Limpiar del formulario
+                                        setVoucherImage(null);
+                                      }
+                                    }}
+                                    className="hidden"
+                                    id="voucher-upload"
+                                  />
+                                  <label
+                                    htmlFor="voucher-upload"
+                                    className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors w-50"
+                                  >
+                                    Seleccionar archivo
+                                  </label>
+                                </>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      </FormField>
+                        </FormField>
+                      </div>
                     </div>
 
                     {/* CUADRANTE SUPERIOR DERECHO: INFORMACIÓN DEL ESTUDIANTE */}

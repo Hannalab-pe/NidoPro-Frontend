@@ -21,6 +21,7 @@ import {
 import { useTrabajadores } from '../../../../hooks/useTrabajadores';
 import { useRoles } from '../../../../hooks/useRoles';
 import { useAulasAsignacion } from '../../../../hooks/useAulasAsignacion';
+import { useTiposContrato } from '../../../../hooks/useTiposContrato';
 
 // Esquema de validación con Yup para trabajadores
 const validationSchema = yup.object({
@@ -113,13 +114,8 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   // Estado para controlar si es docente
   const [isDocente, setIsDocente] = useState(false);
 
-  // Estado para tipos de contrato (mock data por ahora)
-  const [tiposContrato] = useState([
-    { id: '1', nombre: 'Contrato a Plazo Indefinido', duracion: null },
-    { id: '2', nombre: 'Contrato a Plazo Fijo', duracion: 12 },
-    { id: '3', nombre: 'Contrato de Prueba', duracion: 3 },
-    { id: '4', nombre: 'Contrato por Obra', duracion: null }
-  ]);
+  // Hook para tipos de contrato
+  const { tiposContrato, loading: loadingTiposContrato, error: errorTiposContrato } = useTiposContrato();
 
   // Generar número de contrato aleatorio
   const generarNumeroContrato = () => {
@@ -200,17 +196,17 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   // Efecto para calcular fecha fin basado en tipo de contrato
   useEffect(() => {
     if (selectedTipoContrato && tiposContrato.length > 0) {
-      const tipoContrato = tiposContrato.find(tc => tc.id === selectedTipoContrato);
-      if (tipoContrato && tipoContrato.duracion) {
+      const tipoContrato = tiposContrato.find(tc => tc.idTipoContrato === selectedTipoContrato);
+      if (tipoContrato && tipoContrato.duracionMaximaMeses) {
         const fechaInicio = watch('fechaInicio');
         if (fechaInicio) {
           const fechaFin = new Date(fechaInicio);
-          fechaFin.setMonth(fechaFin.getMonth() + tipoContrato.duracion);
+          fechaFin.setMonth(fechaFin.getMonth() + tipoContrato.duracionMaximaMeses);
           setValue('fechaFin', fechaFin.toISOString().split('T')[0]);
         }
       }
     }
-  }, [selectedTipoContrato, watch, setValue]);
+  }, [selectedTipoContrato, tiposContrato, watch, setValue]);
 
   const onSubmit = async (data) => {
     console.log('📋 Form submission - data:', data);
@@ -252,7 +248,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
     }`;
 
   // Estado de carga general
-  const isLoading = creating || uploading || loadingRoles || asignandoAula;
+  const isLoading = creating || uploading || loadingRoles || asignandoAula || loadingTiposContrato;
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -548,12 +544,14 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                         <select
                           {...register('idTipoContrato')}
                           className={inputClassName(errors.idTipoContrato)}
-                          disabled={isLoading}
+                          disabled={isLoading || loadingTiposContrato}
                         >
-                          <option value="">Seleccione tipo de contrato</option>
-                          {tiposContrato.map((tipo) => (
-                            <option key={tipo.id} value={tipo.id}>
-                              {tipo.nombre}
+                          <option value="">
+                            {loadingTiposContrato ? 'Cargando tipos de contrato...' : 'Seleccione tipo de contrato'}
+                          </option>
+                          {Array.isArray(tiposContrato) && tiposContrato.map((tipo) => (
+                            <option key={tipo.idTipoContrato} value={tipo.idTipoContrato}>
+                              {tipo.nombreTipo}
                             </option>
                           ))}
                         </select>
@@ -676,17 +674,25 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                       </FormField>
 
                       <FormField label="Archivos Adjuntos" error={errors.archivos?.message} className="md:col-span-2 lg:col-span-3">
-                        <input
-                          type="file"
-                          {...register('archivos')}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                          disabled={isLoading}
-                          multiple
-                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                          Formatos permitidos: PDF, Word, Excel, imágenes (máx. 10MB)
-                        </p>
+                        <div className="space-y-2">
+                          <input
+                            type="file"
+                            {...register('archivos')}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
+                            disabled={isLoading}
+                            multiple
+                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          />
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <FileText className="w-4 h-4" />
+                            <span>Formatos permitidos: PDF, Word, Excel, imágenes (máx. 10MB)</span>
+                          </div>
+                          {watch('archivos') && watch('archivos').length > 0 && (
+                            <div className="text-sm text-blue-600">
+                              📎 {watch('archivos').length} archivo(s) seleccionado(s)
+                            </div>
+                          )}
+                        </div>
                       </FormField>
                     </div>
                   </FormSection>
@@ -710,7 +716,7 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
                     {isLoading ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        {asignandoAula ? 'Asignando aula...' : uploading ? 'Subiendo...' : 'Guardando...'}
+                        {uploading ? 'Subiendo archivos...' : asignandoAula ? 'Asignando aula...' : 'Guardando...'}
                       </>
                     ) : (
                       <>

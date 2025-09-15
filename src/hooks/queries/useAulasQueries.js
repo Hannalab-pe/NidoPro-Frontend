@@ -98,15 +98,10 @@ export const useAula = (id) => {
 };
 
 /**
- * Hook para obtener estadísticas de aulas
+ * Hook para obtener todas las aulas (para admin)
  */
-export const useAulasStats = () => {
-  return useQuery({
-    queryKey: AULAS_QUERY_KEYS.stats(),
-    queryFn: aulaService.getAulaStats,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
+export const useAulasAdmin = (options = {}) => {
+  return useAulas({}, options);
 };
 
 /**

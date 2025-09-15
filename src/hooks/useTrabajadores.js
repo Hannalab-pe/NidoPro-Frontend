@@ -124,7 +124,7 @@ export const useTrabajadores = (initialFilters = {}) => {
   const creating = createMutation.isPending;
   const updating = updateMutation.isPending;
   const deleting = deleteMutation.isPending;
-  const uploading = false; // Para compatibilidad
+  const uploading = createMutation.isPending; // Considerar la creación como uploading cuando hay archivos
   
   // Funciones de utilidad
   const fetchTrabajadores = useCallback(async (customFilters = {}) => {
