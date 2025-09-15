@@ -14,9 +14,10 @@ const fetchEvaluacionesProfesor = async (idTrabajador) => {
     throw new Error('Token de autenticación no encontrado');
   }
 
-  // Verificar si el puerto es correcto - usar el mismo que en la petición manual
-  const baseUrl = 'http://localhost:3002'; // Cambiado de 8080 a 3002
-  const response = await fetch(`${baseUrl}/api/v1/comentario-docente/trabajador/${idTrabajador}`, {
+  // Usar la URL de la API desde variables de entorno
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
+  const baseUrl = API_BASE_URL.replace('/api/v1', ''); // Remover /api/v1 si está incluido en la variable
+  const response = await fetch(`${API_BASE_URL}/comentario-docente/trabajador/${idTrabajador}`, {
     method: 'GET',
     headers: {
       'Authorization': `Bearer ${token}`,
