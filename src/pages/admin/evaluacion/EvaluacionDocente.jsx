@@ -181,7 +181,7 @@ const EvaluacionDocente = () => {
 
         <button
           onClick={handleNuevaEvaluacion}
-          className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-4 h-4" />
           <span>Nueva Evaluación</span>

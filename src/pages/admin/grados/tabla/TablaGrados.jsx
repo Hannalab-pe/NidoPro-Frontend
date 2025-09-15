@@ -27,9 +27,9 @@ const TablaGrados = ({
       onView={onView}
       actions={{
         add: true,
-        edit: true,
-        delete: true,
-        view: true,
+        edit: false,
+        delete: false,
+        view: false,
         import: false,
         export: true
       }}

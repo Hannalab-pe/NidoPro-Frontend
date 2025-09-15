@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useAuthStore } from "../../store";
+import { useTeacherDashboard } from "../../hooks/useTeacherDashboard";
+import { StudentsByClassroomChart, GradesDistributionChart } from "../../components/charts/TeacherCharts";
 import { 
   BarChart3, 
-  Target, 
   MessageCircle, 
   Calendar, 
   Users, 
@@ -14,17 +15,15 @@ import {
   LogOut,
   Search,
   TrendingUp,
-  Clock,
   ChevronRight,
   Bot,
-  CheckCircle,
-  AlertCircle,
   Menu,
   X,
   Baby,
   FileText,
   BookOpen,
-  CircleUser
+  CircleUser,
+  RefreshCw
 } from "lucide-react";
 
 // Importar los componentes que creamos
@@ -46,6 +45,15 @@ const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { logout, user } = useAuthStore();
+  
+  // Hook personalizado para datos del profesor
+  const { 
+    chartData,
+    dashboardData,
+    loading, 
+    error, 
+    refreshData 
+  } = useTeacherDashboard();
 
   const menuItems = [
     // 📊 DASHBOARD
@@ -71,63 +79,49 @@ const TeacherDashboard = () => {
     { id: "evaluaciones", label: "Mis Evaluaciones", icon: FileText, category: "evaluaciones" }
   ];
 
-  const stats = [
-    { 
-      title: "Mis Estudiantes", 
-      value: "28", 
-      change: "+2 nuevos", 
-      icon: Users, 
-      color: "#3B82F6"
-    },
-    { 
-      title: "Clases Hoy", 
-      value: "4", 
-      change: "2 pendientes", 
-      icon: Calendar, 
-      color: "#10B981"
-    },
-    { 
-      title: "Asistencia Promedio", 
-      value: "94%", 
-      change: "+3% esta semana", 
-      icon: TrendingUp, 
-      color: "#F59E0B"
-    },
-    { 
-      title: "Metas Completadas", 
-      value: "12/15", 
-      change: "80% progreso", 
-      icon: Target, 
-      color: "#8B5CF6"
-    }
-  ];
+  // Calcular estadísticas dinámicas basadas en datos reales
+  const dynamicStats = useMemo(() => {
+    const estudiantesData = dashboardData?.estudiantes?.porAula || {};
+    const aulasData = dashboardData?.aulas?.data || [];
+    
+    const totalEstudiantes = Object.values(estudiantesData).reduce((total, estudiantes) => {
+      return total + (Array.isArray(estudiantes) ? estudiantes.length : 0);
+    }, 0);
+    const totalAulas = aulasData.length;
+    
+    return [
+      { 
+        title: "Mis Estudiantes", 
+        value: totalEstudiantes.toString(), 
+        change: `${totalAulas} aulas`, 
+        icon: Users, 
+        color: "#3B82F6"
+      },
+      { 
+        title: "Mis Aulas", 
+        value: totalAulas.toString(), 
+        change: "Asignadas", 
+        icon: School, 
+        color: "#10B981"
+      },
+      { 
+        title: "Promedio por Aula", 
+        value: totalAulas > 0 ? Math.round(totalEstudiantes / totalAulas).toString() : "0", 
+        change: "estudiantes", 
+        icon: GraduationCap, 
+        color: "#F59E0B"
+      },
+      { 
+        title: "Total de Datos", 
+        value: (totalEstudiantes + totalAulas).toString(), 
+        change: "activos", 
+        icon: BarChart3, 
+        color: "#8B5CF6"
+      }
+    ];
+  }, [dashboardData]);
 
-  const recentActivities = [
-    { 
-      action: "Nueva calificación registrada", 
-      user: "Matemáticas - 5to Grado", 
-      time: "Hace 30 min",
-      icon: CheckCircle 
-    },
-    { 
-      action: "Asistencia tomada", 
-      user: "Ciencias - 4to Grado", 
-      time: "Hace 1 hora",
-      icon: ClipboardList 
-    },
-    { 
-      action: "Nueva anotación creada", 
-      user: "Comportamiento - Ana García", 
-      time: "Hace 2 horas",
-      icon: StickyNote 
-    },
-    { 
-      action: "Juego educativo asignado", 
-      user: "Matemáticas - Todos los grupos", 
-      time: "Hace 3 horas",
-      icon: Gamepad2 
-    }
-  ];
+  const stats = dynamicStats;
 
   // Función para cerrar el menú móvil al seleccionar una opción
   const handleMenuItemClick = (sectionId) => {
@@ -333,136 +327,43 @@ const TeacherDashboard = () => {
                 </div>
               </div>
 
-              {/* Metas del Día */}
+              {/* Gráficos de Datos del Profesor */}
               <div className="bg-white rounded-xl shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
                   <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
-                    <Target className="w-5 h-5 text-gray-600" />
-                    <span>Metas del Día</span>
+                    <BarChart3 className="w-5 h-5 text-gray-600" />
+                    <span>Estadísticas de Mis Aulas</span>
                   </h3>
                   <button 
-                    onClick={() => setActiveSection("goals")}
-                    className="text-sm text-green-600 hover:text-green-700 font-medium"
+                    onClick={refreshData}
+                    disabled={loading}
+                    className="flex items-center space-x-2 text-sm text-green-600 hover:text-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Ver todas
+                    <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                    <span>Actualizar</span>
                   </button>
                 </div>
                 <div className="p-4 lg:p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-4 p-4 bg-green-50 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">Completar evaluaciones de Matemáticas</p>
-                        <p className="text-sm text-gray-600 mt-1">5to Grado - Progreso: 8/10 completadas</p>
-                      </div>
-                      <span className="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                        80%
-                      </span>
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <RefreshCw className="w-8 h-8 animate-spin text-green-600" />
+                      <span className="ml-2 text-gray-600">Cargando datos...</span>
                     </div>
-                    
-                    <div className="flex items-start space-x-4 p-4 bg-yellow-50 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 bg-yellow-100 rounded-full">
-                        <AlertCircle className="w-5 h-5 text-yellow-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">Revisar tareas de Ciencias</p>
-                        <p className="text-sm text-gray-600 mt-1">4to Grado - 15 tareas pendientes</p>
-                      </div>
-                      <span className="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">
-                        Pendiente
-                      </span>
+                  ) : error ? (
+                    <div className="flex items-center justify-center py-8">
+                      <AlertCircle className="w-8 h-8 text-red-600" />
+                      <span className="ml-2 text-red-600">Error al cargar datos: {error}</span>
                     </div>
-                    
-                    <div className="flex items-start space-x-4 p-4 bg-blue-50 rounded-lg">
-                      <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
-                        <Clock className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900">Preparar material para mañana</p>
-                        <p className="text-sm text-gray-600 mt-1">Clase de Historia - 3ro Grado</p>
-                      </div>
-                      <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
-                        Programado
-                      </span>
+                  ) : (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      <StudentsByClassroomChart 
+                        data={chartData} 
+                      />
+                      <GradesDistributionChart 
+                        data={chartData}
+                      />
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Horario del Día */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
-                  <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
-                    <Calendar className="w-5 h-5 text-gray-600" />
-                    <span>Mi Horario Hoy</span>
-                  </h3>
-                  <button 
-                    onClick={() => setActiveSection("schedule")}
-                    className="text-sm text-green-600 hover:text-green-700 font-medium"
-                  >
-                    Ver cronograma completo
-                  </button>
-                </div>
-                <div className="p-4 lg:p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="p-4 border border-green-200 rounded-lg bg-green-50">
-                      <div className="text-sm font-medium text-green-800">08:00 - 09:00</div>
-                      <div className="text-sm text-gray-700 mt-1">Matemáticas</div>
-                      <div className="text-xs text-gray-500">5to Grado A</div>
-                    </div>
-                    
-                    <div className="p-4 border border-blue-200 rounded-lg bg-blue-50">
-                      <div className="text-sm font-medium text-blue-800">09:15 - 10:15</div>
-                      <div className="text-sm text-gray-700 mt-1">Ciencias</div>
-                      <div className="text-xs text-gray-500">4to Grado B</div>
-                    </div>
-                    
-                    <div className="p-4 border border-purple-200 rounded-lg bg-purple-50">
-                      <div className="text-sm font-medium text-purple-800">11:00 - 12:00</div>
-                      <div className="text-sm text-gray-700 mt-1">Historia</div>
-                      <div className="text-xs text-gray-500">3ro Grado A</div>
-                    </div>
-                    
-                    <div className="p-4 border border-orange-200 rounded-lg bg-orange-50">
-                      <div className="text-sm font-medium text-orange-800">14:00 - 15:00</div>
-                      <div className="text-sm text-gray-700 mt-1">Matemáticas</div>
-                      <div className="text-xs text-gray-500">5to Grado B</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Actividad Reciente */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-100">
-                <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
-                  <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
-                    <Clock className="w-5 h-5 text-gray-600" />
-                    <span>Actividad Reciente</span>
-                  </h3>
-                  <button className="text-sm text-green-600 hover:text-green-700 font-medium">Ver todas</button>
-                </div>
-                <div className="p-4 lg:p-6">
-                  <div className="space-y-4">
-                    {recentActivities.map((activity, index) => {
-                      const IconComponent = activity.icon;
-                      return (
-                        <div key={index} className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg">
-                          <div className="flex items-center justify-center w-10 h-10 bg-green-100 rounded-full">
-                            <IconComponent className="w-5 h-5 text-green-600" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{activity.action}</p>
-                            <p className="text-sm text-gray-600 mt-1">Usuario: {activity.user}</p>
-                          </div>
-                          <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded-full">
-                            {activity.time}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  )}
                 </div>
               </div>
 
