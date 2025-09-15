@@ -471,9 +471,7 @@ const Asistencia = () => {
                           <h4 className="font-medium text-gray-900">
                             {estudiante.nombres} {estudiante.apellido_paterno} {estudiante.apellido_materno}
                           </h4>
-                          <p className="text-sm text-gray-600">
-                            Código: {estudiante.codigo_estudiante || 'N/A'}
-                          </p>
+
                         </div>
                       </div>
 

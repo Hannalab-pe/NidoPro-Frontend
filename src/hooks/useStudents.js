@@ -49,8 +49,8 @@ export const useStudents = () => {
     }
 
     const total = students.length;
-    const active = students.filter(s => s.estaActivo).length;
-    const inactive = total - active;
+    const active = students.filter(s => s.idUsuario?.estaActivo === true).length;
+    const inactive = students.filter(s => s.idUsuario?.estaActivo === false || s.idUsuario?.estaActivo === null || s.idUsuario?.estaActivo === undefined).length;
 
     // Agrupar por grado
     const byGrade = students.reduce((acc, student) => {
@@ -190,8 +190,8 @@ export const useStudents = () => {
     getStudentById,
 
     // Funciones derivadas
-    getActiveStudents: () => students.filter(s => s.estaActivo === true),
-    getInactiveStudents: () => students.filter(s => s.estaActivo === false),
+    getActiveStudents: () => students.filter(s => s.idUsuario?.estaActivo === true),
+    getInactiveStudents: () => students.filter(s => s.idUsuario?.estaActivo === false),
     getStudentsByGrade: (grade) => students.filter(s => s.grado === grade),
     getTotalStudents: () => students.length,
     

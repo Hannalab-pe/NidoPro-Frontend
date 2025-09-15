@@ -51,11 +51,9 @@ export const useTrabajadores = (initialFilters = {}) => {
       };
     }
 
-    const total = trabajadores.length;
-    const active = trabajadores.filter(t => t.estaActivo).length;
-    const inactive = total - active;
-
-    // Agrupar por cargo/posición (asume una propiedad 'cargo' en el objeto trabajador)
+    const total = trabajadores.length;
+    const active = trabajadores.filter(t => t.estaActivo === true).length;
+    const inactive = trabajadores.filter(t => t.estaActivo === false || t.estaActivo === null || t.estaActivo === undefined).length;    // Agrupar por cargo/posición (asume una propiedad 'cargo' en el objeto trabajador)
     const byPosition = trabajadores.reduce((acc, trabajador) => {
       const position = trabajador.cargo?.nombre || 'Sin cargo';
       acc[position] = (acc[position] || 0) + 1;

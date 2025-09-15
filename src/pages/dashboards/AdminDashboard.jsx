@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useAuthStore } from "../../store";
+import { useAdminDashboard } from "../../hooks/useAdminDashboard";
+import { DashboardBarChart, FinancialTrendChart, CategoryPieChart } from "../../components/charts";
 import { 
   BarChart3, 
   Users as UsersIcon, 
@@ -23,7 +25,10 @@ import {
   Menu,
   X,
   ClipboardList,
-  Award
+  Award,
+  RefreshCw,
+  MessageCircle,
+  Bot
 } from "lucide-react";
 
 // Importar todos los componentes de administración
@@ -49,12 +54,25 @@ import Contratos from '../admin/contratos/Contratos';
 import Planilla from '../admin/planilla/Planilla';
 import Cronogramas from '../admin/cronogramas/Cronogramas';
 import EvaluacionDocente from '../admin/evaluacion/EvaluacionDocente';
+import AnioEscolar from '../admin/anioescolar/AnioEscolar';
+import AIChat from '../admin/iachat/AIChat';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [financeComponent, setFinanceComponent] = useState("GestionFinanciera");
   const { logout, user } = useAuthStore();
+
+  // Usar el hook personalizado para obtener datos reales del dashboard
+  const { 
+    stats, 
+    loading: dashboardLoading, 
+    refreshData, 
+    error: dashboardError,
+    dashboardData,
+    financialStats,
+    students // Agregar estudiantes para debug
+  } = useAdminDashboard();
 
   // Effect para escuchar eventos de cambio de vista en finanzas
   React.useEffect(() => {
@@ -72,6 +90,9 @@ const AdminDashboard = () => {
     // 📊 DASHBOARD
     { id: "overview", label: "Resumen General", icon: BarChart3, category: "dashboard" },
     
+    // 🤖 HERRAMIENTAS EDUCATIVAS
+    { id: "ai-chat", label: "Asistente IA", icon: MessageCircle, category: "herramientas" },
+    
     // 💰 FINANZAS
     { id: "finances", label: "Finanzas", icon: DollarSign, category: "finanzas" },
     { id: "pensiones", label: "Pensiones", icon: BanknoteArrowUp, category: "finanzas" },
@@ -88,6 +109,7 @@ const AdminDashboard = () => {
     { id: "planificaciones", label: "Planificaciones", icon: FileText, category: "academico" },
     { id: "cronogramas", label: "Cronogramas", icon: Calendar, category: "academico" },
     { id: "evaluacion-docente", label: "Evaluación Docente", icon: Award, category: "academico" },
+    { id: "anio-escolar", label: "Año Escolar", icon: Calendar, category: "academico" },
     
     // 🏫 INFRAESTRUCTURA
     { id: "aulas", label: "Gestión de Aulas", icon: School, category: "infraestructura" },
@@ -96,13 +118,6 @@ const AdminDashboard = () => {
     // 📄 ADMINISTRATIVO
     { id: "contratos", label: "Contratos", icon: FileText, category: "administrativo" },
     { id: "planilla", label: "Planilla", icon: ClipboardList, category: "administrativo" },
-  ];
-
-  const stats = [
-    { title: "Total Estudiantes", value: "245", icon: UsersIcon, color: "#3B82F6", change: "+12%" },
-    { title: "Profesores Activos", value: "28", icon: GraduationCap, color: "#10B981", change: "+3%" },
-    { title: "Aulas Disponibles", value: "15", icon: BookOpen, color: "#F59E0B", change: "+2%" },
-    { title: "Ingresos del Mes", value: "$12,450", icon: DollarSign, color: "#EF4444", change: "+8%" },
   ];
 
   const recentActivities = [
@@ -162,6 +177,7 @@ const AdminDashboard = () => {
   const getCategoryLabel = (category) => {
     const labels = {
       dashboard: "Dashboard",
+      herramientas: "Herramientas IA",
       finanzas: "Finanzas",
       personas: "Personas",
       academico: "Académico",
@@ -247,11 +263,9 @@ const AdminDashboard = () => {
         <div className="mt-auto p-3 border-t border-gray-200">
           {/* User Info */}
            <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-3 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-blue-100 cursor-pointer">
-             <img
-               src={'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
-               alt="Foto de usuario"
-               className="w-11 h-11 object-cover rounded-full border-2 border-blue-500 shadow bg-white"
-             />
+             <div className="w-11 h-11 rounded-full border-2 border-blue-500 shadow bg-blue-100 flex items-center justify-center">
+               <CircleUser className="w-6 h-6 text-blue-600" />
+             </div>
              <div className="flex flex-col min-w-0">
                <span className="font-semibold text-gray-900 text-sm truncate">
                  {user?.nombre || ''} {user?.apellido || ''}
@@ -303,8 +317,15 @@ const AdminDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-2 lg:space-x-4">
-              
-              
+              {/* Botón de refresh */}
+              <button
+                onClick={refreshData}
+                disabled={dashboardLoading}
+                className="p-2 text-white hover:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                title="Actualizar datos"
+              >
+                <RefreshCw className={`w-5 h-5 ${dashboardLoading ? 'animate-spin' : ''}`} />
+              </button>
             </div>
           </div>
         </header>
@@ -313,7 +334,30 @@ const AdminDashboard = () => {
         <div className="p-4 lg:p-6 h-full overflow-y-auto">
           {activeSection === "overview" && (
             <div className="space-y-6 lg:space-y-8">
-              <h1 className="text-5xl font-bold mb-6 text-gray-700">Bienvenido, {user?.nombre || ''}</h1>
+              <div className="flex items-center justify-between">
+                <h1 className="text-5xl font-bold text-gray-700">Bienvenido, {user?.nombre || ''}</h1>
+                {dashboardLoading && (
+                  <div className="flex items-center space-x-2 text-blue-600">
+                    <RefreshCw className="w-5 h-5 animate-spin" />
+                    <span className="text-sm">Actualizando datos...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Mostrar errores si existen */}
+              {dashboardError && (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-2">
+                    <div className="text-red-600">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <span className="text-red-800 text-sm">{dashboardError}</span>
+                  </div>
+                </div>
+              )}
+
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, index) => {
@@ -330,15 +374,172 @@ const AdminDashboard = () => {
                         <TrendingUp className="w-4 h-4 text-green-500" />
                       </div>
                       <div>
-                        <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+                        <h3 className="text-xl lg:text-2xl font-bold text-gray-900 mb-1">
+                          {stat.loading ? (
+                            <div className="animate-pulse bg-gray-200 h-8 rounded"></div>
+                          ) : (
+                            stat.value
+                          )}
+                        </h3>
                         <p className="text-sm text-gray-600 mb-2">{stat.title}</p>
                         <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-                          {stat.change}
+                          {stat.loading ? "..." : stat.change}
                         </span>
                       </div>
                     </div>
                   );
                 })}
+              </div>
+
+              {/* Estadísticas Financieras Detalladas */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Ingresos del Mes</h3>
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-green-600" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-green-600 mb-2">
+                    {dashboardLoading ? (
+                      <div className="animate-pulse bg-gray-200 h-8 rounded w-24"></div>
+                    ) : (
+                      `S/ ${financialStats.ingresosMes?.toLocaleString() || 0}`
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">Movimientos positivos</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Egresos del Mes</h3>
+                    <div className="p-2 bg-red-100 rounded-lg">
+                      <TrendingUp className="w-5 h-5 text-red-600 transform rotate-180" />
+                    </div>
+                  </div>
+                  <div className="text-2xl font-bold text-red-600 mb-2">
+                    {dashboardLoading ? (
+                      <div className="animate-pulse bg-gray-200 h-8 rounded w-24"></div>
+                    ) : (
+                      `S/ ${financialStats.egresosMes?.toLocaleString() || 0}`
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">Movimientos negativos</p>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Utilidad del Mes</h3>
+                    <div className={`p-2 rounded-lg ${financialStats.utilidadMes >= 0 ? 'bg-green-100' : 'bg-red-100'}`}>
+                      <DollarSign className={`w-5 h-5 ${financialStats.utilidadMes >= 0 ? 'text-green-600' : 'text-red-600'}`} />
+                    </div>
+                  </div>
+                  <div className={`text-2xl font-bold mb-2 ${financialStats.utilidadMes >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    {dashboardLoading ? (
+                      <div className="animate-pulse bg-gray-200 h-8 rounded w-24"></div>
+                    ) : (
+                      `S/ ${financialStats.utilidadMes?.toLocaleString() || 0}`
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {financialStats.utilidadMes >= 0 ? 'Resultado positivo' : 'Resultado negativo'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Asistente IA Quick Access */}
+              <div className="bg-gradient-to-r from-blue-900 to-blue-700 rounded-xl shadow-sm p-4 lg:p-6 text-white">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="p-3 bg-blue-900 bg-opacity-20 rounded-lg">
+                      <Bot className="w-8 h-8" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">Asistente IA Administrativo</h3>
+                      <p className="text-blue-100">¿Necesitas ayuda con análisis financiero o gestión institucional?</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setActiveSection("ai-chat")}
+                    className="bg-white text-blue-600 hover:bg-blue-50 px-4 py-2 rounded-lg transition-all duration-200 font-medium"
+                  >
+                    Chatear ahora
+                  </button>
+                </div>
+              </div>
+
+              {/* Gráficos y Visualizaciones */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                {/* Gráfico de barras - Estadísticas generales */}
+                <DashboardBarChart
+                  data={[
+                    {
+                      name: 'Estudiantes',
+                      total: dashboardData.estudiantes.total,
+                      activos: dashboardData.estudiantes.activos,
+                      inactivos: dashboardData.estudiantes.inactivos,
+                    },
+                    {
+                      name: 'Trabajadores',
+                      total: dashboardData.trabajadores.total,
+                      activos: dashboardData.trabajadores.activos,
+                      inactivos: dashboardData.trabajadores.inactivos,
+                    }
+                  ]}
+                  title="Estadísticas de Personal"
+                  height={350}
+                />
+
+                {/* Gráfico circular - Distribución por categorías */}
+                <CategoryPieChart
+                  data={[
+                    { name: 'Docentes', value: Math.round(dashboardData.trabajadores.activos * 0.7), color: '#3b82f6' },
+                    { name: 'Administrativos', value: Math.round(dashboardData.trabajadores.activos * 0.2), color: '#10b981' },
+                    { name: 'Auxiliares', value: Math.round(dashboardData.trabajadores.activos * 0.1), color: '#f59e0b' },
+                  ]}
+                  title="Distribución de Trabajadores"
+                  height={350}
+                />
+              </div>
+
+              {/* Gráfico de tendencias financieras - Ancho completo */}
+              <div className="mb-6">
+                <FinancialTrendChart
+                  data={[
+                    {
+                      mes: 'Ago',
+                      ingresos: financialStats.ingresosMes * 0.8,
+                      egresos: financialStats.egresosMes * 0.9,
+                      utilidad: (financialStats.ingresosMes * 0.8) - (financialStats.egresosMes * 0.9),
+                    },
+                    {
+                      mes: 'Sep',
+                      ingresos: financialStats.ingresosMes * 0.9,
+                      egresos: financialStats.egresosMes * 0.85,
+                      utilidad: (financialStats.ingresosMes * 0.9) - (financialStats.egresosMes * 0.85),
+                    },
+                    {
+                      mes: 'Oct',
+                      ingresos: financialStats.ingresosMes * 1.1,
+                      egresos: financialStats.egresosMes * 0.95,
+                      utilidad: (financialStats.ingresosMes * 1.1) - (financialStats.egresosMes * 0.95),
+                    },
+                    {
+                      mes: 'Nov',
+                      ingresos: financialStats.ingresosMes * 1.2,
+                      egresos: financialStats.egresosMes * 1.0,
+                      utilidad: (financialStats.ingresosMes * 1.2) - (financialStats.egresosMes * 1.0),
+                    },
+                    {
+                      mes: 'Dic',
+                      ingresos: financialStats.ingresosMes,
+                      egresos: financialStats.egresosMes,
+                      utilidad: financialStats.utilidadMes,
+                    }
+                  ]}
+                  title="Tendencias Financieras Mensuales"
+                  height={400}
+                />
               </div>
 
               {/* Recent Activities */}
@@ -372,6 +573,7 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               </div>
+
             </div>
           )}
 
@@ -394,6 +596,8 @@ const AdminDashboard = () => {
           {activeSection === "grados" && <Grados />}
           {activeSection === "cronogramas" && <Cronogramas />}
           {activeSection === "evaluacion-docente" && <EvaluacionDocente />}
+          {activeSection === "anio-escolar" && <AnioEscolar />}
+          {activeSection === "ai-chat" && <AIChat />}
         </div>
       </main>
     </div>

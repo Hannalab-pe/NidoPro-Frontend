@@ -1,4 +1,5 @@
 // src/hooks/queries/useTrabajadoresQueries.js
+import { useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import trabajadorService from '../../services/trabajadorService';
@@ -393,4 +394,29 @@ export const useDeleteComentarioDocente = () => {
       queryClient.invalidateQueries({ queryKey: ['comentarios-docentes'] });
     },
   });
+};
+
+/**
+ * Hook para invalidar cache de trabajadores
+ */
+export const useInvalidateTrabajadores = () => {
+  const queryClient = useQueryClient();
+
+  const invalidateAll = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: trabajadoresKeys.all });
+  }, [queryClient]);
+
+  const invalidateLists = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: trabajadoresKeys.lists() });
+  }, [queryClient]);
+
+  const invalidateDetail = useCallback((id) => {
+    queryClient.invalidateQueries({ queryKey: trabajadoresKeys.detail(id) });
+  }, [queryClient]);
+
+  return {
+    invalidateAll,
+    invalidateLists,
+    invalidateDetail
+  };
 };

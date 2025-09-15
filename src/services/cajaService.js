@@ -134,9 +134,9 @@ const cajaService = {
   },
 
   /**
-   * Actualizar un movimiento de caja existente
+   * Obtener dashboard financiero general
    */
-  async actualizarMovimiento(idMovimiento, datosActualizacion) {
+  async obtenerDashboardFinanciero() {
     try {
       const token = localStorage.getItem('token');
       
@@ -144,37 +144,35 @@ const cajaService = {
         throw new Error('Token de autorización no encontrado');
       }
 
-      console.log('📝 Actualizando movimiento de caja:', { idMovimiento, datosActualizacion });
+      console.log('� Obteniendo dashboard financiero...');
 
-      const response = await fetch(`${API_BASE_URL}/caja-simple/${idMovimiento}`, {
-        method: 'PATCH',
+      const response = await fetch(`${API_BASE_URL}/caja-simple/reportes/dashboard`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(datosActualizacion)
+        }
       });
 
       console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('✅ Movimiento actualizado:', data);
+      console.log('💰 Dashboard financiero obtenido:', data);
       
       return {
         success: true,
-        movimiento: data
+        dashboard: data
       };
 
     } catch (error) {
-      console.error('❌ Error al actualizar movimiento:', error);
-      throw new Error(error.message || 'Error al actualizar movimiento de caja');
+      console.error('❌ Error al obtener dashboard financiero:', error);
+      throw new Error(error.message || 'Error al obtener dashboard financiero');
     }
-  }
+  },
 };
 
 export default cajaService;

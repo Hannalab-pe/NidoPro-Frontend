@@ -17,7 +17,8 @@ import {
   Menu,
   X,
   TrendingUp,
-  ChevronRight
+  ChevronRight,
+  CircleUser
 } from "lucide-react";
 import Reportes from "../parent/reportes/Reportes";
 import Tareas from "../parent/tareas/Tareas";
@@ -330,11 +331,9 @@ const ParentDashboard = () => {
         <div className="mt-auto px-3 pb-6 flex flex-col gap-3">
           {/* User Info */}
            <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-2 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-yellow-100 cursor-pointer">
-             <img
-               src={user?.photo || 'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
-               alt="Foto de usuario"
-               className="w-11 h-11 object-cover rounded-full border-2 border-yellow-500 shadow bg-white"
-             />
+             <div className="w-11 h-11 rounded-full border-2 border-yellow-500 shadow bg-yellow-100 flex items-center justify-center">
+               <CircleUser className="w-6 h-6 text-yellow-600" />
+             </div>
              <div className="flex flex-col min-w-0">
                <span className="font-semibold text-gray-900 text-sm truncate">
                  {user?.nombre || ''} {user?.apellido || ''}

@@ -15,7 +15,6 @@ export const estudiantesKeys = {
 
 // Servicio API para estudiantes
 const estudiantesService = {
-  // Obtener todos los estudiantes
   getEstudiantes: async (filters = {}) => {
     const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
     const token = localStorage.getItem('token');

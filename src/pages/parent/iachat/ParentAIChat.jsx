@@ -163,52 +163,53 @@ const ParentAIChat = () => {
   return (
     <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'h-full'}`}>
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 p-4">
+      <div className="bg-white border-b border-gray-200 p-3 md:p-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-yellow-500 to-blue-600 rounded-full flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+          <div className="flex items-center space-x-2 md:space-x-3 min-w-0 flex-1">
+            <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-yellow-500 to-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 md:w-6 md:h-6 text-white" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900 flex items-center space-x-2">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-base md:text-lg font-semibold text-gray-900 flex items-center space-x-2 truncate">
                 <span>Asistente Familiar IA</span>
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">ChatGPT</span>
+                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full hidden sm:inline">ChatGPT</span>
               </h1>
               <div className="flex items-center space-x-2">
                 {apiStatus === 'connected' && (
                   <div className="flex items-center space-x-1">
                     <CheckCircle className="w-3 h-3 text-green-500" />
-                    <span className="text-sm text-green-600">En línea • Listo para ayudar</span>
+                    <span className="text-xs md:text-sm text-green-600 truncate">En línea • Listo para ayudar</span>
                   </div>
                 )}
                 {apiStatus === 'error' && (
                   <div className="flex items-center space-x-1">
                     <AlertCircle className="w-3 h-3 text-orange-500" />
-                    <span className="text-sm text-orange-600">Configuración pendiente</span>
+                    <span className="text-xs md:text-sm text-orange-600">Configuración pendiente</span>
                   </div>
                 )}
                 {apiStatus === 'checking' && (
-                  <span className="text-sm text-gray-500">Verificando conexión...</span>
+                  <span className="text-xs md:text-sm text-gray-500">Verificando conexión...</span>
                 )}
               </div>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <button 
+
+          <div className="flex items-center space-x-1 md:space-x-2 ml-2">
+            <button
               onClick={toggleFullscreen}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
               title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
             >
               {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
             </button>
-            <button 
+            <button
               onClick={clearConversation}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+              className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
               title="Limpiar conversación"
             >
               <RefreshCw className="w-4 h-4" />
             </button>
-            <button className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
+            <button className="p-1.5 md:p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 md:hidden">
               <MoreVertical className="w-4 h-4" />
             </button>
           </div>
@@ -216,27 +217,29 @@ const ParentAIChat = () => {
       </div>
 
       {/* Quick Prompts */}
-      <div className="bg-gray-50 p-4 border-b border-gray-200">
-        <h3 className="text-sm font-medium text-gray-700 mb-3">Consultas Frecuentes:</h3>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
-          {quickPrompts.map((prompt, index) => {
-            const IconComponent = prompt.icon;
-            return (
-              <button
-                key={index}
-                onClick={() => handleQuickPrompt(prompt.prompt)}
-                className="flex items-center space-x-2 p-3 text-left bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all duration-200 text-sm"
-              >
-                <IconComponent className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span className="text-gray-700 truncate">{prompt.title}</span>
-              </button>
-            );
-          })}
+      {false && (
+        <div className="bg-gray-50 p-4 border-b border-gray-200">
+          <h3 className="text-sm font-medium text-gray-700 mb-3">Consultas Frecuentes:</h3>
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-2">
+            {quickPrompts.map((prompt, index) => {
+              const IconComponent = prompt.icon;
+              return (
+                <button
+                  key={index}
+                  onClick={() => handleQuickPrompt(prompt.prompt)}
+                  className="flex items-center space-x-2 p-3 text-left bg-white rounded-lg border border-gray-200 hover:border-green-300 hover:shadow-sm transition-all duration-200 text-sm"
+                >
+                  <IconComponent className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <span className="text-gray-700 truncate">{prompt.title}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-3 md:space-y-4 bg-gray-50">
         {messages.map((message) => (
           <div
             key={message.id}
@@ -335,8 +338,8 @@ const ParentAIChat = () => {
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t border-gray-200 p-4">
-        <div className="flex items-end space-x-3">
+      <div className="bg-white border-t border-gray-200 p-3 md:p-4">
+        <div className="flex items-end space-x-2 md:space-x-3">
           <div className="flex-1">
             <div className="relative">
               <textarea
@@ -348,49 +351,46 @@ const ParentAIChat = () => {
                     handleSendMessage();
                   }
                 }}
-                placeholder="Escribe tu consulta familiar aquí..."
-                className="w-full p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500 max-h-32"
+                placeholder="Pregúntame sobre educación infantil, padres..."
+                className="w-full p-3 pr-12 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-green-500 focus:border-green-500 max-h-32 text-sm md:text-base"
                 rows="1"
                 style={{ minHeight: '44px' }}
               />
-              <div className="absolute right-2 bottom-2 flex space-x-1">
-                <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                  <Paperclip className="w-4 h-4" />
-                </button>
-                <button className="p-1 text-gray-400 hover:text-gray-600 rounded">
-                  <Mic className="w-4 h-4" />
-                </button>
-              </div>
             </div>
           </div>
+
           <button
             onClick={() => handleSendMessage()}
             disabled={!newMessage.trim() || isTyping}
-            className={`p-3 rounded-lg transition-colors ${
+            className={`p-3 rounded-lg transition-colors flex-shrink-0 ${
               newMessage.trim() && !isTyping
                 ? 'bg-green-600 text-white hover:bg-green-700'
                 : 'bg-gray-300 text-gray-500 cursor-not-allowed'
             }`}
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-4 h-4 md:w-5 md:h-5" />
           </button>
         </div>
+
         <div className="flex items-center justify-between mt-2 text-xs text-gray-500">
-          <span>Presiona Enter para enviar, Shift+Enter para nueva línea</span>
+          <span className="hidden sm:inline">Presiona Enter para enviar, Shift+Enter para nueva línea</span>
+          <span className="sm:hidden">Enter para enviar</span>
           <div className="flex items-center space-x-2">
             {apiStatus === 'connected' && (
               <span className="flex items-center space-x-1 text-green-600">
                 <CheckCircle className="w-3 h-3" />
-                <span>ChatGPT Conectado</span>
+                <span className="hidden sm:inline">ChatGPT Conectado</span>
+                <span className="sm:hidden">Conectado</span>
               </span>
             )}
             {apiStatus === 'error' && (
               <span className="flex items-center space-x-1 text-orange-600">
                 <AlertCircle className="w-3 h-3" />
-                <span>API no configurada</span>
+                <span className="hidden sm:inline">API no configurada</span>
+                <span className="sm:hidden">Error</span>
               </span>
             )}
-            <span>NidoPro IA v2.1</span>
+            <span className="hidden md:inline">NidoPro IA v2.1</span>
           </div>
         </div>
       </div>

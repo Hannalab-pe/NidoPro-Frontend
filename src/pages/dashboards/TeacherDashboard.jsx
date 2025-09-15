@@ -23,7 +23,8 @@ import {
   X,
   Baby,
   FileText,
-  BookOpen
+  BookOpen,
+  CircleUser
 } from "lucide-react";
 
 // Importar los componentes que creamos
@@ -39,6 +40,7 @@ import Clases from "../teacher/clases/Clases";
 import TeacherPlanificaciones from '../teacher/planificaciones/TeacherPlanificaciones';
 import { Tareas } from '../teacher/tareas';
 import Evaluaciones from '../teacher/evaluaciones/Evaluaciones';
+import { EvaluacionesEstudiantes } from '../teacher/evaluaciones';
 
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -46,17 +48,27 @@ const TeacherDashboard = () => {
   const { logout, user } = useAuthStore();
 
   const menuItems = [
-    { id: "overview", label: "Panel Principal", icon: BarChart3 },
-    { id: "ai-chat", label: "Asistente IA", icon: MessageCircle },
-    { id: "schedule", label: "Cronograma", icon: Calendar },
-    { id: "attendance", label: "Asistencias", icon: ClipboardList },
-    { id: "tareas", label: "Tareas", icon: BookOpen },
-    { id: "notes", label: "Anotaciones", icon: StickyNote },
-    { id: "games", label: "Juegos", icon: Gamepad2 },
-    { id: "students", label: "Mis Alumnos", icon: Users },
-    { id: "classrooms", label: "Mis Aulas", icon: School },
-    { id: "planificaciones", label: "Planificaciones", icon: FileText },
-    { id: "evaluaciones", label: "Mis Evaluaciones", icon: FileText }
+    // 📊 DASHBOARD
+    { id: "overview", label: "Panel Principal", icon: BarChart3, category: "dashboard" },
+
+    // 🤖 HERRAMIENTAS EDUCATIVAS
+    { id: "ai-chat", label: "Asistente IA", icon: MessageCircle, category: "herramientas" },
+    { id: "games", label: "Juegos", icon: Gamepad2, category: "herramientas" },
+
+    // 📚 TRABAJO ACADÉMICO
+    { id: "schedule", label: "Cronograma", icon: Calendar, category: "academico" },
+    { id: "attendance", label: "Asistencias", icon: ClipboardList, category: "academico" },
+    { id: "tareas", label: "Tareas", icon: BookOpen, category: "academico" },
+    { id: "evaluaciones-estudiantes", label: "Evaluaciones Estudiantes", icon: FileText, category: "academico" },
+    { id: "notes", label: "Anotaciones", icon: StickyNote, category: "academico" },
+    { id: "planificaciones", label: "Planificaciones", icon: FileText, category: "academico" },
+
+    // 👥 GESTIÓN DE ESTUDIANTES
+    { id: "students", label: "Mis Alumnos", icon: Users, category: "gestion" },
+    { id: "classrooms", label: "Mis Aulas", icon: School, category: "gestion" },
+
+    // 📄 EVALUACIONES PERSONALES
+    { id: "evaluaciones", label: "Mis Evaluaciones", icon: FileText, category: "evaluaciones" }
   ];
 
   const stats = [
@@ -123,6 +135,18 @@ const TeacherDashboard = () => {
     setIsMobileMenuOpen(false);
   };
 
+  // Función para obtener la etiqueta de categoría
+  const getCategoryLabel = (category) => {
+    const labels = {
+      dashboard: "Dashboard",
+      herramientas: "Herramientas Educativas",
+      academico: "Trabajo Académico",
+      gestion: "Gestión de Estudiantes",
+      evaluaciones: "Evaluaciones Personales"
+    };
+    return labels[category] || category;
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 border-r">
       {/* Mobile menu overlay */}
@@ -154,25 +178,42 @@ const TeacherDashboard = () => {
         {/* Navigation */}
         <nav className="mt-6 px-3 flex-1 overflow-y-auto">
           <div className="space-y-1 pb-4">
-            {menuItems.map((item) => {
+            {menuItems.map((item, index) => {
               const IconComponent = item.icon;
               const isActive = activeSection === item.id;
+              
+              // Determinar si mostrar separador de categoría
+              const prevItem = index > 0 ? menuItems[index - 1] : null;
+              const showCategorySeparator = prevItem && prevItem.category !== item.category;
+              
               return (
-                <button
-                  key={item.id}
-                  className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
-                    isActive 
-                      ? "bg-green-600 text-white" 
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                  }`}
-                  onClick={() => handleMenuItemClick(item.id)}
-                >
-                  <div className="flex items-center space-x-3">
-                    <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
-                    <span className="font-medium">{item.label}</span>
-                  </div>
-                  <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
-                </button>
+                <div key={item.id}>
+                  {/* Separador de categoría */}
+                  {showCategorySeparator && (
+                    <div className="my-4 px-4 ">
+                      <div className="h-px bg-gray-400"></div>
+                      <div className="text-sm font-bold text-green-900 uppercase tracking-wider mt-2 mb-1">
+                        {getCategoryLabel(item.category)}
+                      </div>
+                      <div className="h-px bg-gray-400"></div>
+                    </div>
+                  )}
+                  
+                  <button
+                    className={`w-full flex items-center justify-between px-4 py-3 mb-1 rounded-lg text-left transition-all duration-200 group hover:translate-x-2 cursor-pointer ${
+                      isActive 
+                        ? "bg-green-600 text-white" 
+                        : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                    }`}
+                    onClick={() => handleMenuItemClick(item.id)}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <IconComponent className={`w-5 h-5 ${isActive ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
+                      <span className="font-medium">{item.label}</span>
+                    </div>
+                    <ChevronRight className={`w-4 h-4 transition-transform ${isActive ? "rotate-90 text-white" : "text-gray-400"}`} />
+                  </button>
+                </div>
               );
             })}
           </div>
@@ -182,11 +223,9 @@ const TeacherDashboard = () => {
         <div className="mt-auto p-3 border-t border-gray-200">
           {/* User Info */}
            <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-3 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-green-100 cursor-pointer">
-             <img
-               src={'https://res.cloudinary.com/dhdpp8eq2/image/upload/v1750049446/ul4brxbibcnitgusmldn.jpg'}
-               alt="Foto de usuario"
-               className="w-11 h-11 object-cover rounded-full border-2 border-green-500 shadow bg-white"
-             />
+             <div className="w-11 h-11 rounded-full border-2 border-green-500 shadow bg-green-100 flex items-center justify-center">
+               <CircleUser className="w-6 h-6 text-green-600" />
+             </div>
              <div className="flex flex-col min-w-0">
                <span className="font-semibold text-gray-900 text-sm truncate">
                  {user?.nombre || ''} {user?.apellido || ''}
@@ -438,6 +477,7 @@ const TeacherDashboard = () => {
           {activeSection === "schedule" && <Horarios />}
           {activeSection === "attendance" && <Asistencias />}
           {activeSection === "tareas" && <Tareas />}
+          {activeSection === "evaluaciones-estudiantes" && <EvaluacionesEstudiantes />}
           {activeSection === "notes" && <Notas />}
           {activeSection === "games" && <Juegos />}
           {activeSection === "students" && <MisEstudiantes />}

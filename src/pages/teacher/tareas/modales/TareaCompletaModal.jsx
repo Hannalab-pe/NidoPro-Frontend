@@ -116,8 +116,33 @@ const TareaCompletaModal = ({ isOpen, onClose, tarea }) => {
         console.log('🔄 No hay entregas en la tarea, intentando obtener del servicio...');
         try {
           const response = await tareaService.obtenerEntregasPorTarea(tarea.idTarea);
-          const entregasServicio = response.data || response || [];
-          console.log('📋 Entregas obtenidas del servicio:', entregasServicio);
+          console.log('📋 Respuesta completa del servicio:', response);
+          
+          // Manejar diferentes formatos de respuesta
+          let entregasServicio = [];
+          
+          if (Array.isArray(response)) {
+            entregasServicio = response;
+          } else if (response?.data && Array.isArray(response.data)) {
+            entregasServicio = response.data;
+          } else if (response?.data?.entregas && Array.isArray(response.data.entregas)) {
+            entregasServicio = response.data.entregas;
+          } else if (response?.entregas && Array.isArray(response.entregas)) {
+            entregasServicio = response.entregas;
+          } else if (response?.info?.data && Array.isArray(response.info.data)) {
+            entregasServicio = response.info.data;
+          } else {
+            console.warn('⚠️ Formato de respuesta no reconocido:', response);
+            entregasServicio = [];
+          }
+          
+          console.log('📋 Entregas obtenidas del servicio (procesadas):', entregasServicio);
+          
+          // Verificar que sea un array antes de filtrar
+          if (!Array.isArray(entregasServicio)) {
+            console.error('❌ Las entregas no son un array:', entregasServicio);
+            throw new Error('El formato de las entregas no es válido');
+          }
           
           // Filtrar entregas - considerar tanto realizoTarea como estado
           const realizadas = entregasServicio.filter(entrega => 
