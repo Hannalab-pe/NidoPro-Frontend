@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { Calendar, DollarSign, Plus, Settings } from 'lucide-react';
 import CrearPeriodoModal from './modales/CrearPeriodoModal';
 import GenerarPensionesModal from './modales/GenerarPensionesModal';
+import GenerarBimestresModal from './modales/GenerarBimestresModal';
 
 const AnioEscolar = () => {
   const [modalCrearPeriodo, setModalCrearPeriodo] = useState(false);
   const [modalGenerarPensiones, setModalGenerarPensiones] = useState(false);
+  const [modalGenerarBimestres, setModalGenerarBimestres] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -22,7 +24,7 @@ const AnioEscolar = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Crear Período Escolar */}
           <button
             onClick={() => setModalCrearPeriodo(true)}
@@ -46,6 +48,18 @@ const AnioEscolar = () => {
               <div className="text-sm opacity-90">Configurar pensiones automáticamente</div>
             </div>
           </button>
+
+          {/* Generar Bimestres */}
+          <button
+            onClick={() => setModalGenerarBimestres(true)}
+            className="flex items-center justify-center space-x-3 p-6 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-xl transition-all duration-200 transform hover:-translate-y-1 shadow-lg"
+          >
+            <Settings className="w-6 h-6" />
+            <div className="text-left">
+              <div className="font-semibold text-lg">Generar Bimestres</div>
+              <div className="text-sm opacity-90">Crear bimestres de un período</div>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -63,6 +77,13 @@ const AnioEscolar = () => {
         <GenerarPensionesModal
           isOpen={modalGenerarPensiones}
           onClose={() => setModalGenerarPensiones(false)}
+        />
+      )}
+
+      {modalGenerarBimestres && (
+        <GenerarBimestresModal
+          isOpen={modalGenerarBimestres}
+          onClose={() => setModalGenerarBimestres(false)}
         />
       )}
     </div>

@@ -28,7 +28,8 @@ import {
   Award,
   RefreshCw,
   MessageCircle,
-  Bot
+  Bot,
+  Shield
 } from "lucide-react";
 
 // Importar todos los componentes de administración
@@ -55,6 +56,7 @@ import Planilla from '../admin/planilla/Planilla';
 import Cronogramas from '../admin/cronogramas/Cronogramas';
 import EvaluacionDocente from '../admin/evaluacion/EvaluacionDocente';
 import AnioEscolar from '../admin/anioescolar/AnioEscolar';
+import Seguros from '../admin/seguros/Seguros';
 import AIChat from '../admin/iachat/AIChat';
 
 const AdminDashboard = () => {
@@ -118,6 +120,7 @@ const AdminDashboard = () => {
     // 📄 ADMINISTRATIVO
     { id: "contratos", label: "Contratos", icon: FileText, category: "administrativo" },
     { id: "planilla", label: "Planilla", icon: ClipboardList, category: "administrativo" },
+    { id: "seguros", label: "Tipos de Seguro", icon: Shield, category: "administrativo" },
   ];
 
   const recentActivities = [
@@ -597,6 +600,7 @@ const AdminDashboard = () => {
           {activeSection === "cronogramas" && <Cronogramas />}
           {activeSection === "evaluacion-docente" && <EvaluacionDocente />}
           {activeSection === "anio-escolar" && <AnioEscolar />}
+          {activeSection === "seguros" && <Seguros />}
           {activeSection === "ai-chat" && <AIChat />}
         </div>
       </main>
