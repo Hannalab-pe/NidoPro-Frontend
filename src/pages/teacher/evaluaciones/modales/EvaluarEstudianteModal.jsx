@@ -42,7 +42,7 @@ window.testAulasAPI = async () => {
   console.log('Probando API con entidadId:', entidadId);
 
   try {
-    const response = await fetch(`http://localhost:3002/api/v1/trabajador/aulas/${entidadId}`, {
+    const response = await fetch(`https://nidopro.up.railway.app/api/v1/trabajador/aulas/${entidadId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -118,7 +118,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
       console.log('UserId a usar (entidadId):', userId);
 
       // Usar el entidadId directamente
-      const endpoint = `http://localhost:3002/api/v1/trabajador/aulas/${userId}`;
+      const endpoint = `https://nidopro.up.railway.app/api/v1/trabajador/aulas/${userId}`;
       console.log('Endpoint:', endpoint);
 
       const response = await fetch(endpoint, {
@@ -193,7 +193,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
         return;
       }
 
-      const response = await fetch(`http://localhost:3002/api/v1/estudiante/aula/${idAula}`, {
+      const response = await fetch(`https://nidopro.up.railway.app/api/v1/estudiante/aula/${idAula}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -245,7 +245,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
         return;
       }
 
-      const response = await fetch(`http://localhost:3002/api/v1/nota/libreta-kinder/aula/${idAula}`, {
+      const response = await fetch(`https://nidopro.up.railway.app/api/v1/nota/libreta-kinder/aula/${idAula}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -391,7 +391,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
         idEstudiante: formData.idEstudiante
       };
 
-      const response = await fetch('http://localhost:3002/api/v1/nota/kinder', {
+      const response = await fetch('https://nidopro.up.railway.app/api/v1/nota/kinder', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -556,7 +556,7 @@ export const usePensionesSimple = () => {
       
       // Usar fetch directamente para el endpoint simple
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
       
       const response = await fetch(`${API_BASE_URL}/pension`, {
         method: 'POST',

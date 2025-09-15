@@ -110,8 +110,8 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
 
       // Determinar si es creación o edición
       const url = evaluacion
-        ? `http://localhost:3002/api/v1/evaluacion/${evaluacion.idEvaluacion}`
-        : 'http://localhost:3002/api/v1/evaluacion';
+        ? `https://nidopro.up.railway.app/api/v1/evaluacion/${evaluacion.idEvaluacion}`
+        : 'https://nidopro.up.railway.app/api/v1/evaluacion';
 
       const method = evaluacion ? 'PUT' : 'POST';
 

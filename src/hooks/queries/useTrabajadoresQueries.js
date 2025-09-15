@@ -251,7 +251,7 @@ export const useComentariosDocentes = (options = {}) => {
         throw new Error('No se encontró token de autenticación');
       }
 
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
 
       const response = await fetch(`${API_BASE_URL}/comentario-docente`, {
         method: 'GET',
@@ -307,7 +307,7 @@ export const useCreateComentarioDocente = () => {
   return useMutation({
     mutationFn: async (comentarioData) => {
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
 
       const response = await fetch(`${API_BASE_URL}/comentario-docente`, {
         method: 'POST',
@@ -340,7 +340,7 @@ export const useUpdateComentarioDocente = () => {
   return useMutation({
     mutationFn: async ({ id, data }) => {
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
 
       // Usar idEvaluacionDocente para el endpoint del backend
       const response = await fetch(`${API_BASE_URL}/comentario-docente/${id}`, {
@@ -374,7 +374,7 @@ export const useDeleteComentarioDocente = () => {
   return useMutation({
     mutationFn: async (id) => {
       const token = localStorage.getItem('token');
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3002/api/v1';
+      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
 
       // Usar idEvaluacionDocente para el endpoint del backend
       const response = await fetch(`${API_BASE_URL}/comentario-docente/${id}`, {
