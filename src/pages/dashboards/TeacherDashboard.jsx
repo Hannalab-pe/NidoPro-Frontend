@@ -224,6 +224,7 @@ const TeacherDashboard = () => {
                <span className="font-semibold text-gray-900 text-sm truncate">
                  {user?.nombre || ''} {user?.apellido || ''}
                </span>
+               <span className="text-xs text-gray-700 truncate">{user?.email || 'correo@ejemplo.com'}</span>
                {user?.role?.nombre && (
                  <span className="text-[10px] text-white bg-green-500 rounded px-2 py-0.5 mt-1 mb-1 w-fit font-semibold tracking-wide uppercase">
                    {user.rol}
