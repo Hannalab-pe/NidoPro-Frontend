@@ -721,6 +721,27 @@ export const matriculaService = {
       console.error('❌ Error al obtener estadísticas:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener estadísticas');
     }
+  },
+
+  /**
+   * Actualizar contactos y datos del apoderado de una matrícula
+   * @param {string} idMatricula - ID de la matrícula
+   * @param {Object} updateData - Datos a actualizar
+   * @returns {Promise<Object>} Matrícula actualizada
+   */
+  async actualizarContactosMatricula(idMatricula, updateData) {
+    try {
+      console.log('📤 Actualizando contactos de matrícula:', idMatricula);
+      console.log('📋 Datos de actualización:', JSON.stringify(updateData, null, 2));
+
+      const response = await api.patch(`/matricula/actualizar-contactos/${idMatricula}`, updateData);
+
+      console.log('✅ Contactos de matrícula actualizados exitosamente:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al actualizar contactos de matrícula:', error);
+      throw new Error(error.response?.data?.message || 'Error al actualizar contactos de matrícula');
+    }
   }
 };
 

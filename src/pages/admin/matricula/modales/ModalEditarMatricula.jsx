@@ -4,7 +4,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { Dialog, Transition } from '@headlessui/react';
 import { toast } from 'sonner';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   X, 
   User, 
@@ -72,26 +72,7 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
   const queryClient = useQueryClient();
   const [matriculaCompleta, setMatriculaCompleta] = useState(null);
   const [loadingContactos, setLoadingContactos] = useState(false);
-
-  // Mutation para actualizar estudiante
-  const updateEstudianteMutation = useMutation({
-    mutationFn: ({ id, data }) => matriculaService.updateEstudiante(id, data),
-    onSuccess: () => {
-      // Invalidar queries relacionadas con matrícula
-      queryClient.invalidateQueries({ queryKey: matriculaKeys.lists() });
-    }
-  });
-
-  // Mutation para actualizar apoderado
-  const updateApoderadoMutation = useMutation({
-    mutationFn: ({ id, data }) => matriculaService.updateApoderado(id, data),
-    onSuccess: () => {
-      // Invalidar queries relacionadas con matrícula
-      queryClient.invalidateQueries({ queryKey: matriculaKeys.lists() });
-    }
-  });
-
-  const isUpdating = updateEstudianteMutation.isPending || updateApoderadoMutation.isPending;
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const {
     register,
@@ -191,83 +172,81 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
 
   const onSubmit = async (data) => {
     try {
+      setIsUpdating(true);
+
       // Usar la matrícula completa si está disponible, sino la original
       const matriculaToUse = matriculaCompleta || matricula;
-      
-      // Extraer IDs del estudiante y apoderado
-      const estudianteId = matriculaToUse.idEstudiante?.idEstudiante || matriculaToUse.idEstudiante?.id;
-      const apoderadoId = matriculaToUse.idApoderado?.idApoderado || matriculaToUse.idApoderado?.id;
-      
-      console.log('📝 Actualizando con IDs:', { estudianteId, apoderadoId });
-      
-      // Preparar datos del estudiante para actualización (solo campos editables)
-      const estudianteData = {
-        nombre: data.nombreEstudiante,
-        apellido: data.apellidoEstudiante,
-        observaciones: data.observacionesEstudiante
-      };
-      
-      // Preparar datos del apoderado para actualización
+
+      console.log('📝 Iniciando actualización con nuevo endpoint...');
+      console.log('📝 Datos del formulario:', data);
+      console.log('📝 Matrícula a actualizar:', matriculaToUse);
+
+      // Preparar datos del apoderado para el nuevo endpoint
       const apoderadoData = {
-        nombre: data.nombreApoderado,
-        apellido: data.apellidoApoderado,
         numero: data.numeroApoderado,
-        correo: data.correoApoderado,
-        direccion: data.direccionApoderado
+        direccion: data.direccionApoderado,
+        correo: data.correoApoderado
       };
 
-      // Preparar datos del contacto de emergencia
-      const contactosEmergencia = matriculaToUse.idEstudiante?.contactosEmergencia || [];
-      const contactoPrincipal = contactosEmergencia.find(c => c.esPrincipal) || contactosEmergencia[0];
-      
+      // Preparar contactos de emergencia existentes
+      const contactosEmergencia = [];
+      const contactosExistentes = matriculaToUse.idEstudiante?.contactosEmergencia || [];
+
+      // Si hay un contacto principal existente, incluirlo para actualización
+      const contactoPrincipal = contactosExistentes.find(c => c.esPrincipal) || contactosExistentes[0];
       if (contactoPrincipal) {
-        const contactoData = {
+        contactosEmergencia.push({
+          idContactoEmergencia: contactoPrincipal.idContactoEmergencia || contactoPrincipal.id,
           nombre: data.nombreContacto,
           apellido: data.apellidoContacto,
           telefono: data.telefonoContacto,
           email: data.emailContacto,
-          tipoContacto: data.tipoContacto
-        };
-        
-        console.log('📞 Datos del contacto a actualizar:', contactoData);
-        
-        // TODO: Actualizar contacto de emergencia cuando esté disponible el endpoint
-        // await matriculaService.updateContactoEmergencia(contactoPrincipal.idContactoEmergencia, contactoData);
+          tipoContacto: data.tipoContacto,
+          relacionEstudiante: data.tipoContacto, // Usar el mismo valor que tipoContacto
+          esPrincipal: true,
+          prioridad: 1,
+          desactivar: false
+        });
       }
 
-      // Ejecutar las actualizaciones en paralelo
-      const promises = [];
-      
-      if (estudianteId) {
-        promises.push(
-          updateEstudianteMutation.mutateAsync({ id: estudianteId, data: estudianteData })
-        );
+      // Verificar que tenemos el ID de la matrícula
+      const matriculaId = matriculaToUse.idMatricula || matriculaToUse.id;
+      if (!matriculaId) {
+        throw new Error('No se pudo obtener el ID de la matrícula');
       }
 
-      if (apoderadoId) {
-        promises.push(
-          updateApoderadoMutation.mutateAsync({ id: apoderadoId, data: apoderadoData })
-        );
-      }
+      console.log('📝 ID de matrícula:', matriculaId);
 
-      // Esperar a que se completen todas las actualizaciones
-      await Promise.all(promises);
+      // Preparar el payload para el nuevo endpoint
+      const updatePayload = {
+        apoderadoData,
+        contactosEmergencia,
+        nuevosContactos: [] // No agregamos nuevos contactos en esta versión
+      };
+
+      console.log('📦 Payload para nuevo endpoint:', JSON.stringify(updatePayload, null, 2));
+
+      // Usar el nuevo endpoint PATCH
+      await matriculaService.actualizarContactosMatricula(matriculaId, updatePayload);
+
+      // Invalidar queries para refrescar los datos
+      queryClient.invalidateQueries({ queryKey: matriculaKeys.lists() });
 
       toast.success('¡Información actualizada exitosamente!', {
-        description: 'Los datos del estudiante y apoderado han sido actualizados'
+        description: 'Los datos del apoderado y contactos han sido actualizados'
       });
-      
+
       onSave(); // Llamar callback de éxito
-      
+
     } catch (error) {
       console.error('❌ Error al actualizar:', error);
       toast.error('Error al actualizar la información', {
         description: error.message || 'Ocurrió un error inesperado'
       });
+    } finally {
+      setIsUpdating(false);
     }
-  };
-
-  const handleClose = () => {
+  };  const handleClose = () => {
     reset();
     onClose();
   };
