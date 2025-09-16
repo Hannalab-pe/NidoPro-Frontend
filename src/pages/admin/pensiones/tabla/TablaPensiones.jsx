@@ -26,7 +26,7 @@ const TablaPensiones = ({
       onDelete={onDelete}
       onView={onView}
       actions={{
-        add: false,
+        add: true,
         edit: false,
         delete: false,
         view: false,

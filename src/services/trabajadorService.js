@@ -614,19 +614,42 @@ export const trabajadorService = {
   },
 
   /**
-   * Obtener aulas asignadas a un trabajador
-   * @param {string} idTrabajador - ID del trabajador
-   * @returns {Promise} Lista de aulas asignadas al trabajador
+   * Eliminar/desactivar un trabajador
+   * @param {string|number} id - ID del trabajador
+   * @returns {Promise<Object>} Resultado de la eliminación
    */
-  getAulasPorTrabajador: async (idTrabajador) => {
+  async deleteTrabajador(id) {
     try {
-      const response = await api.get(`/trabajador/aulas/${idTrabajador}`);
+      console.log('🗑️ Eliminando/desactivando trabajador:', id);
+      
+      const response = await api.delete(`/trabajador/${id}`);
+      console.log('✅ Trabajador eliminado/desactivado exitosamente:', response.data);
+      
       return response.data;
     } catch (error) {
-      console.error('❌ Error al obtener aulas por trabajador:', error.response?.data || error.message);
-      throw new Error(error.response?.data?.message || 'Error al obtener aulas del trabajador');
+      console.error('❌ Error al eliminar/desactivar trabajador:', error);
+      throw new Error(error.response?.data?.message || 'Error al eliminar/desactivar trabajador');
     }
-  }
+  },
+
+  /**
+   * Cambiar el estado de un trabajador (activar/desactivar)
+   * @param {string|number} id - ID del trabajador
+   * @returns {Promise<Object>} Trabajador con estado actualizado
+   */
+  async toggleTrabajadorStatus(id) {
+    try {
+      console.log('🔄 Cambiando estado del trabajador:', id);
+      
+      const response = await api.delete(`/trabajador/${id}`);
+      console.log('✅ Estado del trabajador cambiado exitosamente:', response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al cambiar estado del trabajador:', error);
+      throw new Error(error.response?.data?.message || 'Error al cambiar estado del trabajador');
+    }
+  },
 };
 
 export default trabajadorService;

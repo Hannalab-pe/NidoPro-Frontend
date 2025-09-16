@@ -22,7 +22,12 @@ const TablaTrabajadoresSinPlanilla = ({
   generatingPlanillas = false,
   setGeneratingPlanillas,
   onGenerarPlanillas,
-  user
+  onAgregarAPlanilla,
+  planillaExistente,
+  isAgregandoTrabajadores = false,
+  user,
+  selectedMes,
+  selectedAnio
 }) => {
   const [selectedTrabajador, setSelectedTrabajador] = useState(null);
   const [selectedTrabajadores, setSelectedTrabajadores] = useState([]);
@@ -82,21 +87,33 @@ const TablaTrabajadoresSinPlanilla = ({
       return;
     }
 
+    // Validar que se haya seleccionado mes y año cuando no hay planilla existente
+    if (!planillaExistente && (!selectedMes || !selectedAnio)) {
+      toast.error('Debe seleccionar mes y año para generar una nueva planilla');
+      return;
+    }
+
     if (setGeneratingPlanillas) {
       setGeneratingPlanillas(true);
     }
 
     try {
-      if (onGenerarPlanillas) {
-        // Usar la función del hook si está disponible
-        await onGenerarPlanillas(selectedTrabajadores);
+      if (planillaExistente && onAgregarAPlanilla) {
+        // Agregar trabajadores a planilla existente
+        await onAgregarAPlanilla(selectedTrabajadores);
+      } else if (onGenerarPlanillas) {
+        // Generar nuevas planillas con mes/año seleccionados
+        await onGenerarPlanillas(selectedTrabajadores, selectedMes, selectedAnio);
       } else {
         // Implementación local como fallback
         const currentDate = new Date();
+        const mes = selectedMes ? parseInt(selectedMes) : currentDate.getMonth() + 1;
+        const anio = selectedAnio ? parseInt(selectedAnio) : currentDate.getFullYear();
+        
         const payload = {
-          mes: currentDate.getMonth() + 1,
-          anio: currentDate.getFullYear(),
-          fechaPagoProgramada: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0],
+          mes: mes,
+          anio: anio,
+          fechaPagoProgramada: new Date(anio, mes - 1 + 1, 0).toISOString().split('T')[0],
           trabajadores: selectedTrabajadores,
           generadoPor: user?.entidadId || user?.id
         };
@@ -106,9 +123,14 @@ const TablaTrabajadoresSinPlanilla = ({
         // await planillaService.generarPlanillasConTrabajadores(payload);
       }
 
-      toast.success(`Generando planillas para ${selectedTrabajadores.length} trabajadores...`);
+      const mesDisplay = selectedMes ? parseInt(selectedMes) : new Date().getMonth() + 1;
+      const anioDisplay = selectedAnio ? parseInt(selectedAnio) : new Date().getFullYear();
+      const actionMessage = planillaExistente 
+        ? 'agregados a la planilla existente' 
+        : `generando planillas para ${mesDisplay}/${anioDisplay}`;
+      toast.success(`${selectedTrabajadores.length} trabajadores ${actionMessage}...`);
 
-      // Resetear selección después de generar
+      // Resetear selección después de la operación
       setSelectedTrabajadores([]);
       setSelectAll(false);
 
@@ -145,18 +167,21 @@ const TablaTrabajadoresSinPlanilla = ({
             </div>
             <button
               onClick={handleGenerarPlanillas}
-              disabled={generatingPlanillas}
+              disabled={generatingPlanillas || isAgregandoTrabajadores}
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {generatingPlanillas ? (
+              {(generatingPlanillas || isAgregandoTrabajadores) ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Generando...
+                  {planillaExistente ? 'Agregando...' : 'Generando...'}
                 </>
               ) : (
                 <>
                   <Send className="w-4 h-4" />
-                  Generar Planillas
+                  {planillaExistente 
+                    ? 'Agregar a Planilla' 
+                    : `Generar Planilla ${selectedMes ? parseInt(selectedMes) : new Date().getMonth() + 1}/${selectedAnio ? parseInt(selectedAnio) : new Date().getFullYear()}`
+                  }
                 </>
               )}
             </button>

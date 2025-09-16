@@ -1,11 +1,13 @@
 // src/hooks/usePlanilla.js
 import { useState, useCallback, useMemo } from 'react';
 import {
-  useTrabajadoresSinPlanilla,
+  useTrabajadoresTipoContratoPlanilla,
   usePlanillasMensuales,
   useCreatePlanilla,
   useAprobarPlanillasMasivo,
-  useInvalidatePlanillas
+  useInvalidatePlanillas,
+  usePlanillaPorPeriodo,
+  useAgregarTrabajadoresAPlanilla
 } from './queries/usePlanillaQueries';
 import planillaService from '../services/planillaService';
 import { useAuthStore } from '../store';
@@ -24,6 +26,10 @@ export const usePlanilla = (initialFilters = {}) => {
     ...initialFilters
   });
 
+  // Estado para trabajadores filtrados por período
+  const [trabajadoresFiltradosPorPeriodo, setTrabajadoresFiltradosPorPeriodo] = useState([]);
+  const [periodoSeleccionado, setPeriodoSeleccionado] = useState({ mes: '', anio: '' });
+
   // Obtener usuario del store
   const { user } = useAuthStore();
 
@@ -33,7 +39,7 @@ export const usePlanilla = (initialFilters = {}) => {
     isLoading: loadingTrabajadoresSinPlanilla,
     error: errorTrabajadoresSinPlanilla,
     refetch: refetchTrabajadoresSinPlanilla
-  } = useTrabajadoresSinPlanilla(filters);
+  } = useTrabajadoresTipoContratoPlanilla(filters);
 
   const {
     data: planillasMensuales,
@@ -42,9 +48,20 @@ export const usePlanilla = (initialFilters = {}) => {
     refetch: refetchPlanillasMensuales
   } = usePlanillasMensuales(filters);
 
+  // Hook para obtener planilla por período (para filtrar trabajadores)
+  const {
+    data: planillaPorPeriodo,
+    isLoading: loadingPlanillaPorPeriodo,
+    error: errorPlanillaPorPeriodo,
+    refetch: refetchPlanillaPorPeriodo
+  } = usePlanillaPorPeriodo('', '', { enabled: false }); // Se ejecuta manualmente
+
   const createMutation = useCreatePlanilla();
   const aprobarMasivoMutation = useAprobarPlanillasMasivo();
   const { invalidateAll, invalidateLists, invalidateTrabajadoresSinPlanilla } = useInvalidatePlanillas();
+
+  // Nuevos hooks para la funcionalidad de agregar trabajadores a planilla existente
+  const agregarTrabajadoresMutation = useAgregarTrabajadoresAPlanilla();
 
   // --- Sección de Estadísticas ---
   /**
@@ -72,22 +89,35 @@ export const usePlanilla = (initialFilters = {}) => {
   }, [aprobarMasivoMutation]);
 
   // Nueva función para generar planillas con trabajadores seleccionados
-  const generarPlanillasConTrabajadores = useCallback(async (trabajadoresSeleccionados) => {
+  const generarPlanillasConTrabajadores = useCallback(async (trabajadoresSeleccionados, mesSeleccionado = null, anioSeleccionado = null) => {
     if (!trabajadoresSeleccionados || trabajadoresSeleccionados.length === 0) {
       throw new Error('Debe seleccionar al menos un trabajador');
     }
 
-    if (!user) {
-      throw new Error('Usuario no autenticado');
+    // Obtener generadoPor del store de autenticación
+    const generadoPor = user?.entidadId;
+    if (!generadoPor) {
+      throw new Error('ID de entidad no encontrado en el estado de autenticación');
     }
 
-    const currentDate = new Date();
+    // Usar mes y año seleccionados, o la fecha actual si no se proporcionan
+    const mes = mesSeleccionado ? parseInt(mesSeleccionado) : (new Date().getMonth() + 1);
+    const anio = anioSeleccionado ? parseInt(anioSeleccionado) : new Date().getFullYear();
+
+    // Validar que mes y año sean válidos
+    if (mes < 1 || mes > 12) {
+      throw new Error('Mes debe estar entre 1 y 12');
+    }
+    if (anio < 2020 || anio > 2030) {
+      throw new Error('Año debe estar entre 2020 y 2030');
+    }
+
     const payload = {
-      mes: currentDate.getMonth() + 1, // getMonth() devuelve 0-11, sumamos 1
-      anio: currentDate.getFullYear(),
-      fechaPagoProgramada: new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString().split('T')[0], // último día del mes
+      mes: mes,
+      anio: anio,
+      fechaPagoProgramada: new Date(anio, mes - 1 + 1, 0).toISOString().split('T')[0], // último día del mes seleccionado
       trabajadores: trabajadoresSeleccionados,
-      generadoPor: user?.entidadId || user?.id
+      generadoPor: generadoPor
     };
 
     console.log('Generando planillas con payload:', payload);
@@ -100,6 +130,99 @@ export const usePlanilla = (initialFilters = {}) => {
 
     return response;
   }, [user, invalidateAll]);
+
+  // Nueva función para obtener planilla por período
+  const obtenerPlanillaPorPeriodo = useCallback(async (mes, anio) => {
+    if (!mes || !anio) {
+      throw new Error('Mes y año son requeridos');
+    }
+
+    console.log('Obteniendo planilla por período:', { mes, anio });
+
+    // Llamada directa al servicio
+    const response = await planillaService.obtenerPlanillaPorPeriodo(mes, anio);
+
+    return response;
+  }, []);
+
+  // Nueva función para filtrar trabajadores por período
+  const filtrarTrabajadoresPorPeriodo = useCallback(async (mes, anio) => {
+    if (!mes || !anio) {
+      // Si no hay período seleccionado, mostrar todos los trabajadores
+      setTrabajadoresFiltradosPorPeriodo([]);
+      setPeriodoSeleccionado({ mes: '', anio: '' });
+      console.log('Mostrando todos los trabajadores (sin filtro de período)');
+      return trabajadoresSinPlanilla;
+    }
+
+    try {
+      console.log('Filtrando trabajadores para período:', { mes, anio });
+
+      // Obtener planilla del período (si existe)
+      const planilla = await obtenerPlanillaPorPeriodo(mes, anio);
+
+      if (!planilla || !planilla.detallePlanillas) {
+        // Si no hay planilla para este período, mostrar todos los trabajadores
+        console.log('No hay planilla para este período, mostrando todos los trabajadores');
+        setTrabajadoresFiltradosPorPeriodo([]);
+        setPeriodoSeleccionado({ mes, anio });
+        return trabajadoresSinPlanilla;
+      }
+
+      // Obtener IDs de trabajadores que YA tienen planilla para este período
+      const trabajadoresEnPlanilla = planilla.detallePlanillas.map(detalle => detalle.idTrabajador);
+
+      console.log('Trabajadores en planilla:', trabajadoresEnPlanilla);
+
+      // Filtrar trabajadores que NO están en la planilla del período
+      const trabajadoresFiltrados = trabajadoresSinPlanilla.filter(trabajador =>
+        !trabajadoresEnPlanilla.includes(trabajador.idTrabajador)
+      );
+
+      console.log('Trabajadores filtrados (sin planilla para este período):', trabajadoresFiltrados.length);
+
+      // Actualizar estado
+      setTrabajadoresFiltradosPorPeriodo(trabajadoresFiltrados);
+      setPeriodoSeleccionado({ mes, anio });
+
+      return trabajadoresFiltrados;
+
+    } catch (error) {
+      console.log('Error al filtrar trabajadores o no hay planilla para este período:', error.message);
+      // Si hay error (planilla no existe), mostrar todos los trabajadores
+      setTrabajadoresFiltradosPorPeriodo([]);
+      setPeriodoSeleccionado({ mes, anio });
+      return trabajadoresSinPlanilla;
+    }
+  }, [trabajadoresSinPlanilla, obtenerPlanillaPorPeriodo]);
+
+  // Nueva función para agregar trabajadores a una planilla existente
+  const agregarTrabajadoresAPlanilla = useCallback(async (idPlanilla, trabajadoresSeleccionados) => {
+    if (!idPlanilla) {
+      throw new Error('ID de planilla es requerido');
+    }
+
+    if (!trabajadoresSeleccionados || trabajadoresSeleccionados.length === 0) {
+      throw new Error('Debe seleccionar al menos un trabajador');
+    }
+
+    // Obtener generadoPor del store de autenticación
+    const generadoPor = user?.entidadId;
+    if (!generadoPor) {
+      throw new Error('ID de entidad no encontrado en el estado de autenticación');
+    }
+
+    const payload = {
+      idPlanilla,
+      trabajadores: trabajadoresSeleccionados,
+      generadoPor: generadoPor
+    };
+
+    console.log('Agregando trabajadores a planilla:', payload);
+
+    // Usar la mutation para agregar trabajadores
+    return agregarTrabajadoresMutation.mutateAsync(payload);
+  }, [user, agregarTrabajadoresMutation]);
 
   // Funciones de filtrado y búsqueda
   const updateFilters = useCallback((newFilters) => {
@@ -162,7 +285,8 @@ export const usePlanilla = (initialFilters = {}) => {
   // Objeto de retorno del hook
   return {
     // Estados
-    trabajadoresSinPlanilla,
+    trabajadoresSinPlanilla: trabajadoresFiltradosPorPeriodo.length > 0 ? trabajadoresFiltradosPorPeriodo : trabajadoresSinPlanilla,
+    trabajadoresSinPlanillaOriginal: trabajadoresSinPlanilla, // Datos originales sin filtrar
     planillasMensuales: planillasMensuales?.planillas || [],
     loading,
     creating,
@@ -170,6 +294,7 @@ export const usePlanilla = (initialFilters = {}) => {
     filters,
     error,
     statistics,
+    periodoSeleccionado,
 
     // Funciones CRUD
     createPlanilla,
@@ -189,13 +314,20 @@ export const usePlanilla = (initialFilters = {}) => {
     fetchPlanillasMensuales,
     refreshAll,
 
+    // Nuevas funciones para agregar trabajadores a planilla existente
+    obtenerPlanillaPorPeriodo,
+    agregarTrabajadoresAPlanilla,
+    filtrarTrabajadoresPorPeriodo,
+    isAgregandoTrabajadores: agregarTrabajadoresMutation.isPending,
+
     // Funciones de cache
     invalidateCache: invalidateAll,
     invalidateLists,
     invalidateTrabajadoresSinPlanilla,
 
     // Estados computados
-    hasTrabajadoresSinPlanilla: Array.isArray(trabajadoresSinPlanilla) && trabajadoresSinPlanilla.length > 0,
+    hasTrabajadoresSinPlanilla: Array.isArray(trabajadoresFiltradosPorPeriodo.length > 0 ? trabajadoresFiltradosPorPeriodo : trabajadoresSinPlanilla) &&
+                                (trabajadoresFiltradosPorPeriodo.length > 0 ? trabajadoresFiltradosPorPeriodo : trabajadoresSinPlanilla).length > 0,
     hasPlanillasMensuales: planillasMensuales?.planillas?.length > 0,
     isOperating: creating || approving,
     isCached: true, // TanStack Query maneja el cache automáticamente

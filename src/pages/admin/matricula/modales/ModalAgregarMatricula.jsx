@@ -149,6 +149,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showApoderadoSearch, setShowApoderadoSearch] = useState(false);
   const [selectedApoderado, setSelectedApoderado] = useState(null);
+  const [selectedAulaId, setSelectedAulaId] = useState('');
   const [gradoCargado, setGradoCargado] = useState(null);
 
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue, control } = useForm({
@@ -158,6 +159,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
       estudianteTipoDoc: 'DNI',
       apoderadoTipoDoc: 'DNI',
       tipoAsignacionAula: 'manual',
+      idAulaEspecifica: '',
       fechaIngreso: new Date().toISOString().split('T')[0],
       contactosEmergencia: [{ nombre: '', apellido: '', telefono: '', email: '', tipoContacto: '', esPrincipal: true, prioridad: 1 }],
       voucherFile: null
@@ -187,6 +189,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   useEffect(() => {
     if (isOpen) {
       setGradoCargado(null);
+      setSelectedAulaId('');
     }
   }, [isOpen]);
 
@@ -220,6 +223,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
           setGradoCargado(selectedGrado);
 
           // Limpiar la selección de aula cuando cambia el grado
+          setSelectedAulaId('');
           setValue('idAulaEspecifica', '');
         } catch (error) {
           console.error('❌ Error al cargar aulas disponibles para grado:', error);
@@ -252,6 +256,7 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
   // Funciones de manejo
   const handleClose = () => {
     reset();
+    setSelectedAulaId('');
     setVoucherImage(null);
     setVoucherFile(null);
     setSearchTerm('');
@@ -361,24 +366,13 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
       // Obtener ID real del aula si es asignación manual
       let idAulaReal = null;
       if (data.tipoAsignacionAula === 'manual' && data.idAulaEspecifica) {
-        try {
-          console.log('🔍 Buscando ID real del aula para sección:', data.idAulaEspecifica, 'en grado:', data.idGrado);
-          
-          // Importar dinámicamente el servicio de aulas
-          const { aulaService } = await import('../../../../services/aulaService');
-          
-          // Buscar aula por grado y sección
-          const aulaCompleta = await aulaService.getAulaByGradoAndSeccion(data.idGrado, data.idAulaEspecifica);
-          
-          if (aulaCompleta && aulaCompleta.idAula) {
-            idAulaReal = aulaCompleta.idAula;
-            console.log('✅ ID real del aula encontrado:', idAulaReal);
-          } else {
-            console.warn('⚠️ No se pudo encontrar el aula completa para sección:', data.idAulaEspecifica);
-          }
-        } catch (error) {
-          console.error('❌ Error al buscar ID del aula:', error);
-        }
+        // El idAula ya viene directamente del endpoint de aulas disponibles por grado
+        idAulaReal = data.idAulaEspecifica;
+        console.log('✅ ID del aula seleccionado:', idAulaReal);
+        console.log('🔍 Tipo de valor idAulaEspecifica:', typeof data.idAulaEspecifica);
+        console.log('🔍 Longitud del valor:', data.idAulaEspecifica.length);
+        console.log('🔍 Es UUID válido?:', /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.idAulaEspecifica));
+        console.log('🔍 Estado local selectedAulaId:', selectedAulaId);
       }
 
       const matriculaData = {
@@ -402,7 +396,16 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
             if (token) {
               // Decodificar el token JWT para obtener el ID del usuario
               const payload = JSON.parse(atob(token.split('.')[1]));
-              return payload.id || payload.userId || payload.sub || null;
+              // Usar entidadId en lugar de userId para que coincida con lo que espera el backend
+              const entidadId = payload.entidadId || payload.id || payload.userId || payload.sub || null;
+              console.log('👤 RegistradoPor obtenido del token:', {
+                entidadId,
+                payloadEntidadId: payload.entidadId,
+                payloadId: payload.id,
+                payloadUserId: payload.userId,
+                payloadSub: payload.sub
+              });
+              return entidadId;
             }
           } catch (error) {
             console.warn('No se pudo obtener el ID del usuario del token:', error);
@@ -1190,7 +1193,14 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                             required
                           >
                             <select
-                              {...register('idAulaEspecifica')}
+                              value={selectedAulaId}
+                              onChange={(e) => {
+                                const selectedValue = e.target.value;
+                                console.log('🎯 Aula seleccionada - Value:', selectedValue);
+                                console.log('🎯 Aula seleccionada - Text:', e.target.options[e.target.selectedIndex]?.text);
+                                setSelectedAulaId(selectedValue);
+                                setValue('idAulaEspecifica', selectedValue);
+                              }}
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                               disabled={loadingAulasPorGrado}
                             >
@@ -1198,8 +1208,8 @@ const ModalAgregarMatricula = ({ isOpen, onClose, refetch }) => {
                                 {loadingAulasPorGrado ? 'Cargando aulas disponibles...' : 'Seleccione un aula disponible'}
                               </option>
                               {Array.isArray(aulasDisponiblesPorGrado) && aulasDisponiblesPorGrado.length > 0 ? (
-                                aulasDisponiblesPorGrado.map((aula, index) => (
-                                  <option key={`${aula.seccion}-${index}`} value={aula.seccion}>
+                                aulasDisponiblesPorGrado.map((aula) => (
+                                  <option key={aula.idAula} value={aula.idAula}>
                                     Sección {aula.seccion} - {aula.cuposDisponibles} cupos disponibles ({aula.estudiantesAsignados}/{aula.cantidadEstudiantes} estudiantes)
                                   </option>
                                 ))

@@ -85,6 +85,35 @@ const planillaService = {
   },
 
   /**
+   * Obtener trabajadores con contrato de planilla
+   * @param {Object} filters - Filtros opcionales
+   * @returns {Promise<Array>} Lista de trabajadores con contrato planilla
+   */
+  obtenerTrabajadoresTipoContratoPlanilla: async (filters = {}) => {
+    try {
+      console.log('👥 Obteniendo trabajadores con contrato planilla...', filters);
+
+      const response = await api.get('/trabajador/tipo-contrato-planilla');
+      console.log('✅ Respuesta del backend para trabajadores con contrato planilla:', response.data);
+
+      // La respuesta ya es un array de trabajadores
+      if (Array.isArray(response.data)) {
+        return response.data;
+      }
+
+      // Si viene envuelto en un objeto
+      if (response.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al obtener trabajadores con contrato planilla:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener trabajadores con contrato planilla');
+    }
+  },
+
+  /**
    * Aprobar múltiples planillas de forma masiva
    * @param {Object} datosAprobacion - Datos para la aprobación masiva
    * @param {Array} datosAprobacion.idsPlanillas - Array de IDs de planillas a aprobar
@@ -187,40 +216,48 @@ const planillaService = {
   },
 
   /**
-   * Obtener trabajadores sin detalle de planilla asociado
-   * @param {Object} filters - Filtros opcionales
-   * @returns {Promise<Array>} Lista de trabajadores sin planilla
+   * Obtener planilla por período (mes/año)
+   * @param {number|string} mes - Mes de la planilla
+   * @param {number|string} anio - Año de la planilla
+   * @returns {Promise<Object>} Planilla del período especificado
    */
-  obtenerTrabajadoresSinPlanilla: async (filters = {}) => {
+  obtenerPlanillaPorPeriodo: async (mes, anio) => {
     try {
-      console.log('👥 Obteniendo trabajadores sin planilla...', filters);
+      console.log('� Obteniendo planilla por período:', { mes, anio });
 
-      const params = new URLSearchParams();
-
-      // Agregar filtros a los parámetros
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          params.append(key, value);
-        }
-      });
-
-      const response = await api.get(`/trabajador/sin-planilla?${params.toString()}`);
-      console.log('✅ Respuesta del backend para trabajadores sin planilla:', response.data);
-
-      // La respuesta ya es un array de trabajadores
-      if (Array.isArray(response.data)) {
-        return response.data;
-      }
-
-      // Si viene envuelto en un objeto
-      if (response.data && Array.isArray(response.data.data)) {
-        return response.data.data;
-      }
+      const response = await api.get(`/planilla-mensual/periodo/${mes}/${anio}`);
+      console.log('✅ Planilla obtenida por período:', response.data);
 
       return response.data;
     } catch (error) {
-      console.error('❌ Error al obtener trabajadores sin planilla:', error);
-      throw new Error(error.response?.data?.message || 'Error al obtener trabajadores sin planilla');
+      console.error('❌ Error al obtener planilla por período:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener planilla por período');
+    }
+  },
+
+  /**
+   * Agregar trabajadores a una planilla existente
+   * @param {string} idPlanilla - ID de la planilla
+   * @param {Array} trabajadores - Array de IDs de trabajadores
+   * @param {string} generadoPor - ID del trabajador que genera
+   * @returns {Promise<Object>} Respuesta de la operación
+   */
+  agregarTrabajadoresAPlanilla: async (idPlanilla, trabajadores, generadoPor) => {
+    try {
+      console.log('➕ Agregando trabajadores a planilla:', { idPlanilla, trabajadores, generadoPor });
+
+      const payload = {
+        trabajadores: trabajadores,
+        generadoPor: generadoPor
+      };
+
+      const response = await api.patch(`/planilla-mensual/${idPlanilla}/agregar-trabajadores`, payload);
+      console.log('✅ Trabajadores agregados a planilla exitosamente:', response.data);
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al agregar trabajadores a planilla:', error);
+      throw new Error(error.response?.data?.message || 'Error al agregar trabajadores a planilla');
     }
   },
 };

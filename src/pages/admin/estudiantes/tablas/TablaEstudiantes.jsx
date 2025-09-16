@@ -32,7 +32,7 @@ const TablaEstudiantes = ({
       actions={{
         add: false, // Los estudiantes se agregan solo a través de matrícula
         edit: true,
-        delete: true,
+        delete: false,
         view: true,
         import: false, // Import manejado por matrícula
       }}

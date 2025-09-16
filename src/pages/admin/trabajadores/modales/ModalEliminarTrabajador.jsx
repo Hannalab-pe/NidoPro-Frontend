@@ -12,11 +12,11 @@ import {
   Clock,
   Award
 } from 'lucide-react';
-import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
+import { useToggleTrabajadorStatus } from 'src/hooks/queries/useTrabajadoresQueries';
 
 const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => {
-  // Hook personalizado para gestión de trabajadores
-  const { toggleTrabajadorStatus, deleting } = useTrabajadores();
+  // Hook para cambiar el estado del trabajador
+  const toggleStatusMutation = useToggleTrabajadorStatus();
   
   // Estado local para confirmación
   const [confirmName, setConfirmName] = useState('');
@@ -35,8 +35,8 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
       console.log('🔄 Modal - Trabajador a togglear:', trabajador);
       console.log('🔄 Modal - ID del trabajador:', trabajador.idTrabajador || trabajador.id);
       
-      // El hook se encarga de todo el proceso (toggle status + toast + update state)
-      await toggleTrabajadorStatus(trabajador);
+      // Usar la mutación para cambiar el estado del trabajador
+      toggleStatusMutation.mutate({ trabajador });
       
       // Limpiar y cerrar modal después del éxito
       handleClose();
