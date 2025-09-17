@@ -60,6 +60,10 @@ const MovimientosCaja = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTipo, setFilterTipo] = useState('TODOS')
   
+  // Estados para paginación
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage] = useState(10)
+  
   // Estados para edición
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [movimientoToEdit, setMovimientoToEdit] = useState(null)
@@ -120,6 +124,8 @@ const MovimientosCaja = () => {
     }
 
     setFilteredMovimientos(filtered)
+    // Resetear a la primera página cuando cambian los filtros
+    setCurrentPage(1)
   }, [movimientos, searchTerm, filterTipo])
 
   const cargarMovimientos = async () => {
@@ -140,6 +146,8 @@ const MovimientosCaja = () => {
     } finally {
       setLoadingHistorial(false)
     }
+    // Resetear a la primera página cuando se cargan nuevos movimientos
+    setCurrentPage(1)
   }
 
   const cargarSaldoCaja = async () => {
@@ -484,6 +492,50 @@ const MovimientosCaja = () => {
       default:
         return 'text-gray-700 bg-gray-100'
     }
+  }
+
+  // Función para obtener elementos paginados
+  const getPaginatedMovimientos = () => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredMovimientos.slice(startIndex, endIndex)
+  }
+
+  // Función para calcular el número total de páginas
+  const getTotalPages = () => {
+    return Math.ceil(filteredMovimientos.length / itemsPerPage)
+  }
+
+  // Función para manejar cambio de página
+  const handlePageChange = (pageNumber) => {
+    if (pageNumber >= 1 && pageNumber <= getTotalPages()) {
+      setCurrentPage(pageNumber)
+    }
+  }
+
+  // Función para generar números de página a mostrar
+  const getPageNumbers = () => {
+    const totalPages = getTotalPages()
+    const current = currentPage
+    const pages = []
+    
+    if (totalPages <= 5) {
+      // Mostrar todas las páginas si son 5 o menos
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Lógica para mostrar páginas con ellipsis
+      if (current <= 3) {
+        pages.push(1, 2, 3, 4, 5)
+      } else if (current >= totalPages - 2) {
+        pages.push(totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(current - 2, current - 1, current, current + 1, current + 2)
+      }
+    }
+    
+    return pages
   }
 
   const handleBack = () => {
@@ -1062,7 +1114,7 @@ const MovimientosCaja = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {filteredMovimientos.map((movimiento) => (
+                          {getPaginatedMovimientos().map((movimiento) => (
                             <tr key={movimiento.idMovimiento} className="hover:bg-gray-50">
                               {/* Fecha/Hora */}
                               <td className="px-6 py-4 whitespace-nowrap">
@@ -1181,6 +1233,52 @@ const MovimientosCaja = () => {
                         </tbody>
                       </table>
                     </div>
+
+                    {/* Controles de paginación */}
+                    {filteredMovimientos.length > itemsPerPage && (
+                      <div className="flex items-center justify-between px-6 py-3 bg-white border-t border-gray-200">
+                        <div className="flex items-center text-sm text-gray-700">
+                          <span>
+                            Mostrando {((currentPage - 1) * itemsPerPage) + 1} a{' '}
+                            {Math.min(currentPage * itemsPerPage, filteredMovimientos.length)} de{' '}
+                            {filteredMovimientos.length} resultados
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
+                            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Anterior
+                          </button>
+                          
+                          {/* Números de página */}
+                          {getPageNumbers().map(pageNumber => (
+                            <button
+                              key={pageNumber}
+                              onClick={() => handlePageChange(pageNumber)}
+                              className={`px-3 py-1 text-sm font-medium rounded-md ${
+                                currentPage === pageNumber
+                                  ? 'text-blue-600 bg-blue-50 border border-blue-500'
+                                  : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50'
+                              }`}
+                            >
+                              {pageNumber}
+                            </button>
+                          ))}
+                          
+                          <button
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === getTotalPages()}
+                            className="px-3 py-1 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            Siguiente
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

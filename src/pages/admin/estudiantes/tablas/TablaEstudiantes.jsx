@@ -15,6 +15,12 @@ const TablaEstudiantes = ({
   onImport,
   onExport
 }) => {
+  // Debug logs
+  console.log('🔍 TablaEstudiantes - Datos recibidos:', estudiantes);
+  console.log('📊 TablaEstudiantes - Cantidad de estudiantes:', estudiantes.length);
+  console.log('📋 TablaEstudiantes - Columnas disponibles:', studentsColumns.length);
+  console.log('🎯 TablaEstudiantes - Primera columna:', studentsColumns[0]);
+  
   return (
     <DataTable
       data={estudiantes}

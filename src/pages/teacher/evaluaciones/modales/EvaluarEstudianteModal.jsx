@@ -5,6 +5,9 @@ import { X, UserCheck, Users, Award, FileText, Save, Bug, Eye } from 'lucide-rea
 import { toast } from 'sonner';
 import VerEstudiantesEvaluadosModal from './VerEstudiantesEvaluadosModal';
 
+// Configuración de la API
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
+
 // Función de debug para la consola
 window.debugAuthStorage = () => {
   const authStorage = localStorage.getItem('auth-storage');
@@ -42,7 +45,7 @@ window.testAulasAPI = async () => {
   console.log('Probando API con entidadId:', entidadId);
 
   try {
-    const response = await fetch(`https://nidopro.up.railway.app/api/v1/trabajador/aulas/${entidadId}`, {
+    const response = await fetch(`${API_BASE_URL}/trabajador/aulas/${entidadId}`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -118,7 +121,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
       console.log('UserId a usar (entidadId):', userId);
 
       // Usar el entidadId directamente
-      const endpoint = `https://nidopro.up.railway.app/api/v1/trabajador/aulas/${userId}`;
+      const endpoint = `${API_BASE_URL}/trabajador/aulas/${userId}`;
       console.log('Endpoint:', endpoint);
 
       const response = await fetch(endpoint, {
@@ -142,17 +145,6 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
 
       // Si aún no funciona, mostrar información de debug
       if (!data.success || !data.aulas || data.aulas.length === 0) {
-        console.error('Debug info - Full response:', data);
-        console.error('Debug info - Auth data structure:', {
-          hasAuthStorage: !!localStorage.getItem('auth-storage'),
-          authDataKeys: authData ? Object.keys(authData) : 'null',
-          stateKeys: authData?.state ? Object.keys(authData.state) : 'null',
-          entidadId: authData?.state?.entidadId,
-          userId: authData?.state?.user?.id,
-          userEntidadId: authData?.state?.user?.entidadId,
-          tokenLength: token?.length || 0
-        });
-        toast.error('No se encontraron aulas asignadas. Revisa la consola para más detalles.');
         return null;
       }
 
@@ -193,7 +185,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
         return;
       }
 
-      const response = await fetch(`https://nidopro.up.railway.app/api/v1/estudiante/aula/${idAula}`, {
+      const response = await fetch(`${API_BASE_URL}/estudiante/aula/${idAula}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -245,7 +237,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
         return;
       }
 
-      const response = await fetch(`https://nidopro.up.railway.app/api/v1/nota/libreta-kinder/aula/${idAula}`, {
+      const response = await fetch(`${API_BASE_URL}/nota/libreta-kinder/aula/${idAula}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -457,34 +449,7 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
                     <span className="text-sm sm:text-base">Evaluar Estudiante</span>
                   </span>
                   <div className="flex items-center space-x-1 sm:space-x-2">
-                    <button
-                      onClick={() => {
-                        const data = window.debugAuthStorage();
-                        if (data) {
-                          toast.success('Información de debug enviada a consola');
-                        } else {
-                          toast.error('No se encontró información de autenticación');
-                        }
-                      }}
-                      className="text-gray-400 hover:text-gray-600 p-1"
-                      title="Debug Info"
-                    >
-                      <Bug className="w-3 h-3 sm:w-4 sm:h-4" />
-                    </button>
-                    <button
-                      onClick={async () => {
-                        const result = await window.testAulasAPI();
-                        if (result && result.success) {
-                          toast.success('API funcionando correctamente');
-                        } else {
-                          toast.error('Error en API - revisa consola');
-                        }
-                      }}
-                      className="text-gray-400 hover:text-gray-600 p-1"
-                      title="Test API"
-                    >
-                      🔗
-                    </button>
+                    
                     <button
                       type="button"
                       className="text-gray-400 hover:text-gray-600 p-1"

@@ -127,8 +127,8 @@ const Evaluaciones = () => {
       <div className="flex flex-col justify-center items-center min-h-64">
         <div className="text-center">
           <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">No hay evaluaciones</h3>
-          <p className="text-gray-500">Aún no tienes evaluaciones registradas.</p>
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">No tienes evaluaciones recibidas</h3>
+          <p className="text-gray-500">Aún no tienes evaluaciones.</p>
         </div>
       </div>
     );

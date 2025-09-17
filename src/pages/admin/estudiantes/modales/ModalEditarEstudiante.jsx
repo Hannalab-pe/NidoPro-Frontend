@@ -20,15 +20,13 @@ import {
   Users
 } from 'lucide-react';
 import { useStudents } from '../../../../hooks/useStudents';
+import { toast } from 'sonner';
 
 // Esquema de validación con Yup (solo campos editables)
 const validationSchema = yup.object({
   nombre: yup.string().required('El nombre es requerido').trim(),
-  apellido: yup.string().required('El apellido es requerido').trim(),
-  contactoEmergencia: yup.string().required('El contacto de emergencia es requerido').trim(),
-  nroEmergencia: yup.string().required('El número de emergencia es requerido').trim(),
-  observaciones: yup.string()
-  // Campos excluidos (no editables): nroDocumento, tipoDocumento, fechaNacimiento, idRol
+  apellido: yup.string().required('El apellido es requerido').trim()
+  // Campos excluidos (no editables): nroDocumento, tipoDocumento, fechaNacimiento, idRol, observaciones, contactosEmergencia
 });
 
 // Componente FormField reutilizable
@@ -73,14 +71,12 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
     defaultValues: {
       nombre: '',
       apellido: '',
-      contactoEmergencia: '',
-      nroEmergencia: '',
-      observaciones: '',
       // Campos de solo lectura (no editables)
       nroDocumento: '',
       tipoDocumento: 'DNI',
       fechaNacimiento: '',
-      idRol: ''
+      idRol: '',
+      observaciones: ''
     }
   });
 
@@ -107,14 +103,12 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
       reset({
         nombre: estudiante.nombre || '',
         apellido: estudiante.apellido || '',
-        contactoEmergencia: estudiante.contactoEmergencia || '',
-        nroEmergencia: estudiante.nroEmergencia || '',
-        observaciones: estudiante.observaciones || '',
         // Campos de solo lectura
         nroDocumento: estudiante.nroDocumento || '',
         tipoDocumento: estudiante.tipoDocumento || 'DNI',
         fechaNacimiento: estudiante.fechaNacimiento || '',
-        idRol: estudiante.idRol || ''
+        idRol: estudiante.idRol || '',
+        observaciones: estudiante.observaciones || ''
       });
     }
   }, [estudiante, isOpen, reset]);
@@ -133,10 +127,24 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
         throw new Error('No se pudo identificar al estudiante para actualizar');
       }
       
-      // Excluir campos inmutables de los datos a enviar (no se pueden editar)
-      const { nroDocumento, tipoDocumento, fechaNacimiento, idRol, ...dataToUpdate } = data;
-      console.log('📋 Datos a actualizar (sin campos inmutables):', dataToUpdate);
-      console.log('📋 Campos excluidos:', { nroDocumento, tipoDocumento, fechaNacimiento, idRol });
+      // Comparar y determinar qué campos han cambiado
+      const dataToUpdate = {};
+      
+      if (data.nombre !== estudiante.nombre) {
+        dataToUpdate.nombre = data.nombre;
+      }
+      
+      if (data.apellido !== estudiante.apellido) {
+        dataToUpdate.apellido = data.apellido;
+      }
+      
+      // Si no hay cambios, mostrar mensaje
+      if (Object.keys(dataToUpdate).length === 0) {
+        toast.info('No se detectaron cambios para actualizar');
+        return;
+      }
+      
+      console.log('📋 Datos a actualizar (solo cambios):', dataToUpdate);
       
       // El hook se encarga del proceso de actualización
       await updateStudent(estudianteId, dataToUpdate);
@@ -150,7 +158,15 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
   };
 
   const handleClose = () => {
-    reset();
+    reset({
+      nombre: '',
+      apellido: '',
+      nroDocumento: '',
+      tipoDocumento: 'DNI',
+      fechaNacimiento: '',
+      idRol: '',
+      observaciones: ''
+    });
     onClose();
   };
 
@@ -264,38 +280,20 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
                       </FormField>
                     </FormSection>
 
-                    {/* Información de Emergencia */}
-                    <FormSection title="Información de Emergencia" icon={AlertTriangle} iconColor="text-red-600">
-                      <FormField label="Contacto de Emergencia" required error={errors.contactoEmergencia?.message}>
-                        <input
-                          {...register('contactoEmergencia')}
-                          className={inputClassName(errors.contactoEmergencia)}
-                          placeholder="Ej: Ana García"
-                          disabled={isLoading}
-                        />
-                      </FormField>
-
-                      <FormField label="Número de Emergencia" required error={errors.nroEmergencia?.message}>
-                        <input
-                          {...register('nroEmergencia')}
-                          type="tel"
-                          className={inputClassName(errors.nroEmergencia)}
-                          placeholder="Ej: 987654321"
-                          disabled={isLoading}
-                        />
-                      </FormField>
-                    </FormSection>
-
                     {/* Observaciones */}
-                    <FormSection title="Observaciones" icon={Heart} iconColor="text-green-600">
-                      <FormField label="Observaciones" error={errors.observaciones?.message} className="md:col-span-2">
+                    <FormSection title="Observaciones" icon={Heart} iconColor="text-purple-600">
+                      <FormField label="Observaciones" className="md:col-span-2">
                         <textarea
                           {...register('observaciones')}
                           rows={3}
-                          className={inputClassName(errors.observaciones)}
+                          className={`${inputClassName()} bg-gray-100 cursor-not-allowed`}
                           placeholder="Observaciones adicionales sobre el estudiante..."
-                          disabled={isLoading}
+                          disabled={true}
+                          readOnly
                         />
+                        <p className="text-xs text-gray-500 mt-1">
+                          ℹ️ Las observaciones no se pueden modificar desde aquí
+                        </p>
                       </FormField>
                     </FormSection>
 

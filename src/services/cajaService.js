@@ -134,6 +134,49 @@ const cajaService = {
   },
 
   /**
+   * Actualizar un movimiento de caja
+   */
+  async actualizarMovimiento(idMovimiento, datosActualizacion) {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        throw new Error('Token de autorización no encontrado');
+      }
+
+      console.log('📝 Actualizando movimiento de caja:', idMovimiento, datosActualizacion);
+
+      const response = await fetch(`${API_BASE_URL}/caja-simple/${idMovimiento}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(datosActualizacion)
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('✅ Movimiento actualizado:', data);
+      
+      return {
+        success: true,
+        movimiento: data
+      };
+
+    } catch (error) {
+      console.error('❌ Error al actualizar movimiento:', error);
+      throw new Error(error.message || 'Error al actualizar movimiento de caja');
+    }
+  },
+
+  /**
    * Obtener dashboard financiero general
    */
   async obtenerDashboardFinanciero() {

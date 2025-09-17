@@ -11,59 +11,93 @@ export const studentsColumns = [
     Header: 'Estudiante',
     accessor: 'nombre',
     sortable: true,
+    width: 200,
     Cell: ({ value, row }) => (
-      <div className="flex items-center space-x-3">
-        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-          {row.foto ? (
-            <img 
-              src={row.foto} 
-              alt={`${value} ${row.apellido}`} 
+      <div className="flex items-center space-x-3 min-w-0">
+        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+          {row.imagen_estudiante ? (
+            <img
+              src={row.imagen_estudiante}
+              alt={`${value} ${row.apellido}`}
               className="w-10 h-10 rounded-full object-cover"
             />
           ) : (
-            <span className="text-gray-600 font-medium">
-              {value?.charAt(0)?.toUpperCase()}
+            <span className="text-gray-600 font-medium text-sm">
+              {value?.charAt(0)?.toUpperCase()}{row.apellido?.charAt(0)?.toUpperCase()}
             </span>
           )}
         </div>
-        <div>
-          <div className="font-medium text-gray-900">{`${value} ${row.apellido || ''}`}</div>
-          <div className="text-sm text-gray-500">{row.nroDocumento || 'Sin documento'}</div>
+        <div className="min-w-0 flex-1">
+          <div className="font-medium text-gray-900 truncate">{`${value} ${row.apellido || ''}`}</div>
+          <div className="text-sm text-gray-500 truncate">{row.nroDocumento ? `${row.tipoDocumento || 'DNI'}: ${row.nroDocumento}` : 'Sin documento'}</div>
         </div>
       </div>
     )
   },
   {
-    Header: 'Documento',
-    accessor: 'nroDocumento',
+    Header: 'Usuario',
+    accessor: 'idUsuario.usuario',
     sortable: true,
+    width: 120,
     Cell: ({ value, row }) => (
       <div>
-        <div className="font-mono text-sm">{value || 'Sin documento'}</div>
-        <div className="text-xs text-gray-500">{row.tipoDocumento || 'DNI'}</div>
+        <div className="font-mono text-sm text-gray-900 truncate max-w-[100px]" title={value}>
+          {value || 'Sin usuario'}
+        </div>
+        <div className="text-xs text-gray-500">
+          {row.idUsuario?.estaActivo ? 'Activo' : 'Inactivo'}
+        </div>
       </div>
     )
   },
   {
     Header: 'Contacto Emergencia',
-    accessor: 'contactoEmergencia',
-    sortable: true,
-    Cell: ({ value, row }) => (
-      <div>
-        <div className="text-sm">{value || 'Sin contacto'}</div>
-        <div className="text-xs text-gray-500">{row.nroEmergencia || ''}</div>
-      </div>
-    )
+    accessor: 'contactosEmergencia',
+    sortable: false,
+    width: 150,
+    Cell: ({ value }) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return (
+          <div className="text-sm text-gray-400 italic">
+            Sin contacto
+          </div>
+        );
+      }
+
+      const principal = value.find(contacto => contacto.esPrincipal) || value[0];
+      return (
+        <div className="max-w-[140px]">
+          <div className="text-sm font-medium text-gray-900 truncate" title={`${principal.nombre} ${principal.apellido}`}>
+            {principal.nombre} {principal.apellido}
+          </div>
+          <div className="text-xs text-gray-600 truncate" title={principal.tipoContacto || principal.relacionEstudiante}>
+            {principal.tipoContacto || principal.relacionEstudiante}
+          </div>
+        </div>
+      );
+    }
   },
   {
-    Header: 'Observaciones',
-    accessor: 'observaciones',
+    Header: 'Email Contacto',
+    accessor: 'contactosEmergencia',
     sortable: false,
-    Cell: ({ value }) => (
-      <span className="text-sm text-gray-600">
-        {value ? (value.length > 30 ? `${value.substring(0, 30)}...` : value) : 'Sin observaciones'}
-      </span>
-    )
+    width: 140,
+    Cell: ({ value }) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return (
+          <div className="text-sm text-gray-400 italic">
+            Sin email
+          </div>
+        );
+      }
+
+      const principal = value.find(contacto => contacto.esPrincipal) || value[0];
+      return (
+        <div className="text-sm text-gray-600 truncate max-w-[120px]" title={principal.email}>
+          {principal.email || 'Sin email'}
+        </div>
+      );
+    }
   },
   {
     Header: 'Estado',
@@ -81,34 +115,52 @@ export const studentsColumns = [
         </span>
       );
     }
+  },
+  {
+    Header: 'Fecha Registro',
+    accessor: 'idUsuario.creado',
+    sortable: true,
+    width: 110,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-600">
+        {value ? new Date(value).toLocaleDateString('es-ES', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        }) : 'Sin fecha'}
+      </div>
+    )
   }
 ];
 
 // Filtros para estudiantes
 export const studentsFilters = {
-  grade: {
-    label: 'Grado',
-    placeholder: 'Todos los grados',
-    options: [
-      { value: '1A', label: '1° Grado A' },
-      { value: '1B', label: '1° Grado B' },
-      { value: '2A', label: '2° Grado A' },
-      { value: '2B', label: '2° Grado B' },
-      { value: '3A', label: '3° Grado A' },
-      { value: '3B', label: '3° Grado B' },
-      { value: '4A', label: '4° Grado A' },
-      { value: '4B', label: '4° Grado B' },
-      { value: '5A', label: '5° Grado A' },
-      { value: '5B', label: '5° Grado B' }
-    ]
-  },
   status: {
     label: 'Estado',
     placeholder: 'Todos los estados',
     options: [
       { value: 'active', label: 'Activo' },
-      { value: 'inactive', label: 'Inactivo' },
-      { value: 'pending', label: 'Pendiente' }
+      { value: 'inactive', label: 'Inactivo' }
+    ]
+  },
+  tipoDocumento: {
+    label: 'Tipo Documento',
+    placeholder: 'Todos los tipos',
+    options: [
+      { value: 'DNI', label: 'DNI' },
+      { value: 'CE', label: 'Carnet de Extranjería' },
+      { value: 'PASAPORTE', label: 'Pasaporte' }
+    ]
+  },
+  contactoEmergencia: {
+    label: 'Tipo Contacto',
+    placeholder: 'Todos los tipos',
+    options: [
+      { value: 'Madre', label: 'Madre' },
+      { value: 'Padre', label: 'Padre' },
+      { value: 'Abuelo', label: 'Abuelo/a' },
+      { value: 'Tío', label: 'Tío/a' },
+      { value: 'Otro', label: 'Otro' }
     ]
   }
 };

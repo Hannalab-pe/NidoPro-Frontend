@@ -116,6 +116,39 @@ export const trabajadorService = {
   },
 
   /**
+   * Obtener aulas asignadas a un trabajador
+   * @param {string|number} idTrabajador - ID del trabajador
+   * @returns {Promise<Object>} Lista de aulas asignadas al trabajador
+   */
+  async getAulasPorTrabajador(idTrabajador) {
+    try {
+      console.log('🏫 Obteniendo aulas del trabajador:', idTrabajador);
+      
+      const response = await api.get(`/trabajador/aulas/${idTrabajador}`);
+      console.log('✅ Aulas del trabajador obtenidas:', response.data);
+      
+      // Estructurar la respuesta para que sea consistente
+      return {
+        aulas: response.data?.aulas || response.data?.data || [],
+        success: true
+      };
+    } catch (error) {
+      console.error('❌ Error al obtener aulas del trabajador:', error);
+      
+      // Si es un error 404 (trabajador no encontrado), devolver array vacío
+      if (error.response?.status === 404) {
+        console.log('ℹ️ Trabajador no encontrado o sin aulas asignadas');
+        return {
+          aulas: [],
+          success: true
+        };
+      }
+      
+      throw new Error(error.response?.data?.message || 'Error al obtener aulas del trabajador');
+    }
+  },
+
+  /**
    * Crear un nuevo trabajador con subida de archivos a Firebase
    * @param {Object} trabajadorData - Datos del trabajador
    * @returns {Promise<Object>} Trabajador creado

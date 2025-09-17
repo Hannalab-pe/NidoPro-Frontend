@@ -339,55 +339,62 @@ const DataTable = ({
       )}
 
       {/* Tabla */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50">
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.accessor}
-                  className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
-                    enableSort && column.sortable !== false ? 'cursor-pointer hover:bg-gray-100' : ''
-                  }`}
-                  onClick={() => column.sortable !== false && handleSort(column.accessor)}
-                >
-                  <div className="flex items-center space-x-1">
-                    <span>{column.Header}</span>
-                    {enableSort && column.sortable !== false && getSortIcon(column.accessor)}
-                  </div>
-                </th>
-              ))}
-              {(actions && Object.values(actions).some(action => action)) && (
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentData.length === 0 ? (
+      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+        <div className="inline-block min-w-full align-middle">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
               <tr>
-                <td 
-                  colSpan={columns.length + (actions ? 1 : 0)} 
-                  className="px-6 py-12 text-center text-gray-500"
-                >
-                  {emptyMessage}
-                </td>
+                {columns.map((column) => (
+                  <th
+                    key={column.accessor}
+                    className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
+                      enableSort && column.sortable !== false ? 'cursor-pointer hover:bg-gray-100' : ''
+                    }`}
+                    style={column.width ? { minWidth: `${column.width}px` } : {}}
+                    onClick={() => column.sortable !== false && handleSort(column.accessor)}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>{column.Header}</span>
+                      {enableSort && column.sortable !== false && getSortIcon(column.accessor)}
+                    </div>
+                  </th>
+                ))}
+                {(actions && Object.values(actions).some(action => action)) && (
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Acciones
+                  </th>
+                )}
               </tr>
-            ) : (
-              currentData.map((item, index) => (
-                <tr key={item.id || index} className="hover:bg-gray-50">
-                  {columns.map((column) => (
-                    <td key={column.accessor} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {renderCell(item, column)}
-                    </td>
-                  ))}
-                  {renderActions(item)}
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentData.length === 0 ? (
+                <tr>
+                  <td 
+                    colSpan={columns.length + (actions ? 1 : 0)} 
+                    className="px-6 py-12 text-center text-gray-500"
+                  >
+                    {emptyMessage}
+                  </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                currentData.map((item, index) => (
+                  <tr key={item.id || index} className="hover:bg-gray-50">
+                    {columns.map((column) => (
+                      <td 
+                        key={column.accessor} 
+                        className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
+                        style={column.width ? { width: `${column.width}px`, minWidth: `${column.width}px` } : {}}
+                      >
+                        {renderCell(item, column)}
+                      </td>
+                    ))}
+                    {renderActions(item)}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Paginación */}

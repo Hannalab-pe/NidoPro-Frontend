@@ -15,21 +15,35 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
+    console.log('🔑 Token encontrado en localStorage:', token ? 'Sí' : 'No');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('✅ Token agregado a headers');
+    } else {
+      console.log('⚠️ No hay token en localStorage');
     }
     return config;
   },
   (error) => {
+    console.error('❌ Error en interceptor de request:', error);
     return Promise.reject(error);
   }
 );
 
 // Interceptor para manejar respuestas y errores
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log('📥 Respuesta exitosa:', response.status, response.config.url);
+    return response;
+  },
   (error) => {
-    console.error('Error en planillaService:', error);
+    console.error('❌ Error en planillaService:', error);
+    console.error('🔍 Detalles del error:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      url: error.config?.url,
+      method: error.config?.method
+    });
     
     // Si el token expiró, redirigir al login
     if (error.response?.status === 401) {
@@ -93,7 +107,12 @@ const planillaService = {
     try {
       console.log('👥 Obteniendo trabajadores con contrato planilla...', filters);
 
-      const response = await api.get('/trabajador/tipo-contrato-planilla');
+      // Construir parámetros de query
+      const params = {};
+      if (filters.mes) params.mes = filters.mes;
+      if (filters.anio) params.anio = filters.anio;
+
+      const response = await api.get('/trabajador/tipo-contrato-planilla', { params });
       console.log('✅ Respuesta del backend para trabajadores con contrato planilla:', response.data);
 
       // La respuesta ya es un array de trabajadores
@@ -211,6 +230,14 @@ const planillaService = {
                           error.response?.data?.error ||
                           'Error al generar las planillas';
 
+      // Si es un error 409 (Conflict), crear un error especial que mantenga el status
+      if (error.response?.status === 409) {
+        const conflictError = new Error(errorMessage);
+        conflictError.status = 409;
+        conflictError.isConflict = true;
+        throw conflictError;
+      }
+
       throw new Error(errorMessage);
     }
   },
@@ -258,6 +285,53 @@ const planillaService = {
     } catch (error) {
       console.error('❌ Error al agregar trabajadores a planilla:', error);
       throw new Error(error.response?.data?.message || 'Error al agregar trabajadores a planilla');
+    }
+  },
+
+  /**
+   * Generar planilla mensual con trabajadores específicos
+   * @param {Object} datosPlanilla - Datos para generar la planilla
+   * @param {number} datosPlanilla.mes - Mes de la planilla
+   * @param {number} datosPlanilla.anio - Año de la planilla
+   * @param {string} datosPlanilla.fechaPagoProgramada - Fecha de pago programada
+   * @param {Array} datosPlanilla.trabajadores - Array de IDs de trabajadores
+   * @param {string} datosPlanilla.generadoPor - ID del usuario que genera
+   * @returns {Promise<Object>} Planilla generada
+   */
+  generarPlanillaConTrabajadores: async (datosPlanilla) => {
+    try {
+      console.log('📤 Generando planilla con trabajadores específicos:', datosPlanilla);
+      console.log('🔗 URL del API:', API_BASE_URL);
+      console.log('📡 Endpoint completo:', `${API_BASE_URL}/planilla-mensual/generar-con-trabajadores`);
+      console.log('📋 Estructura de datos enviados:', {
+        mes: datosPlanilla.mes,
+        anio: datosPlanilla.anio,
+        fechaPago: datosPlanilla.fechaPago,
+        generadoPor: datosPlanilla.generadoPor,
+        entidadId: datosPlanilla.entidadId,
+        trabajadoresSeleccionados: datosPlanilla.trabajadoresSeleccionados?.length || 0,
+        trabajadoresSeleccionadosDetalle: datosPlanilla.trabajadoresSeleccionados
+      });
+
+      const response = await api.post('/planilla-mensual/generar-con-trabajadores', datosPlanilla);
+      console.log('✅ Planilla generada exitosamente:', response.data);
+      console.log('📊 Status de respuesta:', response.status);
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error al generar planilla con trabajadores:', error);
+      console.error('📋 Detalles del error:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+        config: {
+          url: error.config?.url,
+          method: error.config?.method,
+          headers: error.config?.headers
+        }
+      });
+      throw new Error(error.response?.data?.message || 'Error al generar planilla con trabajadores');
     }
   },
 };

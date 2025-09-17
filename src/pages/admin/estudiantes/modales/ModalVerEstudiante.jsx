@@ -19,7 +19,12 @@ import {
   BookOpen,
   Users,
   School,
-  Clock
+  Clock,
+  Shield,
+  Key,
+  UserCircle,
+  PhoneCall,
+  AtSign
 } from 'lucide-react';
 
 const InfoField = ({ label, value, icon: Icon, className = "" }) => (
@@ -28,7 +33,9 @@ const InfoField = ({ label, value, icon: Icon, className = "" }) => (
       <Icon className="w-4 h-4 text-gray-600" />
       <span className="text-sm font-medium text-gray-700">{label}</span>
     </div>
-    <p className="text-gray-900 ml-6">{value || 'No especificado'}</p>
+    <div className="text-gray-900 ml-6">
+      {value || 'No especificado'}
+    </div>
   </div>
 );
 
@@ -238,6 +245,66 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                     </div>
                   </div>
 
+                  {/* Información de Usuario del Sistema */}
+                  {estudiante.idUsuario && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <Shield className="w-5 h-5 mr-2 text-indigo-600" />
+                        Información de Usuario del Sistema
+                      </h3>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {estudiante.idUsuario.usuario && (
+                          <InfoField
+                            label="Nombre de Usuario"
+                            value={estudiante.idUsuario.usuario}
+                            icon={UserCircle}
+                          />
+                        )}
+                        {typeof estudiante.idUsuario.estaActivo !== 'undefined' && (
+                          <InfoField
+                            label="Estado de Usuario"
+                            value={
+                              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                                estudiante.idUsuario.estaActivo 
+                                  ? 'bg-green-100 text-green-800' 
+                                  : 'bg-red-100 text-red-800'
+                              }`}>
+                                {estudiante.idUsuario.estaActivo ? 'Activo' : 'Inactivo'}
+                              </span>
+                            }
+                            icon={UserCheck}
+                          />
+                        )}
+                        {estudiante.idUsuario.creado && (
+                          <InfoField
+                            label="Fecha de Registro"
+                            value={new Date(estudiante.idUsuario.creado).toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                            icon={Calendar}
+                          />
+                        )}
+                        {estudiante.idUsuario.ultimaConexion && (
+                          <InfoField
+                            label="Última Conexión"
+                            value={new Date(estudiante.idUsuario.ultimaConexion).toLocaleDateString('es-ES', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                            icon={Clock}
+                          />
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Información Académica - Solo si existe */}
                   {(estudiante.grado || estudiante.seccion || estudiante.aula) && (
                     <div className="bg-white rounded-lg p-4">
@@ -353,8 +420,68 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                     </div>
                   )}
 
+                  {/* Información de Contacto de Emergencia - Mejorada */}
+                  {estudiante.contactosEmergencia && Array.isArray(estudiante.contactosEmergencia) && estudiante.contactosEmergencia.length > 0 && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <PhoneCall className="w-5 h-5 mr-2 text-red-600" />
+                        Contactos de Emergencia
+                      </h3>
+                      <div className="space-y-3">
+                        {estudiante.contactosEmergencia.map((contacto, index) => (
+                          <div key={index} className={`p-4 rounded-lg border-2 ${
+                            contacto.esPrincipal 
+                              ? 'border-red-200 bg-red-50' 
+                              : 'border-gray-200 bg-gray-50'
+                          }`}>
+                            {contacto.esPrincipal && (
+                              <div className="flex items-center mb-2">
+                                <AlertCircle className="w-4 h-4 text-red-600 mr-1" />
+                                <span className="text-sm font-medium text-red-700">Contacto Principal</span>
+                              </div>
+                            )}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              <InfoField
+                                label="Nombre Completo"
+                                value={`${contacto.nombre || ''} ${contacto.apellido || ''}`.trim() || 'Sin nombre'}
+                                icon={User}
+                              />
+                              <InfoField
+                                label="Relación/Parentesco"
+                                value={contacto.tipoContacto || contacto.relacionEstudiante || 'No especificado'}
+                                icon={Heart}
+                              />
+                              {contacto.telefono && (
+                                <InfoField
+                                  label="Teléfono"
+                                  value={contacto.telefono}
+                                  icon={Phone}
+                                />
+                              )}
+                              {contacto.email && (
+                                <InfoField
+                                  label="Email"
+                                  value={contacto.email}
+                                  icon={AtSign}
+                                />
+                              )}
+                              {contacto.direccion && (
+                                <InfoField
+                                  label="Dirección"
+                                  value={contacto.direccion}
+                                  icon={MapPin}
+                                  className="md:col-span-2"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Información de Contacto de Emergencia - Solo si existe */}
-                  {(estudiante.contactoEmergencia || estudiante.telefonoEmergencia) && (
+                  {(estudiante.contactoEmergencia || estudiante.telefonoEmergencia) && !estudiante.contactosEmergencia && (
                     <div className="bg-white rounded-lg p-4">
                       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <AlertCircle className="w-5 h-5 mr-2 text-red-600" />
@@ -379,43 +506,13 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                     </div>
                   )}
 
+                  {/* Información Adicional del Estudiante */}
+
                   {/* IDs de Referencia del Sistema */}
-                  <div className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                      <FileText className="w-5 h-5 mr-2 text-gray-600" />
-                      IDs de Referencia del Sistema
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {estudiante.idEstudiante && (
-                        <InfoField
-                          label="ID del Estudiante"
-                          value={estudiante.idEstudiante}
-                          icon={FileText}
-                        />
-                      )}
-                      {estudiante.id && (
-                        <InfoField
-                          label="ID General"
-                          value={estudiante.id}
-                          icon={FileText}
-                        />
-                      )}
-                      {estudiante.fechaIngreso && (
-                        <InfoField
-                          label="Fecha de Ingreso"
-                          value={new Date(estudiante.fechaIngreso).toLocaleDateString('es-ES')}
-                          icon={Calendar}
-                        />
-                      )}
-                      {estudiante.ultimaActualizacion && (
-                        <InfoField
-                          label="Última Actualización"
-                          value={new Date(estudiante.ultimaActualizacion).toLocaleDateString('es-ES')}
-                          icon={Calendar}
-                        />
-                      )}
-                    </div>
-                  </div>
+
+
+                  {/* Estadísticas y Métricas */}
+
 
                   {/* Notas Adicionales */}
                   {(estudiante.notas || estudiante.observaciones) && (

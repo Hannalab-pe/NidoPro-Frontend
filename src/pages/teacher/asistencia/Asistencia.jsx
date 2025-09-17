@@ -40,13 +40,19 @@ const Asistencia = () => {
     tieneAulas
   } = useAsistenciaProfesor();
 
+  // Función auxiliar para obtener el ID del aula de manera segura
+  const getAulaId = (aula) => {
+    if (!aula) return null;
+    return aula.id_aula || aula.idAula || aula.id || aula.idAula;
+  };
+
   // Hook para obtener estudiantes del aula seleccionada
   const { 
     data: estudiantesData, 
     isLoading: loadingEstudiantes, 
     error: errorEstudiantes,
     refetch: refetchEstudiantes
-  } = useEstudiantesAula(selectedAula?.id_aula || selectedAula?.idAula);
+  } = useEstudiantesAula(getAulaId(selectedAula));
 
   // Hook para obtener asistencias existentes por aula y fecha
   const {
@@ -55,21 +61,29 @@ const Asistencia = () => {
     error: errorAsistenciasExistentes,
     refetch: refetchAsistenciasExistentes
   } = useAsistenciasPorAulaYFecha(
-    selectedAula?.id_aula || selectedAula?.idAula, 
+    getAulaId(selectedAula), 
     selectedDate
   );
 
-  // Seleccionar la primera aula disponible por defecto INMEDIATAMENTE
+  // Debug: Mostrar errores si existen
+  useEffect(() => {
+    if (errorEstudiantes) {
+      console.error('❌ Error en estudiantes:', errorEstudiantes);
+    }
+    if (errorAsistenciasExistentes) {
+      console.error('❌ Error en asistencias:', errorAsistenciasExistentes);
+    }
+  }, [errorEstudiantes, errorAsistenciasExistentes]);  // Seleccionar la primera aula disponible por defecto INMEDIATAMENTE
   useEffect(() => {
     if (aulas.length > 0 && !selectedAula) {
       const primeraAula = aulas[0];
+      console.log('🏫 Primera aula disponible:', primeraAula);
+      console.log('🔑 Propiedades del aula:', Object.keys(primeraAula));
+      console.log('📋 Estructura completa del aula:', primeraAula);
       setSelectedAula(primeraAula);
-      
+
       // FORZAR CARGA INICIAL INMEDIATA con la primera aula
       console.log('🚀 Cargando datos iniciales para:', primeraAula.nombre, 'Fecha:', selectedDate);
-          // Ver el primer estudiante completo
-      console.log('📄 Primer estudiante completo:', estudiantes[0]);
-
     }
   }, [aulas]);
 
@@ -80,7 +94,7 @@ const Asistencia = () => {
       refetchEstudiantes();
       refetchAsistenciasExistentes();
     }
-  }, [selectedAula?.id_aula, selectedDate]);
+  }, [getAulaId(selectedAula), selectedDate]);
 
   // Procesar datos de estudiantes y asistencias
   const estudiantes = estudiantesData?.estudiantes || estudiantesData?.data || [];
@@ -132,14 +146,14 @@ const Asistencia = () => {
       
       setAsistencias(asistenciasIniciales);
     }
-  }, [estudiantes.length, selectedAula?.id_aula, selectedDate]); // Dependencias más estables
+  }, [estudiantes.length, getAulaId(selectedAula), selectedDate]); // Dependencias más estables
 
   // Refrescar asistencias cuando cambie la fecha o el aula (SIN refetchAsistenciasExistentes en dependencias)
   useEffect(() => {
     if (selectedAula && selectedDate) {
       refetchAsistenciasExistentes();
     }
-  }, [selectedAula?.id_aula, selectedDate]); // Solo ID del aula y fecha
+  }, [getAulaId(selectedAula), selectedDate]); // Solo ID del aula y fecha
 
   const handleAsistenciaChange = (estudianteId, estado) => {
     setAsistencias(prev => ({
@@ -281,7 +295,9 @@ const Asistencia = () => {
         <div className="text-center">
           <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
           <p className="text-gray-600 mb-4">Error al cargar las aulas</p>
-          <p className="text-sm text-red-600">{errorAulas}</p>
+          <p className="text-sm text-red-600">
+            {errorAulas?.message || errorAulas?.toString() || 'Error desconocido'}
+          </p>
         </div>
       </div>
     );
@@ -294,6 +310,46 @@ const Asistencia = () => {
           <School className="w-12 h-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-600 mb-2">No tienes aulas asignadas</p>
           <p className="text-sm text-gray-500">Contacta al administrador para asignar aulas</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorEstudiantes) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600 mb-4">Error al cargar los estudiantes</p>
+          <p className="text-sm text-red-600">
+            {errorEstudiantes?.message || errorEstudiantes?.toString() || 'Error desconocido'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorAsistenciasExistentes) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <p className="text-gray-600 mb-4">Error al cargar las asistencias existentes</p>
+          <p className="text-sm text-red-600">
+            {errorAsistenciasExistentes?.message || errorAsistenciasExistentes?.toString() || 'Error desconocido'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedAula) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <School className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <p className="text-gray-600 mb-2">Selecciona un aula para continuar</p>
+          <p className="text-sm text-gray-500">Elige un aula del selector arriba</p>
         </div>
       </div>
     );
