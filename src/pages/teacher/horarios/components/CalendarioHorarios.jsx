@@ -108,9 +108,9 @@ const CalendarioHorarios = ({
     
     return events.map(evento => ({
       ...evento,
-      // Asegurar que las fechas sean objetos Date válidos
-      start: evento.start instanceof Date ? evento.start : new Date(evento.start),
-      end: evento.end instanceof Date ? evento.end : new Date(evento.end),
+      // Convertir fechas usando moment con zona horaria UTC para evitar problemas de conversión
+      start: evento.start instanceof Date ? evento.start : moment.utc(evento.start).toDate(),
+      end: evento.end instanceof Date ? evento.end : moment.utc(evento.end).toDate(),
     }));
   }, [events]);
 

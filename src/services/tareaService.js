@@ -169,7 +169,7 @@ export const tareaService = {
    */
   actualizarTarea: async (idTarea, tareaData) => {
     try {
-      const response = await api.put(`/tarea/${idTarea}`, tareaData);
+      const response = await api.patch(`/tarea/${idTarea}`, tareaData);
       return response.data;
     } catch (error) {
       console.error('❌ Error al actualizar tarea:', error.response?.data || error.message);

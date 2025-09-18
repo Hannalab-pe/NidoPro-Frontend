@@ -55,12 +55,25 @@ export const useTareasEstudianteQuery = () => {
       return [];
     }
 
+    // Obtener el ID del estudiante actual para filtrar entregas
+    const idEstudianteActual = getIdEstudiante();
+
     return tareasBackend.map(tarea => {
-      // Buscar la entrega del estudiante actual
-      const miEntrega = tarea.tareaEntregas?.[0]; // Como es del estudiante específico, debería ser solo una
+      // Buscar la entrega del estudiante actual específicamente
+      const miEntrega = tarea.tareaEntregas?.find(entrega => 
+        entrega.idEstudiante === idEstudianteActual || 
+        entrega.estudiante?.idEstudiante === idEstudianteActual ||
+        entrega.idEstudiante === parseInt(idEstudianteActual) ||
+        entrega.estudiante?.idEstudiante === parseInt(idEstudianteActual)
+      ) || null; // No usar fallback, mejor ser explícito
       
-      // Debug: mostrar archivoUrl antes de transformar
-      console.log(`🔍 [HOOK] Tarea ${tarea.idTarea} - archivoUrl original:`, tarea.archivoUrl || tarea.archivo_url || tarea.fileUrl || tarea.file_url);
+      // Debug: mostrar información de entregas
+      console.log(`🔍 [HOOK] Tarea ${tarea.idTarea}:`);
+      console.log(`   - Total entregas: ${tarea.tareaEntregas?.length || 0}`);
+      console.log(`   - Mi entrega encontrada:`, miEntrega ? 'SÍ' : 'NO');
+      console.log(`   - Estado de mi entrega:`, miEntrega?.estado);
+      console.log(`   - Realizó tarea:`, miEntrega?.realizoTarea);
+      console.log(`   - Estado general de tarea:`, tarea.estado);
       
       const tareaTransformada = {
         id: tarea.idTarea,
@@ -74,8 +87,8 @@ export const useTareasEstudianteQuery = () => {
         dueDate: tarea.fechaEntrega,
         fechaEntrega: tarea.fechaEntrega,
         fechaAsignacion: tarea.fechaAsignacion,
-        status: mapearEstado(miEntrega?.estado || tarea.estado),
-        estado: mapearEstado(miEntrega?.estado || tarea.estado),
+        status: miEntrega ? mapearEstado(miEntrega.estado) : mapearEstado(tarea.estado),
+        estado: miEntrega ? mapearEstado(miEntrega.estado) : mapearEstado(tarea.estado),
         priority: 'medium', // Por defecto, se puede ajustar si el backend lo provee
         prioridad: 'medium',
         
@@ -113,8 +126,8 @@ export const useTareasEstudianteQuery = () => {
         archivoUrl: tarea.archivoUrl || tarea.archivo_url || tarea.fileUrl || tarea.file_url,
         
         // Estado de entrega
-        realizoTarea: miEntrega?.realizoTarea || false,
-        completedAt: miEntrega?.realizoTarea ? miEntrega?.fechaEntrega : null,
+        realizoTarea: miEntrega?.realizoTarea || miEntrega?.estado === 'entregado' || miEntrega?.estado === 'completado' || false,
+        completedAt: miEntrega?.realizoTarea || miEntrega?.estado === 'entregado' || miEntrega?.estado === 'completado' ? miEntrega?.fechaEntrega : null,
         
         // Datos adicionales para UI
         emoji: getEmojiBySubject(tarea.aula?.idGrado?.descripcion),
@@ -125,8 +138,11 @@ export const useTareasEstudianteQuery = () => {
         daysLeft: Math.ceil((new Date(tarea.fechaEntrega) - new Date()) / (1000 * 60 * 60 * 24))
       };
       
-      // Debug: mostrar archivoUrl mapeado después de crear el objeto
-      console.log(`🔍 [HOOK] Tarea ${tarea.idTarea} - archivoUrl mapeado:`, tareaTransformada.archivoUrl);
+      // Debug: mostrar estado final
+      console.log(`✅ [HOOK] Tarea ${tarea.idTarea} transformada:`);
+      console.log(`   - Status final: ${tareaTransformada.status}`);
+      console.log(`   - Realizó tarea: ${tareaTransformada.realizoTarea}`);
+      console.log(`   - CompletedAt: ${tareaTransformada.completedAt}`);
       
       return tareaTransformada;
     });

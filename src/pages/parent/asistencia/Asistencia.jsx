@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useHistorialAsistenciasEstudiante } from '../../../hooks/queries/useAsistenciaQueries';
+import { formatDatePeru } from '../../../utils/dateUtils';
 
 const Asistencia = () => {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
@@ -103,12 +104,21 @@ const Asistencia = () => {
     };
   }, [asistencias]);
 
+  // Función helper para obtener mes y año en zona horaria de Perú
+  const getMesAnioPeru = (fechaString) => {
+    const fecha = new Date(fechaString + 'T12:00:00-05:00'); // Forzar zona horaria de Perú
+    return {
+      mes: fecha.getMonth(),
+      anio: fecha.getFullYear()
+    };
+  };
+
   // Filtrar asistencias por mes/año y búsqueda
   const asistenciasFiltradas = React.useMemo(() => {
     return asistencias.filter(asistencia => {
-      const fechaAsistencia = new Date(asistencia.fecha);
-      const mesCoincide = fechaAsistencia.getMonth() === selectedMonth;
-      const añoCoincide = fechaAsistencia.getFullYear() === selectedYear;
+      const { mes, anio } = getMesAnioPeru(asistencia.fecha);
+      const mesCoincide = mes === selectedMonth;
+      const añoCoincide = anio === selectedYear;
       
       // Filtro por estado
       let estadoCoincide = true;
@@ -130,7 +140,12 @@ const Asistencia = () => {
         asistencia.observaciones.toLowerCase().includes(searchTerm.toLowerCase());
 
       return mesCoincide && añoCoincide && estadoCoincide && busquedaCoincide;
-    }).sort((a, b) => new Date(b.fecha) - new Date(a.fecha)); // Más recientes primero
+    }).sort((a, b) => {
+      // Convertir fechas a zona horaria de Perú para ordenamiento correcto
+      const fechaA = new Date(a.fecha + 'T12:00:00-05:00');
+      const fechaB = new Date(b.fecha + 'T12:00:00-05:00');
+      return fechaB - fechaA; // Más recientes primero
+    });
   }, [asistencias, selectedMonth, selectedYear, filterStatus, searchTerm]);
 
   const getEstadoInfo = (asistencia) => {
@@ -170,7 +185,7 @@ const Asistencia = () => {
   };
 
   const formatFecha = (fecha) => {
-    return new Date(fecha).toLocaleDateString('es-ES', {
+    return formatDatePeru(fecha, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

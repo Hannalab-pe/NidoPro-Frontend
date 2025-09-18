@@ -15,6 +15,8 @@ import {
   Filter
 } from 'lucide-react'
 import { toast } from 'sonner'
+import { Dialog, Transition } from '@headlessui/react'
+import { Fragment } from 'react'
 import pensionService from '../../../../services/pensionService'
 
 const PagosPensiones = () => {
@@ -30,6 +32,10 @@ const PagosPensiones = () => {
   // Estado para verificación masiva
   const [loadingVerificacion, setLoadingVerificacion] = useState(false)
   const [observaciones, setObservaciones] = useState('')
+
+  // Estado para modal de detalles
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedPension, setSelectedPension] = useState(null)
 
   // Cargar pensiones al montar componente
   useEffect(() => {
@@ -93,6 +99,16 @@ const PagosPensiones = () => {
     window.dispatchEvent(new CustomEvent('changeFinanceView', { 
       detail: { component: 'GestionFinanciera' } 
     }))
+  }
+
+  const handleVerDetalles = (pension) => {
+    setSelectedPension(pension)
+    setModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setModalOpen(false)
+    setSelectedPension(null)
   }
 
   const toggleSeleccionPension = (idPension) => {
@@ -531,6 +547,7 @@ const PagosPensiones = () => {
                       {/* Acciones */}
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
+                          onClick={() => handleVerDetalles(pension)}
                           className="text-blue-600 hover:text-blue-900 flex items-center space-x-1"
                           title="Ver detalles"
                         >
@@ -546,6 +563,197 @@ const PagosPensiones = () => {
           </div>
         )}
       </div>
+
+      {/* Modal de detalles de pensión */}
+      <Transition appear show={modalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={handleCloseModal}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/20 backdrop-blur-md bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900 mb-4"
+                  >
+                    Detalles de Pensión
+                  </Dialog.Title>
+
+                  {selectedPension && (
+                    <div className="space-y-6">
+                      {/* Información del estudiante */}
+                      <div className="bg-gray-50 rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                          <User className="w-5 h-5 mr-2" />
+                          Información del Estudiante
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Nombre completo</p>
+                            <p className="font-medium">{selectedPension.estudiante?.nombre} {selectedPension.estudiante?.apellido}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Documento</p>
+                            <p className="font-medium">{selectedPension.estudiante?.tipoDocumento}: {selectedPension.estudiante?.nroDocumento}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">ID Estudiante</p>
+                            <p className="font-medium text-xs">{selectedPension.estudiante?.idEstudiante}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">ID Usuario</p>
+                            <p className="font-medium text-xs">{selectedPension.estudiante?.id_Usuario}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Información de la pensión */}
+                      <div className="bg-blue-50 rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                          <DollarSign className="w-5 h-5 mr-2" />
+                          Información de la Pensión
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">ID Pensión</p>
+                            <p className="font-medium text-xs">{selectedPension.idPensionEstudiante}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Período</p>
+                            <p className="font-medium">{getMesNombre(selectedPension.mes)} {selectedPension.anio}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Estado</p>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoColor(selectedPension.estadoPension)}`}>
+                              {selectedPension.estadoPension}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Información financiera */}
+                      <div className="bg-green-50 rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                          <FileText className="w-5 h-5 mr-2" />
+                          Información Financiera
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Monto Pensión</p>
+                            <p className="font-medium text-lg">{formatMonto(selectedPension.montoPension)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Monto Pagado</p>
+                            <p className="font-medium text-lg text-green-600">{formatMonto(selectedPension.montoPagado)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Monto Mora</p>
+                            <p className="font-medium text-lg text-red-600">{formatMonto(selectedPension.montoMora)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Monto Descuento</p>
+                            <p className="font-medium text-lg text-blue-600">{formatMonto(selectedPension.montoDescuento)}</p>
+                          </div>
+                          <div className="md:col-span-2 lg:col-span-4">
+                            <p className="text-sm text-gray-600">Monto Total</p>
+                            <p className="font-bold text-xl text-gray-900">{formatMonto(selectedPension.montoTotal)}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Fechas */}
+                      <div className="bg-yellow-50 rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3 flex items-center">
+                          <Calendar className="w-5 h-5 mr-2" />
+                          Fechas
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Fecha de Vencimiento</p>
+                            <p className="font-medium">{formatFecha(selectedPension.fechaVencimiento)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Fecha de Pago</p>
+                            <p className="font-medium">{selectedPension.fechaPago ? formatFecha(selectedPension.fechaPago) : 'No pagado'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Fecha de Registro</p>
+                            <p className="font-medium">{formatFecha(selectedPension.fechaRegistro)}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Última Actualización</p>
+                            <p className="font-medium">{formatFecha(selectedPension.actualizadoEn)}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Información adicional */}
+                      <div className="bg-purple-50 rounded-lg p-4">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3">Información Adicional</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-600">Días de Mora</p>
+                            <p className="font-medium">{selectedPension.diasMora || 0} días</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Método de Pago</p>
+                            <p className="font-medium">{selectedPension.metodoPago || 'No especificado'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">Número de Comprobante</p>
+                            <p className="font-medium">{selectedPension.numeroComprobante || 'No disponible'}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-600">URL del Comprobante</p>
+                            <p className="font-medium text-xs break-all">{selectedPension.comprobanteUrl || 'No disponible'}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Observaciones */}
+                      {selectedPension.observaciones && (
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <h4 className="text-md font-semibold text-gray-900 mb-3">Observaciones</h4>
+                          <p className="text-sm text-gray-700">{selectedPension.observaciones}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      type="button"
+                      className="inline-flex justify-center rounded-md border border-transparent bg-blue-100 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                      onClick={handleCloseModal}
+                    >
+                      Cerrar
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   )
 }

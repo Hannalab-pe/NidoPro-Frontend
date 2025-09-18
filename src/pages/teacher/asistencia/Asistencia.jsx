@@ -21,11 +21,12 @@ import {
   Plus
 } from 'lucide-react';
 import { useAsistenciaProfesor, useEstudiantesAula, useAsistenciasPorAulaYFecha } from '../../../hooks/queries/useAsistenciaQueries';
+import { getCurrentDatePeru, formatDatePeru } from '../../../utils/dateUtils';
 import { toast } from 'sonner';
 
 const Asistencia = () => {
-  // Inicializar fecha una sola vez al montar el componente
-  const [selectedDate, setSelectedDate] = useState(() => new Date().toISOString().split('T')[0]);
+  // Inicializar fecha una sola vez al montar el componente usando zona horaria de Perú
+  const [selectedDate, setSelectedDate] = useState(() => getCurrentDatePeru());
   const [selectedAula, setSelectedAula] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [asistencias, setAsistencias] = useState({});
@@ -109,23 +110,43 @@ const Asistencia = () => {
     }
   }, [estudiantes.length]);
 
+  // DEBUG: Ver asistencias existentes
+  useEffect(() => {
+    if (asistenciasRegistradas.length > 0) {
+      console.log('🔍 DEBUG - Asistencias existentes:', asistenciasRegistradas);
+      console.log('🔍 DEBUG - Estructura de primera asistencia:', asistenciasRegistradas[0]);
+    }
+  }, [asistenciasRegistradas.length]);
+
   // Inicializar asistencias cuando se cargan estudiantes o asistencias existentes
   useEffect(() => {
-    if (estudiantes.length > 0) {
+    // Solo ejecutar si tenemos estudiantes Y (tenemos asistencias registradas O acabamos de cambiar de fecha/aula)
+    if (estudiantes.length > 0 && (asistenciasRegistradas.length > 0 || !tieneAsistenciasRegistradas)) {
+      console.log('🔄 Inicializando asistencias para', estudiantes.length, 'estudiantes');
+      console.log('📊 Asistencias registradas disponibles:', asistenciasRegistradas.length);
+      
       const asistenciasIniciales = {};
       
       estudiantes.forEach(estudiante => {
         const idEstudiante = estudiante.id_estudiante || estudiante.idEstudiante;
+        console.log('👤 Procesando estudiante:', estudiante.nombres, 'ID:', idEstudiante);
         
         // Buscar si ya tiene asistencia registrada para esta fecha
-        // El formato del endpoint es: { asistio, observaciones, idEstudiante }
         const asistenciaExistente = asistenciasRegistradas.find(
-          asist => (asist.idEstudiante || asist.id_estudiante) === idEstudiante
+          asist => {
+            const asistId = asist.idEstudiante || asist.id_estudiante || asist.idEstudiante;
+            const match = asistId === idEstudiante;
+            if (match) {
+              console.log('🔍 Coincidencia encontrada:', { asistId, idEstudiante, asistencia: asist });
+            }
+            return match;
+          }
         );
         
         if (asistenciaExistente) {
+          console.log('✅ Asistencia encontrada para estudiante', idEstudiante, ':', asistenciaExistente);
           // Convertir el formato del backend al formato local
-          if (asistenciaExistente.asistio === true) {
+          if (asistenciaExistente.asistio === true || asistenciaExistente.asistio === 'true') {
             // Si asistió, verificar las observaciones para determinar el estado exacto
             if (asistenciaExistente.observaciones === 'Presente') {
               asistenciasIniciales[idEstudiante] = 'presente';
@@ -136,24 +157,74 @@ const Asistencia = () => {
             } else {
               asistenciasIniciales[idEstudiante] = 'presente'; // Default para asistio=true
             }
-          } else {
+          } else if (asistenciaExistente.asistio === false || asistenciaExistente.asistio === 'false') {
             asistenciasIniciales[idEstudiante] = 'ausente';
+          } else {
+            // Si no hay valor claro, dejar vacío
+            asistenciasIniciales[idEstudiante] = '';
+          }
+        } else {
+          console.log('❌ No se encontró asistencia para estudiante', idEstudiante);
+          asistenciasIniciales[idEstudiante] = '';
+        }
+      });
+      
+      console.log('📋 Asistencias iniciales finales:', asistenciasIniciales);
+      setAsistencias(asistenciasIniciales);
+    }
+  }, [estudiantes.length, getAulaId(selectedAula), selectedDate, asistenciasRegistradas]); // Incluir asistenciasRegistradas como dependencia
+
+  // Refrescar asistencias cuando cambie la fecha o el aula (SIN refetchAsistenciasExistentes en dependencias)
+  useEffect(() => {
+    if (selectedAula && selectedDate) {
+      console.log('🔄 Refrescando asistencias para nueva fecha/aula:', selectedDate, getAulaId(selectedAula));
+      refetchAsistenciasExistentes();
+    }
+  }, [getAulaId(selectedAula), selectedDate]); // Solo ID del aula y fecha
+
+  // Efecto adicional para procesar asistencias cuando se cargan por primera vez
+  useEffect(() => {
+    if (asistenciasRegistradas.length > 0 && estudiantes.length > 0) {
+      console.log('🎯 Asistencias existentes detectadas, procesando...');
+      // Forzar re-ejecución del useEffect principal
+      const asistenciasIniciales = {};
+      
+      estudiantes.forEach(estudiante => {
+        const idEstudiante = estudiante.id_estudiante || estudiante.idEstudiante;
+        
+        const asistenciaExistente = asistenciasRegistradas.find(
+          asist => {
+            const asistId = asist.idEstudiante || asist.id_estudiante || asist.idEstudiante;
+            return asistId === idEstudiante;
+          }
+        );
+        
+        if (asistenciaExistente) {
+          console.log('✅ Procesando asistencia existente:', asistenciaExistente);
+          if (asistenciaExistente.asistio === true || asistenciaExistente.asistio === 'true') {
+            if (asistenciaExistente.observaciones === 'Presente') {
+              asistenciasIniciales[idEstudiante] = 'presente';
+            } else if (asistenciaExistente.observaciones === 'Tardanza') {
+              asistenciasIniciales[idEstudiante] = 'tardanza';
+            } else if (asistenciaExistente.observaciones === 'Justificado') {
+              asistenciasIniciales[idEstudiante] = 'justificado';
+            } else {
+              asistenciasIniciales[idEstudiante] = 'presente';
+            }
+          } else if (asistenciaExistente.asistio === false || asistenciaExistente.asistio === 'false') {
+            asistenciasIniciales[idEstudiante] = 'ausente';
+          } else {
+            asistenciasIniciales[idEstudiante] = '';
           }
         } else {
           asistenciasIniciales[idEstudiante] = '';
         }
       });
       
+      console.log('📋 Aplicando asistencias desde efecto secundario:', asistenciasIniciales);
       setAsistencias(asistenciasIniciales);
     }
-  }, [estudiantes.length, getAulaId(selectedAula), selectedDate]); // Dependencias más estables
-
-  // Refrescar asistencias cuando cambie la fecha o el aula (SIN refetchAsistenciasExistentes en dependencias)
-  useEffect(() => {
-    if (selectedAula && selectedDate) {
-      refetchAsistenciasExistentes();
-    }
-  }, [getAulaId(selectedAula), selectedDate]); // Solo ID del aula y fecha
+  }, [asistenciasRegistradas.length, estudiantes.length]); // Solo cuando cambian las cantidades
 
   const handleAsistenciaChange = (estudianteId, estado) => {
     setAsistencias(prev => ({
@@ -524,7 +595,7 @@ const Asistencia = () => {
                   Estudiantes - {selectedAula.nombre}
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Fecha: {new Date(selectedDate).toLocaleDateString('es-ES', {
+                  Fecha: {formatDatePeru(selectedDate, {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',

@@ -34,12 +34,39 @@ export const formatFechaEvaluacion = (fechaCreacion) => {
   return formatDatePeru(fechaCreacion);
 };
 
-// Función para debugging de fechas
-export const debugFecha = (dateString) => {
-  console.log('=== DEBUG FECHA ===');
-  console.log('Fecha original:', dateString);
-  console.log('Fecha parseada (UTC):', new Date(dateString));
-  console.log('Fecha formateada Perú:', formatDatePeru(dateString));
-  console.log('Zona horaria actual:', Intl.DateTimeFormat().resolvedOptions().timeZone);
-  return formatDatePeru(dateString);
+// Función para obtener la fecha actual en formato YYYY-MM-DD en zona horaria de Perú
+export const getCurrentDatePeru = () => {
+  // Crear fecha actual en zona horaria de Perú
+  const now = new Date();
+  // Obtener la fecha en zona horaria de Perú
+  const peruTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+  // Formatear como YYYY-MM-DD
+  const year = peruTime.getFullYear();
+  const month = String(peruTime.getMonth() + 1).padStart(2, '0');
+  const day = String(peruTime.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Función para convertir una fecha string a formato YYYY-MM-DD en zona horaria de Perú
+export const formatDateForInput = (dateString) => {
+  if (!dateString) return getCurrentDatePeru();
+
+  try {
+    // Si ya es formato YYYY-MM-DD, devolver tal cual
+    if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+
+    // Crear fecha en zona horaria de Perú
+    const date = new Date(dateString);
+    const peruTime = new Date(date.toLocaleString('en-US', { timeZone: 'America/Lima' }));
+
+    const year = peruTime.getFullYear();
+    const month = String(peruTime.getMonth() + 1).padStart(2, '0');
+    const day = String(peruTime.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  } catch (error) {
+    console.error('Error al formatear fecha para input:', dateString, error);
+    return getCurrentDatePeru();
+  }
 };

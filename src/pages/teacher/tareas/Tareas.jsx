@@ -302,7 +302,7 @@ const Tareas = () => {
 
       {/* Filtros y búsqueda */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Búsqueda */}
           <div className="md:col-span-2">
             <div className="relative">
@@ -331,20 +331,6 @@ const Tareas = () => {
             </select>
           </div>
 
-          {/* Filtro por materia */}
-          <div>
-            <select
-              value={filterMateria}
-              onChange={(e) => setFilterMateria(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="todas">Todas las materias</option>
-              {materias.filter(materia => materia && materia.trim()).map((materia, index) => (
-                <option key={`materia-${index}-${materia}`} value={materia}>{materia}</option>
-              ))}
-            </select>
-          </div>
-
           {/* Ordenar */}
           <div>
             <select
@@ -355,7 +341,6 @@ const Tareas = () => {
               <option key="fecha_vencimiento" value="fecha_vencimiento">Por vencimiento</option>
               <option key="fecha_creacion" value="fecha_creacion">Por creación</option>
               <option key="titulo" value="titulo">Por título</option>
-              <option key="materia" value="materia">Por materia</option>
             </select>
           </div>
         </div>
@@ -453,9 +438,7 @@ const Tareas = () => {
                       </div>
                     </div>
                     <div className="relative">
-                      <button className="p-1 hover:bg-gray-100 rounded">
-                        <MoreVertical className="w-4 h-4 text-gray-500" />
-                      </button>
+    
                     </div>
                   </div>
 
@@ -491,10 +474,31 @@ const Tareas = () => {
                         setTareaSeleccionada(tarea);
                         setShowTareaCompletaModal(true);
                       }}
-                      className="flex-1 flex items-center justify-center space-x-2 bg-green-50 text-green-600 hover:cursor-pointer px-3 py-2 rounded-lg hover:bg-green-100 transition-colors"
+                      className="flex-1 flex items-center justify-center space-x-2 bg-green-50 text-green-600 px-3 py-2 rounded-lg hover:bg-green-100 transition-colors"
+                      title="Ver tarea completa"
                     >
                       <Eye className="w-4 h-4" />
-                      <span>Ver Tarea Completa</span>
+                      <span className="hidden sm:inline">Ver</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTareaSeleccionada(tarea);
+                        setShowEditarModal(true);
+                      }}
+                      className="flex items-center justify-center space-x-2 bg-blue-50 text-blue-600 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors"
+                      title="Editar tarea"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setTareaSeleccionada(tarea);
+                        setShowEliminarModal(true);
+                      }}
+                      className="flex items-center justify-center space-x-2 bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition-colors"
+                      title="Eliminar tarea"
+                    >
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

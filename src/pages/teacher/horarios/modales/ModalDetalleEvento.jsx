@@ -60,14 +60,16 @@ const ModalDetalleEvento = ({ isOpen, onClose, evento }) => {
   });
 
   const formatearFecha = (fecha) => {
-    return moment(fecha).format('dddd, DD [de] MMMM [de] YYYY');
+    // Usar zona horaria de Perú para evitar problemas de conversión
+    return moment(fecha).utcOffset('-05:00').format('dddd, DD [de] MMMM [de] YYYY');
   };
 
   const formatearHora = (fecha) => {
-    return moment(fecha).format('HH:mm');
+    // Usar zona horaria de Perú para evitar problemas de conversión
+    return moment(fecha).utcOffset('-05:00').format('HH:mm');
   };
 
-  const esMismoDia = moment(evento.start).isSame(moment(evento.end), 'day');
+  const esMismoDia = moment(evento.start).utcOffset('-05:00').isSame(moment(evento.end).utcOffset('-05:00'), 'day');
 
   return (
     <Transition appear show={isOpen} as={Fragment}>

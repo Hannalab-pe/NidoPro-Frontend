@@ -16,11 +16,16 @@ import {
   Eye,
   CalendarDays
 } from 'lucide-react';
+import moment from 'moment';
+import 'moment/locale/es';
 import CalendarioHorarios from './components/CalendarioHorarios';
 import ModalAgregarActividad from './modales/ModalAgregarActividad';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useAulasByTrabajador } from '../../../hooks/queries/useAulasQueries';
 import { useCronogramaDocente } from '../../../hooks/queries/useCronogramaQueries';
+
+// Configurar moment en español
+moment.locale('es');
 
 const Horarios = () => {
   const [currentWeek, setCurrentWeek] = useState(new Date());
@@ -150,8 +155,9 @@ const Horarios = () => {
 
     return cronogramaDatos.map((actividad, index) => {
       // Los datos del backend usan nombres con guiones bajos
-      const fechaInicio = new Date(actividad.fecha_inicio);
-      const fechaFin = new Date(actividad.fecha_fin);
+      // Usar moment con zona horaria UTC para evitar problemas de conversión
+      const fechaInicio = moment.utc(actividad.fecha_inicio).toDate();
+      const fechaFin = moment.utc(actividad.fecha_fin).toDate();
       
       // Si las fechas no tienen hora específica, agregar horas por defecto
       if (fechaInicio.getHours() === 0 && fechaInicio.getMinutes() === 0) {
