@@ -391,6 +391,23 @@ export const aulaService = {
       console.error('❌ Error al buscar aula por grado y sección:', error);
       throw new Error(error.response?.data?.message || 'Error al buscar aula');
     }
+  },
+
+  /**
+   * Obtener todas las aulas sin asignación
+   * @returns {Promise<Array>} Lista de aulas sin asignar
+   */
+  async getAulasSinAsignacion() {
+    try {
+      const response = await api.get('/aula/sin-asignacion');
+      console.log('📋 Aulas sin asignación obtenidas:', response.data);
+      
+      // Extraer datos del objeto info.data si existe
+      return response.data?.info?.data || response.data?.info || response.data || [];
+    } catch (error) {
+      console.error('Error al obtener aulas sin asignación:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener aulas sin asignación');
+    }
   }
 };
 

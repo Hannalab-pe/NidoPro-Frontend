@@ -564,9 +564,9 @@ const PagosPensiones = () => {
         )}
       </div>
 
-      {/* Modal de detalles de pensión */}
+      {/* Modal de detalles de pensión - Fuera del contenedor para cubrir toda la pantalla */}
       <Transition appear show={modalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={handleCloseModal}>
+        <Dialog as="div" className="fixed inset-0 z-50" onClose={handleCloseModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -576,7 +576,7 @@ const PagosPensiones = () => {
             leaveFrom="opacity-100"
             leaveTo="opacity-0"
           >
-            <div className="fixed inset-0 bg-black/20 backdrop-blur-md bg-opacity-25" />
+            <div className="fixed inset-0 bg-black/20 backdrop-blur-md" />
           </Transition.Child>
 
           <div className="fixed inset-0 overflow-y-auto">

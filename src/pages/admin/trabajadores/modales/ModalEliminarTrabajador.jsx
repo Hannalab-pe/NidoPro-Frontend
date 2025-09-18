@@ -155,7 +155,7 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
                   <button
                     onClick={handleClose}
                     className="text-gray-400 hover:text-gray-600 transition-colors"
-                    disabled={deleting}
+                    disabled={toggleStatusMutation.isLoading}
                   >
                     <X className="w-6 h-6" />
                   </button>
@@ -278,7 +278,7 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
                           : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                       }`}
                       placeholder={`Escribe "${trabajadorName}" para confirmar`}
-                      disabled={deleting}
+                      disabled={toggleStatusMutation.isLoading}
                       autoComplete="off"
                     />
                     {confirmName && isConfirmDisabled && (
@@ -298,13 +298,13 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
                     <button
                       onClick={handleClose}
                       className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                      disabled={deleting}
+                      disabled={toggleStatusMutation.isLoading}
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={handleConfirm}
-                      disabled={deleting || isConfirmDisabled}
+                      disabled={toggleStatusMutation.isLoading || isConfirmDisabled}
                       className={`px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[160px] ${
                         isConfirmDisabled 
                           ? 'bg-gray-400 text-white cursor-not-allowed'
@@ -313,7 +313,7 @@ const ModalEliminarTrabajador = ({ isOpen, onClose, onSuccess, trabajador }) => 
                           : 'bg-green-600 text-white hover:bg-green-700'
                       }`}
                     >
-                      {deleting ? (
+                      {toggleStatusMutation.isLoading ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
                           {trabajador.estaActivo ? 'Desactivando...' : 'Activando...'}

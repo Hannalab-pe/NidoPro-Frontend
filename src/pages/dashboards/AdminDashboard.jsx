@@ -58,6 +58,7 @@ import EvaluacionDocente from '../admin/evaluacion/EvaluacionDocente';
 import AnioEscolar from '../admin/anioescolar/AnioEscolar';
 import Seguros from '../admin/seguros/Seguros';
 import AIChat from '../admin/iachat/AIChat';
+import BimestralDocente from '../admin/bimestralDocente/BimestralDocente';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -110,7 +111,8 @@ const AdminDashboard = () => {
     { id: "grados", label: "Grados Académicos", icon: School, category: "academico" },
     { id: "planificaciones", label: "Planificaciones", icon: FileText, category: "academico" },
     { id: "cronogramas", label: "Cronogramas", icon: Calendar, category: "academico" },
-    { id: "evaluacion-docente", label: "Evaluación Docente", icon: Award, category: "academico" },
+    { id: "evaluacion-docente", label: "Comentario Docente", icon: Award, category: "academico" },
+    { id: "bimestral-docente", label: "Bimestral Docente", icon: Award, category: "academico" },
     { id: "anio-escolar", label: "Año Escolar", icon: Calendar, category: "academico" },
     
     // 🏫 INFRAESTRUCTURA
@@ -556,6 +558,7 @@ const AdminDashboard = () => {
           {activeSection === "grados" && <Grados />}
           {activeSection === "cronogramas" && <Cronogramas />}
           {activeSection === "evaluacion-docente" && <EvaluacionDocente />}
+          {activeSection === "bimestral-docente" && <BimestralDocente />}
           {activeSection === "anio-escolar" && <AnioEscolar />}
           {activeSection === "seguros" && <Seguros />}
           {activeSection === "ai-chat" && <AIChat />}

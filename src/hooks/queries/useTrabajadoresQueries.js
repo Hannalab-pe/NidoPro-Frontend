@@ -199,9 +199,10 @@ export const useToggleTrabajadorStatus = () => {
       }
       
       console.log('🔄 ID del trabajador para toggle:', trabajadorId);
+      console.log('🔄 Estado actual del trabajador:', trabajador.estaActivo);
       
-      // Usar la función correcta del servicio que llama al DELETE endpoint
-      return trabajadorService.toggleTrabajadorStatus(trabajadorId);
+      // Usar la función correcta del servicio que llama al PATCH endpoint
+      return trabajadorService.toggleTrabajadorStatus(trabajadorId, !trabajador.estaActivo);
     },
     onMutate: ({ trabajador }) => {
       const action = trabajador.estaActivo ? 'desactivando' : 'activando';

@@ -396,12 +396,17 @@ export const trabajadorService = {
   /**
    * Desactivar/Activar un trabajador
    * @param {string|number} id - ID del trabajador
+   * @param {boolean} newStatus - Nuevo estado activo/inactivo
    * @returns {Promise<Object>} Respuesta del servidor
    */
-  async toggleTrabajadorStatus(id) {
+  async toggleTrabajadorStatus(id, newStatus) {
     try {
-      console.log(`🔄 Cambiando estado del trabajador ID: ${id}`);
-      const response = await api.delete(`/trabajador/${id}`);
+      console.log(`🔄 Cambiando estado del trabajador ID: ${id} a ${newStatus}`);
+      
+      const response = await api.patch(`/trabajador/${id}`, { 
+        estaActivo: newStatus 
+      });
+      
       console.log('✅ Estado del trabajador actualizado:', response.data);
       return response.data;
     } catch (error) {

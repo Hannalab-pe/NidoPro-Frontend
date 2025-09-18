@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
 
-const bimestreApi = axios.create({
+const evaluacionApi = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -10,7 +10,7 @@ const bimestreApi = axios.create({
 });
 
 // Interceptor para agregar token de autenticación
-bimestreApi.interceptors.request.use(
+evaluacionApi.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -23,14 +23,15 @@ bimestreApi.interceptors.request.use(
   }
 );
 
-export const bimestreService = {
-  async getBimestreActual() {
-    const response = await bimestreApi.get('/bimestre/actual');
-    return response.data?.bimestre || null;
+export const evaluacionService = {
+  async createEvaluacionDocente(evaluationData) {
+    const response = await evaluacionApi.post('/evaluacion-docente-bimestral', evaluationData);
+    return response.data;
   },
 
-  async getAllBimestres() {
-    const response = await bimestreApi.get('/bimestre');
-    return response.data;
+  async getEvaluacionesDocente() {
+    const response = await evaluacionApi.get('/evaluacion-docente-bimestral');
+    console.log('API Response:', response.data);
+    return response.data.evaluaciones || [];
   },
 };

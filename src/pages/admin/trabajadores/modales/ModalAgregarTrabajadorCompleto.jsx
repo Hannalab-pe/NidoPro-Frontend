@@ -103,16 +103,24 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
   // Hook para obtener los roles disponibles
   const { roles, isLoading: loadingRoles } = useRoles();
 
+  // Estado para controlar si es docente
+  const [isDocente, setIsDocente] = useState(false);
+  const [cargarAulasSinAsignacion, setCargarAulasSinAsignacion] = useState(false);
+  const [rolSeleccionado, setRolSeleccionado] = useState(false);
+
+  // Calcular parámetros para el hook
+  const aulasParams = React.useMemo(() => ({
+    soloSinAsignacion: cargarAulasSinAsignacion,
+    enabled: rolSeleccionado
+  }), [cargarAulasSinAsignacion, rolSeleccionado]);
+
   // Hook para asignación de aulas (incluye carga de aulas)
   const {
     aulas,
     loadingAulas,
     asignarAulaADocente,
     asignandoAula
-  } = useAulasAsignacion();
-
-  // Estado para controlar si es docente
-  const [isDocente, setIsDocente] = useState(false);
+  } = useAulasAsignacion(aulasParams.soloSinAsignacion, aulasParams.enabled);
 
   // Hook para tipos de contrato
   const { tiposContrato, loading: loadingTiposContrato, error: errorTiposContrato } = useTiposContrato();
@@ -183,13 +191,20 @@ const ModalAgregarTrabajador = ({ isOpen, onClose, onSuccess }) => {
       const selectedRole = roles.find(rol => rol.idRol === selectedRoleId);
       const isDocenteRole = selectedRole?.nombre?.toLowerCase() === 'docente';
 
+      console.log('👨‍🏫 Rol seleccionado:', selectedRole?.nombre, 'es docente:', isDocenteRole);
+
       setIsDocente(isDocenteRole);
+      setCargarAulasSinAsignacion(isDocenteRole);
+      setRolSeleccionado(true);
       setValue('isDocente', isDocenteRole);
 
       // Limpiar selección de aula si no es docente
       if (!isDocenteRole) {
         setValue('idAula', '');
       }
+    } else {
+      setRolSeleccionado(false);
+      setCargarAulasSinAsignacion(false);
     }
   }, [selectedRoleId, roles, setValue]);
 

@@ -7,28 +7,32 @@ import { asignacionAulaService } from '../services/asignacionAulaService';
 /**
  * Hook personalizado para gestión de aulas y asignaciones
  */
-export const useAulasAsignacion = () => {
+export const useAulasAsignacion = (soloSinAsignacion = false, enabled = true) => {
   const queryClient = useQueryClient();
+
+  console.log('🔍 useAulasAsignacion called with soloSinAsignacion:', soloSinAsignacion, 'enabled:', enabled);
 
   // Estado para aulas disponibles por grado
   const [aulasDisponiblesPorGrado, setAulasDisponiblesPorGrado] = useState([]);
   const [loadingAulasPorGrado, setLoadingAulasPorGrado] = useState(false);
-
-  // Query para obtener todas las aulas disponibles
   const {
     data: aulas = [],
     isLoading: loadingAulas,
     error: errorAulas,
     refetch: refetchAulas
   } = useQuery({
-    queryKey: ['aulas'],
-    queryFn: () => aulaService.getAllAulas(),
+    queryKey: ['aulas', soloSinAsignacion ? 'sin-asignacion' : 'todas'],
+    queryFn: () => {
+      console.log('🔍 Ejecutando queryFn con soloSinAsignacion:', soloSinAsignacion);
+      return soloSinAsignacion ? aulaService.getAulasSinAsignacion() : aulaService.getAllAulas();
+    },
     staleTime: 5 * 60 * 1000, // 5 minutos
     cacheTime: 10 * 60 * 1000, // 10 minutos
+    refetchOnMount: true,
+    refetchOnWindowFocus: false,
+    enabled: enabled,
     onSuccess: (data) => {
-
-      if (data && data.length > 0) {
-      }
+      console.log('✅ Aulas cargadas:', data?.length || 0, 'aulas, tipo:', soloSinAsignacion ? 'sin-asignacion' : 'todas');
     },
     onError: (error) => {
       console.error('❌ Error al cargar aulas:', error);

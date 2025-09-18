@@ -20,7 +20,7 @@ import {
   Briefcase
 } from 'lucide-react';
 import ImageUploader from '../../../../components/common/ImageUploader';
-import { useTrabajadores } from 'src/hooks/queries/useTrabajadoresQueries';
+import { useTrabajadores, useUpdateTrabajador } from 'src/hooks/queries/useTrabajadoresQueries';
 import { useRoles } from '../../../../hooks/useRoles';
 
 // Esquema de validación con Yup (solo campos reales del backend)
@@ -63,7 +63,10 @@ const tiposDocumento = ['DNI', 'Carnet de Extranjería', 'Pasaporte'];
 
 const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
   // Hook personalizado para gestión de trabajadores
-  const { updateTrabajador, updating, uploading } = useTrabajadores();
+  const { uploading } = useTrabajadores();
+  
+  // Hook para actualizar trabajador
+  const updateTrabajadorMutation = useUpdateTrabajador();
   
   // Hook para obtener los roles disponibles
   const { roles, isLoading: loadingRoles } = useRoles();
@@ -119,8 +122,11 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
       console.log('📋 Datos a actualizar (sin campos inmutables):', dataToUpdate);
       console.log('📋 Campos excluidos:', { idRol, tipoDocumento, nroDocumento });
       
-      // El hook se encarga del proceso de actualización
-      await updateTrabajador(trabajador.idTrabajador, dataToUpdate);
+      // Usar la mutación para actualizar el trabajador
+      await updateTrabajadorMutation.mutateAsync({ 
+        id: trabajador.idTrabajador, 
+        data: dataToUpdate 
+      });
       
       // Cerrar modal después del éxito
       handleClose();
@@ -141,7 +147,7 @@ const ModalEditarTrabajador = ({ isOpen, onClose, trabajador }) => {
     }`;
 
   // Estado de carga general
-  const isLoading = updating || uploading;
+  const isLoading = updateTrabajadorMutation.isLoading || uploading;
 
   if (!trabajador) return null;
 
