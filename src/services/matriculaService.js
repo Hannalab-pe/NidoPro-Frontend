@@ -247,34 +247,15 @@ export const matriculaService = {
   },
 
   /**
-   * Crear nueva matrícula con proceso de dos pasos:
+   * Crear nueva matrícula:
    * 1. POST /api/v1/matricula (crear matrícula)
-   * 2. POST /api/v1/matricula/caja-simple/registrar/{id} (registrar en caja)
+   * El registro en caja simple se hace automáticamente en el backend
    * @param {Object} matriculaData - Datos de la matrícula
-   * @returns {Promise<Object>} Matrícula creada con registro en caja
+   * @returns {Promise<Object>} Matrícula creada
    */
   async createMatricula(matriculaData) {
     try {
-      console.log('📤 Iniciando proceso de matrícula de dos pasos:', matriculaData);
-      
-      // Debug específico para contactos de emergencia
-      if (matriculaData.estudianteData?.contactosEmergencia) {
-        console.log('🚨 CONTACTOS DE EMERGENCIA enviados:', matriculaData.estudianteData.contactosEmergencia);
-        console.log('🚨 Cantidad de contactos:', matriculaData.estudianteData.contactosEmergencia.length);
-        
-        // Validar estructura de cada contacto
-        matriculaData.estudianteData.contactosEmergencia.forEach((contacto, index) => {
-          console.log(`🚨 Contacto ${index + 1}:`, {
-            nombre: contacto.nombre,
-            apellido: contacto.apellido,
-            telefono: contacto.telefono,
-            email: contacto.email,
-            tipoContacto: contacto.tipoContacto,
-            esPrincipal: contacto.esPrincipal,
-            prioridad: contacto.prioridad
-          });
-        });
-      }
+      console.log('📤 Creando matrícula:', matriculaData);
 
       // Validar datos antes del envío
       if (!matriculaData.estudianteData) {
@@ -301,180 +282,45 @@ export const matriculaService = {
       });
 
       console.log('📋 Datos finales a enviar al backend:', JSON.stringify(matriculaData, null, 2));
-      
-      // PASO 1: Crear la matrícula
-      console.log('🌐 PASO 1: Creando matrícula en:', `${API_BASE_URL}/matricula`);
-      
-      try {
-        const matriculaResponse = await api.post('/matricula', matriculaData);
-        console.log('✅ PASO 1 completado - Matrícula creada:', matriculaResponse.data);
-        
-        // Extraer el idMatricula de la respuesta
-        let idMatricula = null;
-        const responseData = matriculaResponse.data;
-        
-        // Buscar idMatricula en diferentes estructuras de respuesta posibles
-        if (responseData?.info?.data?.id) {
-          idMatricula = responseData.info.data.id;
-        } else if (responseData?.data?.id) {
-          idMatricula = responseData.data.id;
-        } else if (responseData?.id) {
-          idMatricula = responseData.id;
-        } else if (responseData?.info?.data?.idMatricula) {
-          idMatricula = responseData.info.data.idMatricula;
-        } else if (responseData?.data?.idMatricula) {
-          idMatricula = responseData.data.idMatricula;
-        } else if (responseData?.idMatricula) {
-          idMatricula = responseData.idMatricula;
-        }
-        
-        if (!idMatricula) {
-          console.error('❌ No se encontró idMatricula en la respuesta:', responseData);
-          throw new Error('No se pudo obtener el ID de la matrícula creada');
-        }
-        
-        console.log('🔑 ID de matrícula obtenido:', idMatricula);
-        
-        // PASO 2: Registrar en caja simple
-        console.log('🌐 PASO 2: Registrando en caja simple en:', `${API_BASE_URL}/matricula/caja-simple/registrar/${idMatricula}`);
-        console.log('🔗 URL completa del PASO 2:', `${API_BASE_URL}/matricula/caja-simple/registrar/${idMatricula}`);
-        console.log('🎯 ID de matrícula para caja:', idMatricula);
-        console.log('🔍 Tipo de ID:', typeof idMatricula);
-        console.log('🔍 ID es válido?:', idMatricula && idMatricula.length > 0);
-        
-        // Obtener los datos del usuario actual
-        const userData = getUserDataFromAuth();
-        console.log('👤 Datos de usuario obtenidos:', userData);
-        
-        if (!userData || !userData.entidadId) {
-          throw new Error('No se pudo obtener el entidadId del usuario. Por favor, inicie sesión nuevamente.');
-        }
-        
-        // Generar número de comprobante
-        const numeroComprobante = generateComprobanteNumber();
-        console.log('🧾 Número de comprobante generado:', numeroComprobante);
-        
-        // Preparar el body para el PASO 2 con la estructura correcta
-        const cajaPayload = {
-          registradoPor: userData.entidadId,  // Usar entidadId en lugar de userId
-          numeroComprobante: numeroComprobante
-        };
-        
-        console.log('📦 Payload completo para PASO 2:', cajaPayload);
-        
-        try {
-          const cajaResponse = await api.post(`/matricula/caja-simple/registrar/${idMatricula}`, cajaPayload);
-          console.log('✅ PASO 2 completado - Registrado en caja:', cajaResponse.data);
-          
-          // Retornar la respuesta completa combinando ambos resultados
-          const finalResponse = {
-            matricula: matriculaResponse.data,
-            cajaRegistro: cajaResponse.data,
-            idMatricula: idMatricula,
-            numeroComprobante: numeroComprobante,
-            success: true,
-            message: 'Matrícula creada y registrada exitosamente'
-          };
-          
-          console.log('🎉 Proceso completo de matrícula finalizado:', finalResponse);
-          return finalResponse;
-          
-        } catch (cajaError) {
-          console.error('❌ Error específico en PASO 2 (registro en caja):', cajaError);
-          console.error('❌ Status del error PASO 2:', cajaError.response?.status);
-          console.error('❌ Datos del error PASO 2:', cajaError.response?.data);
-          console.error('❌ Headers del error PASO 2:', cajaError.response?.headers);
-          console.error('❌ Payload enviado que falló:', cajaPayload);
-          
-          // Error más específico para problemas de foreign key
-          let errorMessage = 'Error en registro de caja';
-          if (cajaError.response?.data?.message) {
-            errorMessage = cajaError.response.data.message;
-          } else if (cajaError.response?.data?.error) {
-            errorMessage = cajaError.response.data.error;
-          } else if (cajaError.message) {
-            errorMessage = cajaError.message;
-          }
-          
-          // Si es un error de foreign key, dar más contexto
-          if (errorMessage.includes('foreign key constraint') || errorMessage.includes('registrado_por_fkey')) {
-            errorMessage = `Error de clave foránea: El entidadId "${userData.entidadId}" no existe en la base de datos. Verifique que el usuario esté correctamente registrado.`;
-          }
-          
-          throw new Error(`Matrícula creada pero falló el registro en caja: ${errorMessage}`);
-        }
-        
-      } catch (paso1Error) {
-        console.error('❌ Error específico en PASO 1 (creación de matrícula):', paso1Error);
-        console.error('❌ Status del error PASO 1:', paso1Error.response?.status);
-        console.error('❌ Datos completos del error PASO 1:', paso1Error.response?.data);
-        console.error('❌ Headers del error PASO 1:', paso1Error.response?.headers);
-        console.error('❌ Payload enviado que falló en PASO 1:', JSON.stringify(matriculaData, null, 2));
-        
-        // Si es error 500, extraer el mensaje específico del backend
-        let errorMessage = 'Error del servidor en creación de matrícula';
-        
-        if (paso1Error.response?.data) {
-          const errorData = paso1Error.response.data;
-          
-          // Intentar extraer el mensaje de error más específico
-          if (typeof errorData === 'string') {
-            errorMessage = errorData;
-          } else if (errorData.message) {
-            errorMessage = errorData.message;
-          } else if (errorData.error) {
-            errorMessage = errorData.error;
-          } else if (errorData.details) {
-            errorMessage = errorData.details;
-          } else {
-            errorMessage = `Error del servidor: ${JSON.stringify(errorData)}`;
-          }
-        }
-        
-        throw new Error(errorMessage);
-      }
-      
+
+      // Crear la matrícula
+      console.log('🌐 Creando matrícula en:', `${API_BASE_URL}/matricula`);
+
+      const matriculaResponse = await api.post('/matricula', matriculaData);
+      console.log('✅ Matrícula creada exitosamente:', matriculaResponse.data);
+
+      return matriculaResponse.data;
+
     } catch (error) {
-      console.error('❌ Error en el proceso de matrícula:', error);
-      
-      // Manejo específico de errores según el paso
+      console.error('❌ Error al crear matrícula:', error);
+
       if (error.response) {
         const status = error.response.status;
         const errorData = error.response.data;
-        
+
         console.error('❌ Detalles del error HTTP:', {
           status,
           data: errorData,
           url: error.config?.url
         });
-        
-        // Determinar en qué paso ocurrió el error
-        const url = error.config?.url || '';
-        let errorStep = 'desconocido';
-        
-        if (url.includes('/matricula') && !url.includes('caja-simple')) {
-          errorStep = 'creación de matrícula';
-        } else if (url.includes('caja-simple/registrar')) {
-          errorStep = 'registro en caja';
-        }
-        
+
         // Mensajes de error específicos
-        let errorMessage = `Error en ${errorStep}`;
-        
+        let errorMessage = 'Error al crear matrícula';
+
         if (status === 400) {
-          errorMessage = errorData?.message || `Datos inválidos en ${errorStep}`;
+          errorMessage = errorData?.message || 'Datos inválidos';
         } else if (status === 401) {
           errorMessage = 'No autorizado. Por favor, inicie sesión nuevamente';
         } else if (status === 403) {
           errorMessage = 'No tiene permisos para realizar esta operación';
         } else if (status === 404) {
-          errorMessage = `Recurso no encontrado en ${errorStep}`;
+          errorMessage = 'Recurso no encontrado';
         } else if (status === 409) {
-          errorMessage = errorData?.message || `Conflicto en ${errorStep}`;
+          errorMessage = errorData?.message || 'Conflicto al crear matrícula';
         } else if (status >= 500) {
-          errorMessage = `Error del servidor en ${errorStep}`;
+          errorMessage = 'Error del servidor';
         }
-        
+
         throw new Error(errorMessage);
       } else if (error.request) {
         console.error('❌ Error de red:', error.request);
