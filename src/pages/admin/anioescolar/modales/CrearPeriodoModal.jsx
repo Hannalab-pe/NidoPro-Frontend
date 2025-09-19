@@ -27,7 +27,7 @@ const CrearPeriodoModal = ({ isOpen, onClose }) => {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/v1/periodo-escolar', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/periodo-escolar`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
