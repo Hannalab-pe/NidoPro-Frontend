@@ -75,7 +75,7 @@ const GenerarPensionesModal = ({ isOpen, onClose }) => {
         registradoPorId: entidadId
       };
 
-      const response = await fetch('/api/v1/pension-estudiante/configurar-anio-escolar-optimizada?registradoPorId=' + entidadId, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/pension-estudiante/configurar-anio-escolar-optimizada?registradoPorId=${entidadId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,17 +236,7 @@ const GenerarPensionesModal = ({ isOpen, onClose }) => {
                     </label>
                   </div>
 
-                  {/* Info del usuario */}
-                  {entidadId && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                      <div className="flex items-center space-x-2">
-                        <Settings className="w-4 h-4 text-blue-600" />
-                        <span className="text-sm text-blue-800">
-                          Registrado por: {entidadId}
-                        </span>
-                      </div>
-                    </div>
-                  )}
+
 
                   {/* Buttons */}
                   <div className="flex space-x-3 pt-4">
