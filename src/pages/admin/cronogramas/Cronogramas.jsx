@@ -132,14 +132,13 @@ const Cronogramas = () => {
 
     return cronogramaDatos.map((actividad, index) => {
       // Los datos del backend usan nombres con guiones bajos
-      const fechaInicio = new Date(actividad.fecha_inicio);
-      const fechaFin = new Date(actividad.fecha_fin);
+      // Extraer solo la fecha (YYYY-MM-DD) para evitar problemas de zona horaria
+      const fechaInicioStr = actividad.fecha_inicio.split('T')[0]; // "2025-09-20"
+      const fechaFinStr = actividad.fecha_fin.split('T')[0]; // "2025-09-20"
 
-      // Si las fechas no tienen hora específica, agregar horas por defecto
-      if (fechaInicio.getHours() === 0 && fechaInicio.getMinutes() === 0) {
-        fechaInicio.setHours(8, 0); // 8:00 AM por defecto
-        fechaFin.setHours(9, 30); // 9:30 AM por defecto
-      }
+      // Crear fechas locales sin zona horaria para evitar conversiones UTC
+      const fechaInicio = new Date(fechaInicioStr + 'T08:00:00'); // 8:00 AM local
+      const fechaFin = new Date(fechaFinStr + 'T09:30:00'); // 9:30 AM local
 
       return {
         id: actividad.id_cronograma || index,
