@@ -77,7 +77,7 @@ const ParentDashboard = () => {
   const studentData = {
     name: `${user?.nombre || ''} ${user?.apellido || ''}`,
     grade: "Los Pequeños Exploradores",
-    photo: "https://res.cloudinary.com/dhdpp8eq2/image/upload/v1755701581/estudiantes/zoslqzw97fnfnuxfhcmj.gif",
+    photo: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236B7280'%3E%3Cpath d='M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z'/%3E%3C/svg%3E",
     age: 0,
     teacher: ""
   };
@@ -99,18 +99,11 @@ const ParentDashboard = () => {
       color: estadisticas.tareasVencidas > 0 ? "#EF4444" : "#10B981"
     },
     { 
-      title: "Completitud", 
-      value: `${estadisticas.promedioCompletitud}%`, 
-      change: "promedio", 
+      title: "¡Qué bien lo estás haciendo!", 
+      value: estadisticas.promedioCompletitud >= 80 ? "¡Excelente!" : estadisticas.promedioCompletitud >= 60 ? "¡Muy bien!" : "¡Ánimo!", 
+      change: "¡Sigue así!", 
       icon: Star, 
       color: estadisticas.promedioCompletitud >= 80 ? "#10B981" : estadisticas.promedioCompletitud >= 60 ? "#F59E0B" : "#EF4444"
-    },
-    { 
-      title: "Estado General", 
-      value: estadisticas.tareasVencidas === 0 ? "Excelente" : estadisticas.tareasVencidas <= 2 ? "Bueno" : "Requiere Atención", 
-      change: "rendimiento", 
-      icon: TrendingUp, 
-      color: estadisticas.tareasVencidas === 0 ? "#10B981" : estadisticas.tareasVencidas <= 2 ? "#F59E0B" : "#EF4444"
     }
   ];
 
@@ -172,11 +165,9 @@ const ParentDashboard = () => {
     <div className="space-y-6 lg:space-y-8">
       {/* Información del hijo */}
       <div className="bg-gradient-to-r from-yellow-200 to-yellow-100 rounded-xl p-6 flex items-center gap-6">
-        <img 
-          src={studentData.photo} 
-          alt={studentData.name}
-          className="w-20 h-20 rounded-full object-cover border-4 border-blue-200"
-        />
+        <div className="w-20 h-20 rounded-full border-4 border-yellow-600 shadow bg-yellow-100 flex items-center justify-center">
+          <CircleUser className="w-12 h-12 text-yellow-600" />
+        </div>
         <div className="flex-1">
           <h3 className="text-xl font-bold text-gray-900">{studentData.name}</h3>
           <p className="text-blue-600 font-medium">{studentData.grade}</p>
@@ -193,7 +184,7 @@ const ParentDashboard = () => {
       </div>
 
       {/* Estadísticas rápidas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {quickStats.map((stat, index) => {
           const IconComponent = stat.icon;
           return (
@@ -305,7 +296,10 @@ const ParentDashboard = () => {
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
         <h3 className="text-lg font-bold text-gray-900 mb-4">Próximas Actividades</h3>
         <div className="grid md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-4 border border-blue-100">
+          <button 
+            onClick={() => setActiveSection("tasks")}
+            className="bg-white rounded-lg p-4 border border-blue-100 hover:shadow-md transition-all duration-200 cursor-pointer w-full text-left"
+          >
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
                 <span className="text-xl">📚</span>
@@ -315,8 +309,11 @@ const ParentDashboard = () => {
                 <p className="text-sm text-gray-600">Accede a la sección de Actividades</p>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-purple-100">
+          </button>
+          <button 
+            onClick={() => setActiveSection("iachat")}
+            className="bg-white rounded-lg p-4 border border-purple-100 hover:shadow-md transition-all duration-200 cursor-pointer w-full text-left"
+          >
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
                 <span className="text-xl">🤖</span>
@@ -326,8 +323,11 @@ const ParentDashboard = () => {
                 <p className="text-sm text-gray-600">Obtén ayuda educativa personalizada</p>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-green-100">
+          </button>
+          <button 
+            onClick={() => setActiveSection("games")}
+            className="bg-white rounded-lg p-4 border border-green-100 hover:shadow-md transition-all duration-200 cursor-pointer w-full text-left"
+          >
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
                 <span className="text-xl">🎮</span>
@@ -337,7 +337,7 @@ const ParentDashboard = () => {
                 <p className="text-sm text-gray-600">¡Aprende jugando con diversión!</p>
               </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
     </div>

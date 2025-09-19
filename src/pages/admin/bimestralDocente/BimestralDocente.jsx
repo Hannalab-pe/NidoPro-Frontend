@@ -62,7 +62,7 @@ const BimestralDocente = () => {
           <div className="flex gap-3">
             <button
               onClick={handleRefresh}
-              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+              className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-md cursor-pointer flex items-center gap-2"
               disabled={loading}
             >
               <RefreshCw size={20} className={loading ? 'animate-spin' : ''} />
@@ -70,7 +70,7 @@ const BimestralDocente = () => {
             </button>
             <button
               onClick={handleOpenModal}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md cursor-pointer flex items-center gap-2"
             >
               <UserCheck size={20} />
               Evaluar Docente

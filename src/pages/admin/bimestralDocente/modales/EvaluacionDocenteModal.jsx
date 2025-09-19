@@ -16,7 +16,7 @@ const schema = yup.object({
   puntajePuntualidad: yup.number().min(0).max(20).required('Puntaje de puntualidad es requerido'),
   puntajeCreatividad: yup.number().min(0).max(20).required('Puntaje de creatividad es requerido'),
   puntajeComunicacion: yup.number().min(0).max(20).required('Puntaje de comunicación es requerido'),
-  idTrabajador: yup.string().required('Trabajador es requerido'),
+  idTrabajador: yup.string().required('Docente es requerido'),
   idBimestre: yup.string().required('Bimestre es requerido'),
   observaciones: yup.string().required('Observaciones son requeridas'),
   fechaEvaluacion: yup.date().required('Fecha de evaluación es requerida'),
@@ -41,12 +41,26 @@ const EvaluacionDocenteModal = ({ isOpen, onClose, onSuccess }) => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [trabajadoresRes, bimestresRes] = await Promise.all([
+      const [trabajadoresRes, bimestreActualRes] = await Promise.all([
         trabajadorService.getAllTrabajadores(),
-        bimestreService.getAllBimestres(),
+        bimestreService.getBimestreActual(),
       ]);
-      setTrabajadores(trabajadoresRes || []);
-      setBimestres(bimestresRes.bimestres || []);
+      
+      // Filtrar solo los trabajadores con rol DOCENTE
+      const docentes = (trabajadoresRes || []).filter(trabajador => 
+        trabajador.idRol?.nombre === 'DOCENTE' || trabajador.rol?.nombre === 'DOCENTE'
+      );
+      
+      setTrabajadores(docentes);
+      setBimestres(bimestreActualRes ? [bimestreActualRes] : []);
+      
+      // Preseleccionar el bimestre activo si existe
+      if (bimestreActualRes) {
+        reset((prevValues) => ({
+          ...prevValues,
+          idBimestre: bimestreActualRes.idBimestre
+        }));
+      }
     } catch (error) {
       console.error('Error loading data:', error);
       toast.error('Error al cargar los datos');
@@ -145,7 +159,7 @@ const EvaluacionDocenteModal = ({ isOpen, onClose, onSuccess }) => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Trabajador *
+                        Docente *
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -156,7 +170,7 @@ const EvaluacionDocenteModal = ({ isOpen, onClose, onSuccess }) => {
                           disabled={loading}
                           className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <option value="">Seleccionar trabajador</option>
+                          <option value="">Seleccionar docente</option>
                           {trabajadores.map((trabajador) => (
                             <option key={trabajador.idTrabajador} value={trabajador.idTrabajador}>
                               {trabajador.nombre} {trabajador.apellido}
@@ -169,7 +183,7 @@ const EvaluacionDocenteModal = ({ isOpen, onClose, onSuccess }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Bimestre *
+                        Bimestre Activo *
                       </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -183,7 +197,7 @@ const EvaluacionDocenteModal = ({ isOpen, onClose, onSuccess }) => {
                           <option value="">Seleccionar bimestre</option>
                           {bimestres.map((bimestre) => (
                             <option key={bimestre.idBimestre} value={bimestre.idBimestre}>
-                              {bimestre.nombreBimestre}
+                              {bimestre.nombreBimestre} (Activo)
                             </option>
                           ))}
                         </select>
