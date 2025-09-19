@@ -504,20 +504,6 @@ const Login = () => {
                     </div>
                   )}
 
-                  {/* Options */}
-                  <div className="flex items-center justify-between">
-                    <label className="flex items-center cursor-pointer">
-                      <input 
-                        type="checkbox" 
-                        className="w-4 h-4 text-blue-600 bg-gray-100 border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2" 
-                      />
-                      <span className="ml-3 text-sm text-gray-600 font-medium">Recordarme</span>
-                    </label>
-                    <a href="#" className="text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium">
-                      ¿Olvidaste tu contraseña?
-                    </a>
-                  </div>
-
                   {/* Submit Button */}
                   <div className={`transition-all duration-700 transform ${
                     isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
@@ -545,17 +531,6 @@ const Login = () => {
                     </button>
                   </div>
                 </form>
-
-                {/* Footer */}
-                <div className={`mt-8 text-center transition-all duration-700 transform ${
-                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'
-                }`} style={{ transitionDelay: '1.1s' }}>
-                  <p className="text-sm text-gray-600 mb-3">¿Necesitas ayuda?</p>
-                  <a href="#" className="text-sm text-blue-600 hover:text-blue-700 transition-colors font-medium inline-flex items-center">
-                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                    Contacta soporte técnico
-                  </a>
-                </div>
 
                 {/* Decorative elements for form */}
                 <div className="absolute -top-4 -right-4 w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg rotate-45 opacity-20"></div>
@@ -633,14 +608,14 @@ const Login = () => {
         <div className={`flex justify-center items-center space-x-2  transition-all duration-1000 transform ${
           isVisible ? 'translate-y-0' : 'translate-y-4 opacity-0'
         }`} style={{ transitionDelay: '1.5s' }}>
-          <div className="text-black text-xs font-medium">
+          <div className="text-black text-sm font-medium">
             <a 
               href="https://hannahlab.com/" 
               target="_blank" 
               rel="noopener noreferrer"
               className="hover:text-black transition-colors cursor-pointer"
             >
-              Powered by <span className="font-extrabold text-lg bg-gradient-to-r from-green-500 to-emerald-700 bg-clip-text text-transparent">HannahLab</span>
+              Powered by <span className="font-extrabold text-xl bg-gradient-to-r from-green-500 to-emerald-700 bg-clip-text text-transparent">HannahLab</span>
             </a>
           </div>
         </div>

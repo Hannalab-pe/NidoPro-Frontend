@@ -98,7 +98,7 @@ export const cursoService = {
   async update(id, cursoData) {
     try {
       console.log(`📝 Actualizando curso ${id}:`, cursoData);
-      const response = await axiosInstance.put(`/curso/${id}`, cursoData);
+      const response = await axiosInstance.patch(`/curso/${id}`, cursoData);
       console.log('✅ Curso actualizado:', response.data);
       return response.data;
     } catch (error) {

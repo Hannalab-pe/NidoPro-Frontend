@@ -1,16 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { X, BookOpen, Users, AlertCircle, Loader2 } from 'lucide-react';
+import { X, BookOpen, AlertCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
   const [formData, setFormData] = useState({
     nombre: '',
-    descripcion: '',
-    grado: '',
-    capacidadMaxima: '',
-    estado: 'activo'
+    descripcion: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -20,11 +17,8 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
   useEffect(() => {
     if (curso && isOpen) {
       setFormData({
-        nombre: curso.nombre || '',
-        descripcion: curso.descripcion || '',
-        grado: curso.grado || '',
-        capacidadMaxima: curso.capacidadMaxima || '',
-        estado: curso.estado || 'activo'
+        nombre: curso.nombreCurso || curso.nombre || '',
+        descripcion: curso.descripcion || ''
       });
       setErrors({});
     }
@@ -57,14 +51,6 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
       newErrors.descripcion = 'La descripción es obligatoria';
     }
 
-    if (!formData.grado) {
-      newErrors.grado = 'El grado es obligatorio';
-    }
-
-    if (!formData.capacidadMaxima || formData.capacidadMaxima <= 0) {
-      newErrors.capacidadMaxima = 'La capacidad máxima debe ser mayor a 0';
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -79,9 +65,9 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
 
     try {
       setLoading(true);
-      console.log('🚀 Actualizando curso:', { id: curso.id, ...formData });
+      console.log('🚀 Actualizando curso:', { id: curso.idCurso || curso.id, ...formData });
 
-      await onSave(curso.id, formData);
+      await onSave(curso.idCurso || curso.id, formData);
 
     } catch (error) {
       console.error('❌ Error al actualizar curso:', error);
@@ -95,10 +81,7 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
     if (!loading) {
       setFormData({
         nombre: '',
-        descripcion: '',
-        grado: '',
-        capacidadMaxima: '',
-        estado: 'activo'
+        descripcion: ''
       });
       setErrors({});
       onClose();
@@ -207,76 +190,6 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
                         {errors.descripcion}
                       </div>
                     )}
-                  </div>
-
-                  {/* Grado y Capacidad */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Grado *
-                      </label>
-                      <select
-                        name="grado"
-                        value={formData.grado}
-                        onChange={handleInputChange}
-                        className={inputClassName(errors.grado)}
-                        disabled={loading}
-                      >
-                        <option value="">Seleccionar grado</option>
-                        <option value="1">1er Grado</option>
-                        <option value="2">2do Grado</option>
-                        <option value="3">3er Grado</option>
-                        <option value="4">4to Grado</option>
-                        <option value="5">5to Grado</option>
-                        <option value="6">6to Grado</option>
-                      </select>
-                      {errors.grado && (
-                        <div className="mt-1 flex items-center text-sm text-red-600">
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {errors.grado}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Users className="w-4 h-4 inline mr-1" />
-                        Capacidad Máxima *
-                      </label>
-                      <input
-                        type="number"
-                        name="capacidadMaxima"
-                        value={formData.capacidadMaxima}
-                        onChange={handleInputChange}
-                        placeholder="30"
-                        min="1"
-                        className={inputClassName(errors.capacidadMaxima)}
-                        disabled={loading}
-                      />
-                      {errors.capacidadMaxima && (
-                        <div className="mt-1 flex items-center text-sm text-red-600">
-                          <AlertCircle className="w-4 h-4 mr-1" />
-                          {errors.capacidadMaxima}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Estado */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Estado
-                    </label>
-                    <select
-                      name="estado"
-                      value={formData.estado}
-                      onChange={handleInputChange}
-                      className={inputClassName()}
-                      disabled={loading}
-                    >
-                      <option value="activo">Activo</option>
-                      <option value="inactivo">Inactivo</option>
-                    </select>
                   </div>
 
                   {/* Botones */}
