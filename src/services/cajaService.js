@@ -27,7 +27,6 @@ const cajaService = {
         }
       });
 
-      console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -69,7 +68,6 @@ const cajaService = {
         body: JSON.stringify(datosMovimiento)
       });
 
-      console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -111,7 +109,6 @@ const cajaService = {
         }
       });
 
-      console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
@@ -155,7 +152,6 @@ const cajaService = {
         body: JSON.stringify(datosActualizacion)
       });
 
-      console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -187,7 +183,6 @@ const cajaService = {
         throw new Error('Token de autorización no encontrado');
       }
 
-      console.log('� Obteniendo dashboard financiero...');
 
       const response = await fetch(`${API_BASE_URL}/caja-simple/reportes/dashboard`, {
         method: 'GET',
@@ -197,14 +192,12 @@ const cajaService = {
         }
       });
 
-      console.log('📡 Response status:', response.status);
 
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
-      console.log('💰 Dashboard financiero obtenido:', data);
       
       return {
         success: true,

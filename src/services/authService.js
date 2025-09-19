@@ -15,20 +15,17 @@ export const authService = {
   // Login con backend real
   async login(credentials) {
     try {
-      console.log('🔐 Iniciando login con:', { usuario: credentials.email });
       
       const payload = {
         usuario: credentials.email,
         contrasena: credentials.password
       };
       
-      console.log('📤 Enviando al backend:', payload);
       
       const response = await authApi.post('/auth/login', payload);
 
       const { data } = response;
       
-      console.log('✅ Login exitoso:', data);
       
 
       // Estructura del backend real con mapeo de roles (ajustado para SECRETARIA)
@@ -71,8 +68,7 @@ export const authService = {
         permissions: roleMapping.permissions
       };
 
-      console.log('🔐 Datos de autenticación procesados:', authResponse);
-      console.log('🔐 Usuario con fullName:', authResponse.user.fullName);
+
 
       return authResponse;
     } catch (error) {

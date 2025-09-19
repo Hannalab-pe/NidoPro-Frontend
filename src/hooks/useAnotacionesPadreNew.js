@@ -13,11 +13,9 @@ export const useAnotacionesPadre = () => {
         throw new Error('Usuario no tiene entidadId (ID de estudiante)');
       }
       
-      console.log('📋 Obteniendo anotaciones para estudiante ID:', user.entidadId);
       
       // Obtener anotaciones directamente usando el entidadId del usuario
       const response = await anotacionService.getAnotacionesByEstudiante(user.entidadId);
-      console.log('📋 Respuesta del backend anotaciones:', response);
       
       // El backend devuelve: { success: true, message: "...", anotaciones: [...] }
       // Extraer el array de anotaciones y mapear los datos

@@ -53,7 +53,6 @@ window.testAulasAPI = async () => {
       },
     });
 
-    console.log('Response status:', response.status);
 
     if (response.ok) {
       const result = await response.json();
@@ -132,7 +131,6 @@ const EvaluarEstudianteModal = ({ isOpen, onClose, evaluacion }) => {
         },
       });
 
-      console.log('Response status:', response.status, 'para endpoint:', endpoint);
 
       if (!response.ok) {
         const errorText = await response.text();
