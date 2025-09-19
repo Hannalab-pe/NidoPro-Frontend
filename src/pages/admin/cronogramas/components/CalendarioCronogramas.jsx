@@ -138,7 +138,13 @@ const CalendarioCronogramas = ({
   const handleSelectEvent = (event) => {
     console.log('📅 Evento seleccionado en admin:', event);
     setSelectedEvent(event);
-    setIsDetailModalOpen(true);
+
+    // Solo abrir modal propio si no es readOnly (modo edición)
+    // En modo readOnly (admin), el componente padre maneja el modal
+    if (!readOnly) {
+      setIsDetailModalOpen(true);
+    }
+
     if (onSelectEvent) {
       onSelectEvent(event);
     }
@@ -535,12 +541,14 @@ const CalendarioCronogramas = ({
         }
       `}</style>
 
-      {/* Modal para mostrar detalles del evento */}
-      <ModalDetalleEvento
-        isOpen={isDetailModalOpen}
-        onClose={() => setIsDetailModalOpen(false)}
-        evento={selectedEvent}
-      />
+      {/* Modal para mostrar detalles del evento - solo en modo edición */}
+      {!readOnly && (
+        <ModalDetalleEvento
+          isOpen={isDetailModalOpen}
+          onClose={() => setIsDetailModalOpen(false)}
+          evento={selectedEvent}
+        />
+      )}
     </div>
   );
 };
