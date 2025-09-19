@@ -4,7 +4,6 @@ import axios from 'axios';
 // Base URL del API
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
 
-console.log('🌐 API Base URL configurada:', API_BASE_URL);
 
 // Función auxiliar para obtener el ID del usuario del token y el estado de auth
 const getUserDataFromAuth = () => {
@@ -73,7 +72,6 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('🔑 Token añadido a headers:', token.substring(0, 20) + '...');
     } else {
       console.log('⚠️ No se encontró token en localStorage');
     }
