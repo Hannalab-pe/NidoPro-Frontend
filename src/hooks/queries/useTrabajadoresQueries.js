@@ -345,7 +345,7 @@ export const useUpdateComentarioDocente = () => {
 
       // Usar idEvaluacionDocente para el endpoint del backend
       const response = await fetch(`${API_BASE_URL}/comentario-docente/${id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

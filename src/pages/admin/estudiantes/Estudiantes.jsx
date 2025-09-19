@@ -5,7 +5,8 @@ import {
   Calendar,
   BookOpen,
   UserPlus,
-  User
+  User,
+  RefreshCw
 } from 'lucide-react';
 import { useStudents } from '../../../hooks/useStudents';
 import TablaEstudiantes from './tablas/TablaEstudiantes';
@@ -21,7 +22,8 @@ const Estudiantes = () => {
     loading,
     statistics,
     getActiveStudents,
-    getTotalStudents
+    getTotalStudents,
+    fetchStudents
   } = useStudents();
 
   // Estados locales solo para UI
@@ -78,6 +80,14 @@ const Estudiantes = () => {
             <h1 className="text-2xl font-bold text-gray-900">Gestión de Estudiantes</h1>
             <p className="text-gray-600 mt-1">Administra los Estudiantes</p>
           </div>
+          <button
+            onClick={() => fetchStudents()}
+            disabled={loading}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <span>Actualizar</span>
+          </button>
         </div>
 
         {/* Estadísticas */}
