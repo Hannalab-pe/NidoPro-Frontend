@@ -44,40 +44,44 @@ export const usePadres = () => {
         total: 0,
         active: 0,
         inactive: 0,
-        byRelation: {},
-        byParticipation: {},
-        withChildren: 0
+        byType: {},
+        withChildren: 0,
+        totalChildren: 0,
+        averageChildren: 0
       };
     }
 
     const total = parents.length;
-    const active = parents.filter(p => p.estaActivo).length;
-    const inactive = total - active;
+    // Nota: La nueva API no incluye estaActivo, así que asumimos todos activos por ahora
+    const active = total;
+    const inactive = 0;
 
-    // Agrupar por relación (asume una propiedad 'relacion' en el objeto padre)
-    const byRelation = parents.reduce((acc, parent) => {
-      const relation = parent.relacion || 'Sin relación';
-      acc[relation] = (acc[relation] || 0) + 1;
+    // Agrupar por tipo de apoderado (Padre/Madre)
+    const byType = parents.reduce((acc, parent) => {
+      const type = parent.tipoApoderado || 'Sin tipo';
+      acc[type] = (acc[type] || 0) + 1;
       return acc;
     }, {});
-    
-    // Agrupar por nivel de participación (asume una propiedad 'participacion')
-    const byParticipation = parents.reduce((acc, parent) => {
-        const level = parent.participacion || 'Sin definir';
-        acc[level] = (acc[level] || 0) + 1;
-        return acc;
-    }, {});
 
-    // Contar padres que tienen hijos asignados (asume un array 'hijos' no vacío)
-    const withChildren = parents.filter(p => p.hijos && p.hijos.length > 0).length;
+    // Contar padres que tienen estudiantes matriculados
+    const withChildren = parents.filter(p => p.matriculas && p.matriculas.length > 0).length;
+
+    // Calcular total de estudiantes
+    const totalChildren = parents.reduce((sum, parent) => {
+      return sum + (parent.matriculas?.length || 0);
+    }, 0);
+
+    // Calcular promedio de hijos por familia
+    const averageChildren = withChildren > 0 ? Math.round((totalChildren / withChildren) * 10) / 10 : 0;
 
     return {
       total,
       active,
       inactive,
-      byRelation,
-      byParticipation,
-      withChildren
+      byType,
+      withChildren,
+      totalChildren,
+      averageChildren
     };
   }, [parents]);
   // --- Fin de la Sección de Estadísticas ---

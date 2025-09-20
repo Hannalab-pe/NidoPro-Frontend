@@ -21,7 +21,7 @@ const TablaPadres = ({
         data={padres}
         columns={parentsColumns}
         loading={loading}
-        title="Gestión de Padres de Familia"
+        title="Gestión de Apoderados y Estudiantes"
         searchPlaceholder="Buscar padres..."
         icon={UserCheck}
         onAdd={onAdd}
@@ -32,7 +32,7 @@ const TablaPadres = ({
         onExport={onExport}
         actions={{
           add: false, // Los padres se agregan solo a través de matrícula
-          edit: false, // Edición deshabilitada - no existe endpoint en backend
+          edit: true, // Habilitado para edición
           delete: false,
           view: true,
           import: false, // Import manejado por matrícula

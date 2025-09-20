@@ -27,13 +27,25 @@ import matriculaService from '../../../../services/matriculaService';
 // Esquema de validación actualizado según estructura real
 const validationSchema = yup.object({
   // Datos del estudiante (solo campos editables que existen)
-  nombreEstudiante: yup.string().required('El nombre del estudiante es requerido').trim(),
-  apellidoEstudiante: yup.string().required('El apellido del estudiante es requerido').trim(),
+  nombreEstudiante: yup.string()
+    .required('El nombre del estudiante es requerido')
+    .trim()
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras y espacios'),
+  apellidoEstudiante: yup.string()
+    .required('El apellido del estudiante es requerido')
+    .trim()
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El apellido solo puede contener letras y espacios'),
   observacionesEstudiante: yup.string().trim(),
   
   // Datos del apoderado
-  nombreApoderado: yup.string().required('El nombre del apoderado es requerido').trim(),
-  apellidoApoderado: yup.string().required('El apellido del apoderado es requerido').trim(),
+  nombreApoderado: yup.string()
+    .required('El nombre del apoderado es requerido')
+    .trim()
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras y espacios'),
+  apellidoApoderado: yup.string()
+    .required('El apellido del apoderado es requerido')
+    .trim()
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El apellido solo puede contener letras y espacios'),
   numeroApoderado: yup.string().required('El teléfono del apoderado es requerido').trim(),
   correoApoderado: yup.string()
     .email('El email del apoderado no es válido')
@@ -41,15 +53,17 @@ const validationSchema = yup.object({
   direccionApoderado: yup.string().trim(),
   
   // Contactos de emergencia
-  nombreContacto: yup.string().required('El nombre del contacto de emergencia es requerido').trim(),
-  apellidoContacto: yup.string().required('El apellido del contacto de emergencia es requerido').trim(),
+  nombreContacto: yup.string()
+    .required('El nombre del contacto de emergencia es requerido')
+    .trim()
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras y espacios'),
+  apellidoContacto: yup.string()
+    .required('El apellido del contacto de emergencia es requerido')
+    .trim()
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El apellido solo puede contener letras y espacios'),
   telefonoContacto: yup.string().required('El teléfono de emergencia es requerido').trim(),
   emailContacto: yup.string().email('El email del contacto no es válido').trim(),
-  tipoContacto: yup.string().required('El tipo de contacto es requerido'),
-  
-  // Datos de matrícula
-  costoMatricula: yup.number().required('El costo es requerido').positive('El costo debe ser positivo'),
-  fechaIngreso: yup.date().required('La fecha de ingreso es requerida')
+  tipoContacto: yup.string().required('El tipo de contacto es requerido')
 });
 
 // Componente FormField reutilizable
@@ -160,9 +174,8 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
         emailContacto: contactoPrincipal.email || '',
         tipoContacto: contactoPrincipal.tipoContacto || '',
         
-        // Datos de matrícula
-        costoMatricula: matriculaCompleta.costoMatricula || '',
-        fechaIngreso: formattedFechaIngreso
+        // Datos de matrícula (solo los que se pueden editar según el API)
+        // No incluimos fechaIngreso, costoMatricula, etc.
       };
 
       console.log('📝 Datos del formulario:', formData);
@@ -188,6 +201,12 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
         correo: data.correoApoderado
       };
 
+      // Preparar datos del estudiante para el nuevo endpoint
+      const estudianteData = {
+        nombre: data.nombreEstudiante,
+        apellido: data.apellidoEstudiante
+      };
+
       // Preparar contactos de emergencia existentes
       const contactosEmergencia = [];
       const contactosExistentes = matriculaToUse.idEstudiante?.contactosEmergencia || [];
@@ -203,9 +222,7 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
           email: data.emailContacto,
           tipoContacto: data.tipoContacto,
           relacionEstudiante: data.tipoContacto, // Usar el mismo valor que tipoContacto
-          esPrincipal: true,
-          prioridad: 1,
-          desactivar: false
+          prioridad: 1
         });
       }
 
@@ -220,6 +237,7 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
       // Preparar el payload para el nuevo endpoint
       const updatePayload = {
         apoderadoData,
+        estudianteData,
         contactosEmergencia,
         nuevosContactos: [] // No agregamos nuevos contactos en esta versión
       };
@@ -341,15 +359,6 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
                           </FormField>
 
                           <FormField
-                            label="Documento de Identidad"
-                            className="md:col-span-2"
-                          >
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
-                              {matricula?.idEstudiante?.nroDocumento || 'No especificado'} (No editable)
-                            </div>
-                          </FormField>
-
-                          <FormField
                             label="Observaciones del Estudiante"
                             error={errors.observacionesEstudiante?.message}
                             className="md:col-span-2"
@@ -421,15 +430,6 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                               placeholder="apoderado@ejemplo.com"
                             />
-                          </FormField>
-
-                          <FormField
-                            label="Documento de Identidad"
-                            className="md:col-span-1"
-                          >
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
-                              {matricula?.idApoderado?.documentoIdentidad || 'No especificado'} (No editable)
-                            </div>
                           </FormField>
 
                           <FormField
@@ -556,56 +556,6 @@ const ModalEditarMatricula = ({ isOpen, onClose, matricula, onSave }) => {
                         )}
                       </div>
 
-                      {/* Información de Matrícula */}
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-md font-semibold text-gray-900 mb-4 flex items-center">
-                          <GraduationCap className="w-5 h-5 mr-2 text-purple-600" />
-                          Información de Matrícula
-                        </h3>
-                        <div className="grid grid-cols-1 gap-4">
-                          <FormField
-                            label="Fecha de Ingreso"
-                            error={errors.fechaIngreso?.message}
-                            required
-                          >
-                            <input
-                              {...register('fechaIngreso')}
-                              type="date"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            />
-                          </FormField>
-
-                          <FormField
-                            label="Costo de Matrícula (S/)"
-                            error={errors.costoMatricula?.message}
-                            required
-                          >
-                            <input
-                              {...register('costoMatricula')}
-                              type="number"
-                              step="0.01"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="0.00"
-                            />
-                          </FormField>
-
-                          <FormField
-                            label="Grado"
-                          >
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
-                              {matricula?.idGrado?.grado || 'No especificado'} (No editable)
-                            </div>
-                          </FormField>
-
-                          <FormField
-                            label="Aula Asignada"
-                          >
-                            <div className="bg-gray-100 px-3 py-2 rounded-lg text-gray-600">
-                              Sección {matricula?.matriculaAula?.aula?.seccion || 'No asignada'} (No editable)
-                            </div>
-                          </FormField>
-                        </div>
-                      </div>
                     </div>
                   </div>
 

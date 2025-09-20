@@ -7,7 +7,8 @@ import {
   useCreateAula,
   useUpdateAula,
   useDeleteAula,
-  useToggleAulaStatus
+  useToggleAulaStatus,
+  useEstudiantesByAula
 } from './queries/useAulasQueries';
 
 /**
@@ -202,4 +203,30 @@ export const useAulasSimple = () => {
   };
 
   return { crearAula };
+};
+
+/**
+ * Hook personalizado para obtener aulas y estudiantes por aula para el módulo de pensiones
+ */
+export const useAulasParaPensiones = () => {
+  // Obtener todas las aulas
+  const { data: aulas = [], isLoading: loadingAulas } = useAulas();
+
+  return {
+    aulas,
+    loadingAulas
+  };
+};
+
+/**
+ * Hook personalizado para obtener estudiantes de un aula específica para pensiones
+ */
+export const useEstudiantesAulaParaPensiones = (idAula) => {
+  // Obtener estudiantes del aula
+  const { data: estudiantes = [], isLoading: loadingEstudiantes } = useEstudiantesByAula(idAula);
+
+  return {
+    estudiantes,
+    loadingEstudiantes
+  };
 };

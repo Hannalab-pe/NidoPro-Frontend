@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { 
   Users,
   UserPlus,
+  UserCheck,
+  Baby,
+  TrendingUp,
   RefreshCw
 } from 'lucide-react';
 import { usePadres } from '../../../hooks/usePadres';
 import TablaPadres from './tablas/TablaPadres';
 import ModalAgregarPadre from './modales/ModalAgregarPadre';
 import ModalVerPadre from './modales/ModalVerPadre';
-// import ModalEditarPadre from './modales/ModalEditarPadre'; // Eliminado - no existe endpoint
+import ModalEditarPadre from './modales/ModalEditarPadre'; // Habilitado para edición
 import ModalEliminarPadre from './modales/ModalEliminarPadre';
 
 const Padres = () => {
@@ -23,7 +26,7 @@ const Padres = () => {
   // Estados locales solo para UI
   const [showModal, setShowModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  // const [showEditModal, setShowEditModal] = useState(false); // Eliminado - no existe endpoint
+  const [showEditModal, setShowEditModal] = useState(false); // Habilitado para edición
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedParent, setSelectedParent] = useState(null);
 
@@ -42,8 +45,8 @@ const Padres = () => {
   };
 
   const handleEdit = (padre) => {
-    // Funcionalidad deshabilitada - no existe endpoint de actualización en backend
-    console.log('Edición deshabilitada - no existe endpoint en backend');
+    setSelectedParent(padre);
+    setShowEditModal(true);
   };
 
   const handleDelete = (padre) => {
@@ -71,8 +74,8 @@ const Padres = () => {
       <div className="bg-white p-6 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Padres</h1>
-            <p className="text-gray-600 mt-1">Administra los padres</p>
+            <h1 className="text-2xl font-bold text-gray-900">Gestión de Apoderados</h1>
+            <p className="text-gray-600 mt-1">Administra apoderados y sus estudiantes matriculados</p>
           </div>
           <button
             onClick={() => refreshParents()}
@@ -85,26 +88,46 @@ const Padres = () => {
         </div>
 
         {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-blue-50 p-4 rounded-lg">
             <div className="flex items-center">
               <Users className="w-8 h-8 text-blue-600" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-blue-600">Total Padres</p>
+                <p className="text-sm font-medium text-blue-600">Total Apoderados</p>
                 <p className="text-2xl font-bold text-blue-900">{statistics.total}</p>
               </div>
             </div>
           </div>
-          
-          {/* <div className="bg-green-50 p-4 rounded-lg">
+
+          <div className="bg-green-50 p-4 rounded-lg">
             <div className="flex items-center">
-              <UserPlus className="w-8 h-8 text-green-600" />
+              <UserCheck className="w-8 h-8 text-green-600" />
               <div className="ml-3">
-                <p className="text-sm font-medium text-green-600">Padres Activos</p>
-                <p className="text-2xl font-bold text-green-900">{statistics.active}</p>
+                <p className="text-sm font-medium text-green-600">Con Estudiantes</p>
+                <p className="text-2xl font-bold text-green-900">{statistics.withChildren}</p>
               </div>
             </div>
-          </div> */}
+          </div>
+
+          <div className="bg-purple-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <Baby className="w-8 h-8 text-purple-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-purple-600">Total Estudiantes</p>
+                <p className="text-2xl font-bold text-purple-900">{statistics.totalChildren}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-orange-50 p-4 rounded-lg">
+            <div className="flex items-center">
+              <TrendingUp className="w-8 h-8 text-orange-600" />
+              <div className="ml-3">
+                <p className="text-sm font-medium text-orange-600">Promedio por Familia</p>
+                <p className="text-2xl font-bold text-orange-900">{statistics.averageChildren}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -143,7 +166,20 @@ const Padres = () => {
         padre={selectedParent}
       />
 
-      {/* Modal para editar padre - ELIMINADO: No existe endpoint en backend */}
+      {/* Modal para editar padre */}
+      <ModalEditarPadre
+        isOpen={showEditModal}
+        onClose={() => {
+          setShowEditModal(false);
+          setSelectedParent(null);
+        }}
+        onSuccess={() => {
+          setShowEditModal(false);
+          setSelectedParent(null);
+          refreshParents();
+        }}
+        padre={selectedParent}
+      />
 
       {/* Modal para eliminar padre */}
       <ModalEliminarPadre

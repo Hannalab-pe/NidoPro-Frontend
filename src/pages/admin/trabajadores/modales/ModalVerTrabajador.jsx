@@ -376,6 +376,112 @@ const ModalVerTrabajador = ({ isOpen, onClose, trabajador }) => {
                     </div>
                   )}
 
+                  {/* Información de Contratos - Solo si existe */}
+                  {trabajador.contratoTrabajadors3 && trabajador.contratoTrabajadors3.length > 0 && (
+                    <div className="bg-white rounded-lg p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <FileText className="w-5 h-5 mr-2 text-orange-600" />
+                        Información de Contratos
+                      </h3>
+                      <div className="space-y-4">
+                        {trabajador.contratoTrabajadors3.map((contrato, index) => (
+                          <div key={contrato.idContrato || index} className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                              {contrato.numeroContrato && (
+                                <InfoField
+                                  label="Número de Contrato"
+                                  value={contrato.numeroContrato}
+                                  icon={FileText}
+                                />
+                              )}
+                              {contrato.idTipoContrato?.nombreTipo && (
+                                <InfoField
+                                  label="Tipo de Contrato"
+                                  value={contrato.idTipoContrato.nombreTipo === 'CONTRATO_PLANILLA' ? 'Planilla' : 
+                                        contrato.idTipoContrato.nombreTipo === 'RECIBO_POR_HONORARIOS' ? 'Recibo por Honorarios' : 
+                                        contrato.idTipoContrato.nombreTipo}
+                                  icon={Briefcase}
+                                />
+                              )}
+                              {contrato.cargoContrato && (
+                                <InfoField
+                                  label="Cargo"
+                                  value={contrato.cargoContrato}
+                                  icon={UserCheck}
+                                />
+                              )}
+                              {contrato.sueldoContratado && (
+                                <InfoField
+                                  label="Sueldo Contratado"
+                                  value={`S/ ${parseFloat(contrato.sueldoContratado).toLocaleString('es-PE', { minimumFractionDigits: 2 })}`}
+                                  icon={DollarSign}
+                                />
+                              )}
+                              {contrato.jornadaLaboral && (
+                                <InfoField
+                                  label="Jornada Laboral"
+                                  value={contrato.jornadaLaboral}
+                                  icon={Clock}
+                                />
+                              )}
+                              {contrato.horasSemanales && (
+                                <InfoField
+                                  label="Horas Semanales"
+                                  value={`${contrato.horasSemanales} horas`}
+                                  icon={Clock}
+                                />
+                              )}
+                              {contrato.lugarTrabajo && (
+                                <InfoField
+                                  label="Lugar de Trabajo"
+                                  value={contrato.lugarTrabajo}
+                                  icon={MapPin}
+                                />
+                              )}
+                              {contrato.estadoContrato && (
+                                <InfoField
+                                  label="Estado del Contrato"
+                                  value={contrato.estadoContrato}
+                                  icon={UserCheck}
+                                />
+                              )}
+                              {contrato.fechaInicio && (
+                                <InfoField
+                                  label="Fecha de Inicio"
+                                  value={new Date(contrato.fechaInicio).toLocaleDateString('es-ES')}
+                                  icon={Calendar}
+                                />
+                              )}
+                              {contrato.fechaFin && (
+                                <InfoField
+                                  label="Fecha de Fin"
+                                  value={new Date(contrato.fechaFin).toLocaleDateString('es-ES')}
+                                  icon={Calendar}
+                                />
+                              )}
+                              {contrato.descripcionFunciones && (
+                                <InfoField
+                                  label="Funciones"
+                                  value={contrato.descripcionFunciones}
+                                  icon={FileText}
+                                  className="md:col-span-2 lg:col-span-3"
+                                />
+                              )}
+                              {contrato.observacionesContrato && (
+                                <InfoField
+                                  label="Observaciones"
+                                  value={contrato.observacionesContrato}
+                                  icon={FileText}
+                                  className="md:col-span-2 lg:col-span-3"
+                                />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {/* IDs de Referencia del Sistema */}
                   <div className="bg-gray-50 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">

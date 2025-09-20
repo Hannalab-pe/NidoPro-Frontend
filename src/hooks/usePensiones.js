@@ -608,4 +608,69 @@ export const usePensionesOptions = () => {
   };
 };
 
+/**
+ * Hook para obtener pensiones por apoderado
+ */
+export const usePensionesPorApoderado = (apoderadoId, filters = {}) => {
+  return useQuery({
+    queryKey: ['pensiones-apoderado', apoderadoId, filters],
+    queryFn: () => pensionService.getPensionesPorApoderado(apoderadoId, filters),
+    enabled: !!apoderadoId,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
+    refetchOnWindowFocus: false,
+    retry: 2,
+    onError: (error) => {
+      console.error('❌ Error al cargar pensiones por apoderado:', error);
+      toast.error('Error al cargar las pensiones del apoderado');
+    },
+    // Asegurar que siempre retorne un array
+    select: (data) => {
+      if (Array.isArray(data)) {
+        return data;
+      }
+      return [];
+    }
+  });
+};
+
+/**
+ * Hook para obtener pensiones de múltiples apoderados (para filtrado por aula)
+ */
+export const usePensionesPorApoderados = (apoderadoIds, filters = {}) => {
+  return useQuery({
+    queryKey: ['pensiones-apoderados', apoderadoIds, filters],
+    queryFn: async () => {
+      if (!apoderadoIds || apoderadoIds.length === 0) {
+        return [];
+      }
+
+      console.log('🔍 Obteniendo pensiones de apoderados:', apoderadoIds);
+
+      // Obtener pensiones de cada apoderado
+      const promises = apoderadoIds.map(apoderadoId =>
+        pensionService.getPensionesPorApoderado(apoderadoId, filters)
+      );
+
+      const results = await Promise.all(promises);
+      
+      // Combinar todas las pensiones en un solo array
+      const allPensiones = results.flat();
+      
+      console.log('✅ Pensiones obtenidas de apoderados:', allPensiones.length);
+      
+      return allPensiones;
+    },
+    enabled: !!apoderadoIds && apoderadoIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutos
+    cacheTime: 10 * 60 * 1000, // 10 minutos
+    refetchOnWindowFocus: false,
+    retry: 2,
+    onError: (error) => {
+      console.error('❌ Error al cargar pensiones de apoderados:', error);
+      toast.error('Error al cargar las pensiones');
+    }
+  });
+};
+
 export default usePensiones;

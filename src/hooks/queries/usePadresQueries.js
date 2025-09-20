@@ -15,12 +15,12 @@ export const padresKeys = {
 
 // Servicio API para padres
 const padresService = {
-  // Obtener todos los padres
+  // Obtener todos los padres con estudiantes
   getPadres: async (filters = {}) => {
     const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
     const token = localStorage.getItem('token');
     
-    const response = await axios.get(`${API_BASE_URL}/apoderado`, {
+    const response = await axios.get(`${API_BASE_URL}/apoderado/estudiantes`, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
@@ -67,7 +67,7 @@ const padresService = {
     const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
     const token = localStorage.getItem('token');
     
-    const response = await axios.put(`${API_BASE_URL}/apoderado/${id}`, padreData, {
+    const response = await axios.patch(`${API_BASE_URL}/apoderado/${id}`, padreData, {
       headers: {
         'Content-Type': 'application/json',
         'Authorization': token ? `Bearer ${token}` : ''
@@ -218,8 +218,13 @@ export const useUpdatePadre = () => {
       queryClient.invalidateQueries({ queryKey: padresKeys.lists() });
       queryClient.invalidateQueries({ queryKey: padresKeys.detail(id) });
       
+      // Mostrar mensaje de éxito, manejando el caso donde updatedPadre podría ser undefined
+      const nombrePadre = updatedPadre?.nombre || 'Padre/Apoderado';
+      const apellidoPadre = updatedPadre?.apellido || '';
+      const nombreCompleto = apellidoPadre ? `${nombrePadre} ${apellidoPadre}` : nombrePadre;
+      
       toast.success('Padre/apoderado actualizado exitosamente', {
-        description: `Los datos de ${updatedPadre.nombre} ${updatedPadre.apellido} han sido actualizados`
+        description: `Los datos de ${nombreCompleto} han sido actualizados`
       });
     },
     onError: (error) => {

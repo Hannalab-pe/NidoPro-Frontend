@@ -35,6 +35,7 @@ const DataTable = ({
     export: false
   },
   filters = {},
+  customFiltersElement = null,
   itemsPerPage = 10,
   enablePagination = true,
   enableSearch = true,
@@ -87,9 +88,59 @@ const DataTable = ({
     Object.entries(customFilters).forEach(([key, value]) => {
       if (value && value !== 'all') {
         filtered = filtered.filter(item => {
+          // Filtro especial para aula
+          if (key === 'aula') {
+            if (!value || value === '') return true; // Si no hay filtro seleccionado, mostrar todos
+            
+            // Buscar la matrícula activa más reciente
+            const matriculaActiva = item.matriculas?.find(m => m.matriculaAula?.estado === 'activo') || item.matriculas?.[0];
+            const aula = matriculaActiva?.matriculaAula?.aula;
+            
+            if (!aula) return false;
+            
+            // Comparar por nombre del aula (grado + sección)
+            const aulaNombre = `${aula.idGrado?.grado || ''} ${aula.seccion || ''}`.trim();
+            return aulaNombre === value;
+          }
+
+          // Filtro especial para mes
+          if (key === 'mes') {
+            return getNestedValue(item, 'mes') === parseInt(value);
+          }
+
+          // Filtro especial para monto de pensión
+          if (key === 'montoPension') {
+            const monto = parseFloat(getNestedValue(item, 'montoPension')) || 0;
+            switch (value) {
+              case '300-349':
+                return monto >= 300 && monto <= 349;
+              case '350-399':
+                return monto >= 350 && monto <= 399;
+              case '400-449':
+                return monto >= 400 && monto <= 449;
+              case '450-499':
+                return monto >= 450 && monto <= 499;
+              case '500+':
+                return monto >= 500;
+              default:
+                return true;
+            }
+          }
+
+          // Filtro especial para estado de pensión
+          if (key === 'estadoPension') {
+            return getNestedValue(item, 'estadoPension') === value;
+          }
+
+          // Filtro especial para año
+          if (key === 'anio') {
+            return getNestedValue(item, 'anio') === parseInt(value);
+          }
+
+          // Filtros estándar para otros campos
           const itemValue = getNestedValue(item, key);
-          
-          // Manejar valores booleanos (para el filtro de estado)
+
+          // Manejar valores booleanos
           if (value === 'true' || value === 'false') {
             return itemValue === (value === 'true');
           }
@@ -199,7 +250,7 @@ const DataTable = ({
 
   // Renderizar acciones
   const renderActions = (item) => {
-    if (!actions || Object.values(actions).every(action => !action)) return null;
+    if (!actions || (!actions.add && !actions.edit && !actions.delete && !actions.view)) return null;
 
     return (
       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -299,7 +350,7 @@ const DataTable = ({
       </div>
 
       {/* Filtros */}
-      {(enableSearch || Object.keys(filters).length > 0) && (
+      {(enableSearch || Object.keys(filters).length > 0 || customFiltersElement) && (
         <div className="p-4 lg:p-6 bg-gray-50">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Búsqueda global */}
@@ -313,6 +364,13 @@ const DataTable = ({
                   onChange={(e) => setGlobalFilter(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
+              </div>
+            )}
+
+            {/* Elemento de filtros personalizado */}
+            {customFiltersElement && (
+              <div className="relative min-w-[150px]">
+                {customFiltersElement}
               </div>
             )}
 
@@ -359,7 +417,7 @@ const DataTable = ({
                     </div>
                   </th>
                 ))}
-                {(actions && Object.values(actions).some(action => action)) && (
+                {(actions && (actions.add || actions.edit || actions.delete || actions.view)) && (
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Acciones
                   </th>
@@ -370,7 +428,7 @@ const DataTable = ({
               {currentData.length === 0 ? (
                 <tr>
                   <td 
-                    colSpan={columns.length + (actions ? 1 : 0)} 
+                    colSpan={columns.length + ((actions && (actions.add || actions.edit || actions.delete || actions.view)) ? 1 : 0)} 
                     className="px-6 py-12 text-center text-gray-500"
                   >
                     {emptyMessage}

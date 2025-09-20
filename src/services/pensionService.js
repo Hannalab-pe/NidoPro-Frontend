@@ -62,24 +62,62 @@ export const pensionService = {
         }
       });
       
-      const response = await api.get(`/pension?${params.toString()}`);
-      console.log('Respuesta del backend - pensiones:', response.data);
+      const response = await api.get(`/pension-estudiante?${params.toString()}`);
+      console.log('Respuesta del backend - pensiones estudiante:', response.data);
       
       // Extraer el array de pensiones de la respuesta según la estructura real
-      if (response.data?.info?.data && Array.isArray(response.data.info.data)) {
-        return response.data.info.data;
-      } else if (response.data?.pensiones && Array.isArray(response.data.pensiones)) {
-        return response.data.pensiones;
+      // El endpoint /pension-estudiante devuelve directamente un array
+      if (Array.isArray(response.data)) {
+        return response.data;
       } else if (response.data?.data && Array.isArray(response.data.data)) {
         return response.data.data;
-      } else if (Array.isArray(response.data)) {
-        return response.data;
+      } else if (response.data?.pensiones && Array.isArray(response.data.pensiones)) {
+        return response.data.pensiones;
       }
       
+      console.warn('Estructura de respuesta inesperada:', response.data);
       return [];
     } catch (error) {
       console.error('Error al obtener pensiones:', error);
       throw new Error(error.response?.data?.message || 'Error al obtener pensiones');
+    }
+  },
+
+  /**
+   * Obtener pensiones de los hijos de un apoderado
+   * @param {string} apoderadoId - ID del apoderado
+   * @param {Object} filters - Filtros opcionales (idEstudiante, estadoPension, anio, mes)
+   * @returns {Promise<Array>} Lista de pensiones del apoderado
+   */
+  async getPensionesPorApoderado(apoderadoId, filters = {}) {
+    try {
+      const params = new URLSearchParams();
+      
+      // Agregar filtros a los parámetros
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== '') {
+          params.append(key, value);
+        }
+      });
+      
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const response = await api.get(`/pension-estudiante/apoderado/${apoderadoId}${queryString}`);
+      console.log('Respuesta del backend - pensiones por apoderado:', response.data);
+      
+      // El endpoint devuelve directamente un array
+      if (Array.isArray(response.data)) {
+        return response.data;
+      } else if (response.data?.data && Array.isArray(response.data.data)) {
+        return response.data.data;
+      } else if (response.data?.pensiones && Array.isArray(response.data.pensiones)) {
+        return response.data.pensiones;
+      }
+      
+      console.warn('Estructura de respuesta inesperada:', response.data);
+      return [];
+    } catch (error) {
+      console.error('Error al obtener pensiones por apoderado:', error);
+      throw new Error(error.response?.data?.message || 'Error al obtener pensiones del apoderado');
     }
   },
 

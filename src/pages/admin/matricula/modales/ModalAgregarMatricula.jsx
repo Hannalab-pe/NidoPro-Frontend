@@ -41,25 +41,33 @@ const schema = yup.object({
   // Información del Estudiante
   estudianteNombre: yup.string()
     .required('El nombre del estudiante es requerido')
-    .min(2, 'El nombre debe tener al menos 2 caracteres'),
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras y espacios'),
   estudianteApellido: yup.string()
     .required('El apellido del estudiante es requerido')
-    .min(2, 'El apellido debe tener al menos 2 caracteres'),
+    .min(2, 'El apellido debe tener al menos 2 caracteres')
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El apellido solo puede contener letras y espacios'),
   estudianteTipoDoc: yup.string()
     .required('El tipo de documento es requerido'),
   estudianteDocumento: yup.string()
     .required('El número de documento es requerido')
-    .min(8, 'El documento debe tener al menos 8 caracteres'),
+    .when('estudianteTipoDoc', {
+      is: 'Carnet de Extranjería',
+      then: (schema) => schema.min(20, 'El Carnet de Extranjería debe tener al menos 20 caracteres'),
+      otherwise: (schema) => schema.min(8, 'El documento debe tener al menos 8 caracteres')
+    }),
   contactosEmergencia: yup.array().of(
     yup.object({
       nombre: yup.string()
         .required('Nombre de contacto requerido')
         .min(2, 'El nombre debe tener al menos 2 caracteres')
-        .max(50, 'El nombre no puede superar los 50 caracteres'),
+        .max(50, 'El nombre no puede superar los 50 caracteres')
+        .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras y espacios'),
       apellido: yup.string()
         .required('Apellido de contacto requerido')
         .min(2, 'El apellido debe tener al menos 2 caracteres')
-        .max(50, 'El apellido no puede superar los 50 caracteres'),
+        .max(50, 'El apellido no puede superar los 50 caracteres')
+        .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El apellido solo puede contener letras y espacios'),
       telefono: yup.string()
         .required('Teléfono requerido')
         .min(9, 'El teléfono debe tener al menos 9 dígitos')
@@ -83,15 +91,21 @@ const schema = yup.object({
   // Información del Apoderado
   apoderadoNombre: yup.string()
     .required('El nombre del apoderado es requerido')
-    .min(2, 'El nombre debe tener al menos 2 caracteres'),
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre solo puede contener letras y espacios'),
   apoderadoApellido: yup.string()
     .required('El apellido del apoderado es requerido')
-    .min(2, 'El apellido debe tener al menos 2 caracteres'),
+    .min(2, 'El apellido debe tener al menos 2 caracteres')
+    .matches(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El apellido solo puede contener letras y espacios'),
   apoderadoTipoDoc: yup.string()
     .required('El tipo de documento es requerido'),
   apoderadoDocumento: yup.string()
     .required('El número de documento es requerido')
-    .min(8, 'El documento debe tener al menos 8 caracteres'),
+    .when('apoderadoTipoDoc', {
+      is: 'Carnet de Extranjería',
+      then: (schema) => schema.min(20, 'El Carnet de Extranjería debe tener al menos 20 caracteres'),
+      otherwise: (schema) => schema.min(8, 'El documento debe tener al menos 8 caracteres')
+    }),
   apoderadoTelefono: yup.string()
     .required('El teléfono es requerido'),
   apoderadoCorreo: yup.string()

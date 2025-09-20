@@ -59,6 +59,7 @@ import AnioEscolar from '../admin/anioescolar/AnioEscolar';
 import Seguros from '../admin/seguros/Seguros';
 import AIChat from '../admin/iachat/AIChat';
 import BimestralDocente from '../admin/bimestralDocente/BimestralDocente';
+import Roles from '../admin/roles/Roles';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
@@ -104,6 +105,7 @@ const AdminDashboard = () => {
     { id: "students", label: "Estudiantes", icon: CircleUser, category: "personas" },
     { id: "parents", label: "Padres de Familia", icon: UserCheck, category: "personas" },
     { id: "trabajadores", label: "Trabajadores", icon: UsersIcon, category: "personas" },
+    { id: "roles", label: "Roles del Sistema", icon: Shield, category: "personas" },
     
     // 📚 ACADÉMICO
     { id: "matricula", label: "Matrícula", icon: GraduationCap, category: "academico" },
@@ -546,6 +548,7 @@ const AdminDashboard = () => {
           {activeSection === "contratos" && <Contratos />}
           {activeSection === "planilla" && <Planilla />}
           {activeSection === "parents" && <Padres />}
+          {activeSection === "roles" && <Roles />}
           {activeSection === "asignacion-aula" && <AsignacionAula />}
           {activeSection === "aulas" && <Aulas />}
           {activeSection === "cursos" && <Cursos />}

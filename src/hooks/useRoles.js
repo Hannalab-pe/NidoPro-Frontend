@@ -1,175 +1,127 @@
-import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import axios from 'axios';
+// src/hooks/useRoles.js
+import { useState, useCallback, useMemo } from 'react';
+import {
+  useRoles as useRolesQuery,
+  useCreateRol,
+  useUpdateRol,
+  useDeleteRol,
+  useToggleRolStatus
+} from './queries/useRolesQueries';
 
-// Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
-
-// Crear instancia de axios con configuración
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Interceptor para agregar token de autenticación
-api.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Interceptor para manejar respuestas y errores
-api.interceptors.response.use(
-  (response) => {
-    // Verificar si la respuesta contiene HTML en lugar de JSON
-    if (typeof response.data === 'string' && response.data.includes('<html>')) {
-      console.error('❌ Respuesta HTML detectada en interceptor');
-      if (import.meta.env.PROD) {
-        // En producción, crear una respuesta vacía en lugar de fallar
-        return {
-          ...response,
-          data: { roles: [], data: [] }
-        };
-      }
-    }
-    return response;
-  },
-  (error) => {
-    console.error('Error en la respuesta del API de roles:', error);
-    
-    // Si el token expiró, redirigir al login (solo si no estamos ya en login)
-    if (error.response?.status === 401 && !window.location.pathname.includes('/login')) {
-      console.warn('🔐 Token expirado, redirigiendo al login');
-      localStorage.removeItem('token');
-      localStorage.removeItem('auth-storage');
-      
-      // En producción, usar reemplazo en lugar de asignación directa
-      if (import.meta.env.PROD) {
-        window.location.replace('/login');
-      } else {
-        window.location.href = '/login';
-      }
-    }
-    
-    return Promise.reject(error);
-  }
-);
-
-// Función para obtener todos los roles
-const fetchRoles = async () => {
-  try {
-    console.log('🔍 Iniciando petición a /api/v1/rol');
-    
-    const response = await api.get('/rol');
-    
-    console.log('📋 Respuesta completa de roles:', response);
-    console.log('📋 Datos de roles:', response.data);
-    console.log('📋 Tipo de respuesta:', typeof response.data);
-
-    // Verificar que la respuesta sea válida y contenga datos
-    if (!response.data) {
-      console.warn('⚠️ Respuesta vacía del servidor');
-      return [];
-    }
-
-    // Si la respuesta es HTML (string), indica problema de autenticación
-    if (typeof response.data === 'string') {
-      console.error('❌ Respuesta es HTML, posible problema de autenticación');
-      // En producción, retornar array vacío en lugar de fallar
-      if (import.meta.env.PROD) {
-        console.warn('🏭 Modo producción: Retornando array vacío para roles');
-        return [];
-      }
-      throw new Error('Respuesta inválida del servidor (HTML en lugar de JSON)');
-    }
-
-    // Intentar extraer el array de roles según diferentes estructuras posibles
-    let rolesData = [];
-    
-    if (response.data.roles && Array.isArray(response.data.roles)) {
-      rolesData = response.data.roles;
-    } else if (response.data.info?.data && Array.isArray(response.data.info.data)) {
-      rolesData = response.data.info.data;
-    } else if (response.data.data && Array.isArray(response.data.data)) {
-      rolesData = response.data.data;
-    } else if (Array.isArray(response.data)) {
-      rolesData = response.data;
-    }
-
-    console.log('✅ Roles procesados:', rolesData);
-    console.log('✅ Cantidad de roles:', rolesData.length);
-
-    return rolesData;
-  } catch (error) {
-    console.error('❌ Error al obtener roles:', error);
-    console.error('❌ Detalles del error:', {
-      message: error.message,
-      status: error.response?.status,
-      statusText: error.response?.statusText,
-      data: error.response?.data
-    });
-    
-    // En producción, manejar errores de forma más silenciosa
-    if (import.meta.env.PROD) {
-      console.warn('🏭 Producción: Error en roles manejado silenciosamente');
-      return [];
-    } else {
-      toast.error('Error al cargar los roles');
-    }
-    
-    // Retornar array vacío en lugar de fallar la aplicación
-    return [];
-  }
-};
-
-// Hook personalizado para gestión de roles
+/**
+ * Hook personalizado para gestionar roles usando TanStack Query
+ * Proporciona todas las funcionalidades CRUD, gestión de estado y estadísticas
+ */
 export const useRoles = () => {
-  const {
-    data: roles = [],
-    isLoading,
-    isError,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ['roles'],
-    queryFn: fetchRoles,
-    staleTime: 5 * 60 * 1000, // 5 minutos
-    cacheTime: 10 * 60 * 1000, // 10 minutos
-    retry: 2,
-    refetchOnWindowFocus: false,
+  // Estado para filtros y búsqueda
+  const [filters, setFilters] = useState({
+    search: '',
+    status: '',
+    page: 1,
+    limit: 10
   });
 
-  // Helper para obtener rol por nombre
-  const getRoleByName = (roleName) => {
-    return roles.find(rol => rol.nombre === roleName || rol.rol === roleName);
-  };
+  // TanStack Query hooks
+  const { data: roles = [], isLoading: loading, refetch: fetchRoles } = useRolesQuery(filters);
+  const createMutation = useCreateRol();
+  const updateMutation = useUpdateRol();
+  const deleteMutation = useDeleteRol();
+  const toggleStatusMutation = useToggleRolStatus();
 
-  // Helper para obtener ID de rol estudiante
-  const getEstudianteRoleId = () => {
-    const estudianteRole = getRoleByName('ESTUDIANTE');
-    if (estudianteRole) {
-      return estudianteRole.idRol || estudianteRole.id;
+  // Estados de operaciones
+  const creating = createMutation.isPending;
+  const updating = updateMutation.isPending;
+  const deleting = deleteMutation.isPending;
+  const uploading = creating || updating;
+
+  // --- Sección de Estadísticas ---
+  /**
+   * Calcular y memorizar estadísticas de los roles
+   */
+  const statistics = useMemo(() => {
+    if (!roles || roles.length === 0) {
+      return {
+        total: 0,
+        active: 0,
+        inactive: 0
+      };
     }
-    // Fallback UUID real del rol ESTUDIANTE
-    return '35225955-5aeb-4df0-8014-1cdfbce9b41e';
-  };
+
+    const total = roles.length;
+    const active = roles.filter(rol => rol.estaActivo).length;
+    const inactive = total - active;
+
+    return {
+      total,
+      active,
+      inactive
+    };
+  }, [roles]);
+  // --- Fin de la Sección de Estadísticas ---
+
+  /**
+   * Crear un nuevo rol
+   */
+  const createRol = useCallback(async (rolData) => {
+    return createMutation.mutateAsync(rolData);
+  }, [createMutation]);
+
+  /**
+   * Actualizar un rol existente
+   */
+  const updateRol = useCallback(async (id, rolData) => {
+    return updateMutation.mutateAsync({ id, ...rolData });
+  }, [updateMutation]);
+
+  /**
+   * Eliminar un rol
+   */
+  const deleteRol = useCallback(async (id) => {
+    return deleteMutation.mutateAsync(id);
+  }, [deleteMutation]);
+
+  /**
+   * Cambiar estado de un rol
+   */
+  const toggleRolStatus = useCallback(async (id) => {
+    return toggleStatusMutation.mutateAsync(id);
+  }, [toggleStatusMutation]);
+
+  /**
+   * Actualizar filtros
+   */
+  const updateFilters = useCallback((newFilters) => {
+    setFilters(prev => ({ ...prev, ...newFilters }));
+  }, []);
+
+  /**
+   * Refrescar roles
+   */
+  const refreshRoles = useCallback(async () => {
+    await fetchRoles();
+  }, [fetchRoles]);
 
   return {
+    // Datos
     roles,
-    isLoading,
-    isError,
-    error,
-    refetch,
-    getRoleByName,
-    getEstudianteRoleId
+    loading,
+    statistics,
+
+    // Estados de operaciones
+    creating,
+    updating,
+    deleting,
+    uploading,
+
+    // Filtros
+    filters,
+    updateFilters,
+
+    // Acciones
+    createRol,
+    updateRol,
+    deleteRol,
+    toggleRolStatus,
+    refreshRoles
   };
 };

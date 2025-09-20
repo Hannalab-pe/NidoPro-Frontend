@@ -130,6 +130,36 @@ export const studentsColumns = [
         }) : 'Sin fecha'}
       </div>
     )
+  },
+  {
+    Header: 'Aula',
+    accessor: 'matriculas',
+    sortable: true,
+    width: 120,
+    Cell: ({ value }) => {
+      // Buscar la matrícula activa más reciente
+      const matriculaActiva = value?.find(m => m.matriculaAula?.estado === 'activo') || value?.[0];
+      const aula = matriculaActiva?.matriculaAula?.aula;
+      
+      if (!aula) {
+        return (
+          <div className="text-sm text-gray-400 italic">
+            Sin aula
+          </div>
+        );
+      }
+      
+      return (
+        <div className="text-sm">
+          <div className="font-medium text-gray-900">
+            {aula.seccion || 'N/A'}
+          </div>
+          <div className="text-xs text-gray-500">
+            {aula.idGrado?.grado || ''}
+          </div>
+        </div>
+      );
+    }
   }
 ];
 
@@ -328,7 +358,7 @@ export const informesFilters = {
 export const pensionesColumns = [
   {
     Header: 'ID Pensión',
-    accessor: 'idPension',
+    accessor: 'idPensionEstudiante',
     sortable: true,
     Cell: ({ value }) => (
       <div className="font-mono text-xs text-gray-600">
@@ -337,12 +367,54 @@ export const pensionesColumns = [
     )
   },
   {
-    Header: 'Monto',
-    accessor: 'monto',
+    Header: 'Estudiante',
+    accessor: 'estudiante',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm">
+        <div className="font-medium text-gray-900">
+          {value?.nombre} {value?.apellido}
+        </div>
+        <div className="text-gray-500">
+          {value?.tipoDocumento}: {value?.nroDocumento}
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Mes/Año',
+    accessor: 'mes',
+    sortable: true,
+    Cell: ({ value, row }) => {
+      const mes = value;
+      const anio = row?.anio;
+      const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+
+      if (!mes || !anio) {
+        return (
+          <div className="text-center">
+            <span className="text-gray-400 text-xs">N/A</span>
+          </div>
+        );
+      }
+
+      return (
+        <div className="text-center">
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+            {meses[mes - 1] || 'Mes'} {anio}
+          </span>
+        </div>
+      );
+    }
+  },
+  {
+    Header: 'Monto Pensión',
+    accessor: 'montoPension',
     sortable: true,
     Cell: ({ value }) => (
       <div className="flex items-center">
-        <span className="font-semibold text-green-600 text-lg">
+        <span className="font-semibold text-green-600">
           S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
         </span>
       </div>
@@ -350,19 +422,27 @@ export const pensionesColumns = [
   },
   {
     Header: 'Fecha Vencimiento',
-    accessor: 'fechaVencimientoMensual',
+    accessor: 'fechaVencimiento',
     sortable: true,
     Cell: ({ value }) => (
-      <div className="text-center">
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-          Día {value || 'N/A'}
-        </span>
+      <div className="text-sm text-gray-600">
+        {value ? new Date(value).toLocaleDateString('es-ES') : 'N/A'}
       </div>
     )
   },
   {
-    Header: 'Mora Diaria',
-    accessor: 'moraDiaria',
+    Header: 'Monto Pagado',
+    accessor: 'montoPagado',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className="font-mono text-sm text-blue-600">
+        S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
+      </span>
+    )
+  },
+  {
+    Header: 'Mora',
+    accessor: 'montoMora',
     sortable: true,
     Cell: ({ value }) => (
       <span className="font-mono text-sm text-red-600">
@@ -371,12 +451,44 @@ export const pensionesColumns = [
     )
   },
   {
-    Header: 'Descuento Pago Adelantado',
-    accessor: 'descuentoPagoAdelantado',
+    Header: 'Descuento',
+    accessor: 'montoDescuento',
     sortable: true,
     Cell: ({ value }) => (
       <span className="font-mono text-sm text-green-600">
         S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
+      </span>
+    )
+  },
+  {
+    Header: 'Total',
+    accessor: 'montoTotal',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="flex items-center">
+        <span className="font-bold text-lg text-gray-900">
+          S/ {value ? parseFloat(value).toFixed(2) : '0.00'}
+        </span>
+      </div>
+    )
+  },
+  {
+    Header: 'Fecha Pago',
+    accessor: 'fechaPago',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-600">
+        {value ? new Date(value).toLocaleDateString('es-ES') : 'No pagado'}
+      </div>
+    )
+  },
+  {
+    Header: 'Días Mora',
+    accessor: 'diasMora',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className={`text-sm font-medium ${value > 0 ? 'text-red-600' : 'text-gray-500'}`}>
+        {value || 0}
       </span>
     )
   }
@@ -384,31 +496,64 @@ export const pensionesColumns = [
 
 // Filtros para pensiones
 export const pensionesFilters = {
-  monto: {
-    label: 'Rango de Monto',
+  aula: {
+    label: 'Aula',
+    placeholder: 'Todas las aulas',
+    type: 'select',
+    options: [] // Se llenará dinámicamente en el componente
+  },
+  estudiante: {
+    label: 'Estudiante',
+    placeholder: 'Todos los estudiantes',
+    type: 'select',
+    options: [] // Se llenará dinámicamente en el componente
+  },
+  mes: {
+    label: 'Mes',
+    placeholder: 'Todos los meses',
+    options: [
+      { value: '1', label: 'Enero' },
+      { value: '2', label: 'Febrero' },
+      { value: '3', label: 'Marzo' },
+      { value: '4', label: 'Abril' },
+      { value: '5', label: 'Mayo' },
+      { value: '6', label: 'Junio' },
+      { value: '7', label: 'Julio' },
+      { value: '8', label: 'Agosto' },
+      { value: '9', label: 'Septiembre' },
+      { value: '10', label: 'Octubre' },
+      { value: '11', label: 'Noviembre' },
+      { value: '12', label: 'Diciembre' }
+    ]
+  },
+  montoPension: {
+    label: 'Monto de Pensión',
     placeholder: 'Todos los montos',
     options: [
-      { value: '0-100', label: 'S/ 0 - S/ 100' },
-      { value: '100-200', label: 'S/ 100 - S/ 200' },
-      { value: '200-300', label: 'S/ 200 - S/ 300' },
-      { value: '300+', label: 'S/ 300+' }
+      { value: '300-349', label: 'S/ 300 - 349' },
+      { value: '350-399', label: 'S/ 350 - 399' },
+      { value: '400-449', label: 'S/ 400 - 449' },
+      { value: '450-499', label: 'S/ 450 - 499' },
+      { value: '500+', label: 'S/ 500 +' }
     ]
   },
-  fechaVencimiento: {
-    label: 'Día de Vencimiento',
-    placeholder: 'Todos los días',
+  estadoPension: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
     options: [
-      { value: '1-10', label: 'Días 1-10' },
-      { value: '11-20', label: 'Días 11-20' },
-      { value: '21-31', label: 'Días 21-31' }
+      { value: 'PENDIENTE', label: 'Pendiente' },
+      { value: 'PAGADO', label: 'Pagado' },
+      { value: 'VENCIDO', label: 'Vencido' },
+      { value: 'CANCELADO', label: 'Cancelado' }
     ]
   },
-  descripcion: {
-    label: 'Con Descripción',
-    placeholder: 'Todas',
+  anio: {
+    label: 'Año',
+    placeholder: 'Todos los años',
     options: [
-      { value: 'con-descripcion', label: 'Con descripción' },
-      { value: 'sin-descripcion', label: 'Sin descripción' }
+      { value: '2024', label: '2024' },
+      { value: '2025', label: '2025' },
+      { value: '2026', label: '2026' }
     ]
   }
 };
@@ -456,6 +601,153 @@ export const trabajadoresColumns = [
         <div className="text-sm text-gray-500">{row.direccion || 'Sin dirección'}</div>
       </div>
     )
+  },
+  {
+    Header: 'Tipo de Contrato',
+    accessor: 'contratoTrabajadors3',
+    sortable: true,
+    Cell: ({ value }) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return (
+          <span className="text-sm text-gray-400 italic">
+            Sin contrato
+          </span>
+        );
+      }
+
+      const contrato = value[0]; // Tomar el primer contrato activo
+      const tipoContrato = contrato.idTipoContrato?.nombreTipo;
+
+      const getContractTypeBadgeColor = (tipo) => {
+        switch (tipo) {
+          case 'CONTRATO_PLANILLA':
+            return 'bg-green-100 text-green-800';
+          case 'RECIBO_POR_HONORARIOS':
+            return 'bg-blue-100 text-blue-800';
+          default:
+            return 'bg-gray-100 text-gray-800';
+        }
+      };
+
+      const getContractTypeDisplayName = (tipo) => {
+        switch (tipo) {
+          case 'CONTRATO_PLANILLA':
+            return 'Planilla';
+          case 'RECIBO_POR_HONORARIOS':
+            return 'Honorarios';
+          default:
+            return tipo || 'Sin tipo';
+        }
+      };
+
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getContractTypeBadgeColor(tipoContrato)}`}>
+          {getContractTypeDisplayName(tipoContrato)}
+        </span>
+      );
+    }
+  },
+  {
+    Header: 'Cargo',
+    accessor: 'contratoTrabajadors3',
+    sortable: true,
+    Cell: ({ value }) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return (
+          <span className="text-sm text-gray-400 italic">
+            Sin cargo
+          </span>
+        );
+      }
+
+      const contrato = value[0]; // Tomar el primer contrato activo
+      return (
+        <div>
+          <div className="text-sm font-medium text-gray-900">{contrato.cargoContrato || 'Sin cargo'}</div>
+          <div className="text-xs text-gray-500">{contrato.lugarTrabajo || 'Sin lugar'}</div>
+        </div>
+      );
+    }
+  },
+  {
+    Header: 'Sueldo',
+    accessor: 'contratoTrabajadors3',
+    sortable: true,
+    Cell: ({ value }) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return (
+          <span className="text-sm text-gray-400 italic">
+            Sin sueldo
+          </span>
+        );
+      }
+
+      const contrato = value[0]; // Tomar el primer contrato activo
+      const sueldo = contrato.sueldoContratado;
+
+      if (!sueldo) {
+        return (
+          <span className="text-sm text-gray-400 italic">
+            Sin sueldo
+          </span>
+        );
+      }
+
+      return (
+        <div className="text-sm font-medium text-gray-900">
+          S/ {parseFloat(sueldo).toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+        </div>
+      );
+    }
+  },
+  {
+    Header: 'Estado Contrato',
+    accessor: 'contratoTrabajadors3',
+    sortable: true,
+    Cell: ({ value }) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return (
+          <span className="text-sm text-gray-400 italic">
+            Sin contrato
+          </span>
+        );
+      }
+
+      const contrato = value[0]; // Tomar el primer contrato activo
+      const estado = contrato.estadoContrato;
+
+      const getContractStatusBadgeColor = (estado) => {
+        switch (estado) {
+          case 'ACTIVO':
+            return 'bg-green-100 text-green-800';
+          case 'INACTIVO':
+            return 'bg-red-100 text-red-800';
+          case 'FINALIZADO':
+            return 'bg-gray-100 text-gray-800';
+          default:
+            return 'bg-yellow-100 text-yellow-800';
+        }
+      };
+
+      const getContractStatusDisplayName = (estado) => {
+        switch (estado) {
+          case 'ACTIVO':
+            return 'Activo';
+          case 'INACTIVO':
+            return 'Inactivo';
+          case 'FINALIZADO':
+            return 'Finalizado';
+          default:
+            return estado || 'Sin estado';
+        }
+      };
+
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getContractStatusBadgeColor(estado)}`}>
+          {getContractStatusDisplayName(estado)}
+        </span>
+      );
+    }
   },
   {
     Header: 'Rol',
@@ -521,21 +813,12 @@ export const trabajadoresFilters = {
       { value: 'DIRECTORA', label: 'Directora' },
     ]
   },
-  tipoDocumento: {
-    label: 'Tipo de Documento',
+  'contratoTrabajadors3.0.idTipoContrato.nombreTipo': {
+    label: 'Tipo de Contrato',
     placeholder: 'Todos los tipos',
     options: [
-      { value: 'DNI', label: 'DNI' },
-      { value: 'CE', label: 'Carnet de Extranjería' },
-      { value: 'Pasaporte', label: 'Pasaporte' }
-    ]
-  },
-  estaActivo: {
-    label: 'Estado',
-    placeholder: 'Todos los estados',
-    options: [
-      { value: 'true', label: 'Activos' },
-      { value: 'false', label: 'Inactivos' }
+      { value: 'CONTRATO_PLANILLA', label: 'Planilla' },
+      { value: 'RECIBO_POR_HONORARIOS', label: 'Recibo por Honorarios' }
     ]
   }
 };
@@ -657,8 +940,23 @@ export const parentsColumns = [
         <div>
           <div className="font-medium text-gray-900">{`${value || ''} ${row.apellido || ''}`}</div>
           <div className="text-sm text-gray-500">{row.correo || 'Sin correo'}</div>
+          <div className="text-sm text-gray-500">{row.numero || 'Sin teléfono'}</div>
         </div>
       </div>
+    )
+  },
+  {
+    Header: 'Tipo',
+    accessor: 'tipoApoderado',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+        value === 'Padre' ? 'bg-blue-100 text-blue-800' :
+        value === 'Madre' ? 'bg-pink-100 text-pink-800' :
+        'bg-gray-100 text-gray-800'
+      }`}>
+        {value || 'Sin tipo'}
+      </span>
     )
   },
   {
@@ -673,15 +971,68 @@ export const parentsColumns = [
     )
   },
   {
-    Header: 'Contacto',
-    accessor: 'numero',
+    Header: 'Estudiantes Asociados',
+    accessor: 'matriculas',
     sortable: false,
-    Cell: ({ value, row }) => (
-      <div>
-        <div className="text-sm text-gray-900">{value || 'Sin teléfono'}</div>
-        <div className="text-xs text-gray-500 truncate max-w-[150px]" title={row.direccion}>
-          {row.direccion || 'Sin dirección'}
+    Cell: ({ value }) => {
+      if (!value || !Array.isArray(value) || value.length === 0) {
+        return (
+          <div className="text-sm text-gray-400 italic">
+            Sin estudiantes
+          </div>
+        );
+      }
+
+      return (
+        <div className="space-y-2">
+          {value.map((matricula, index) => (
+            <div key={index} className="bg-gray-50 p-2 rounded">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-600 font-bold text-xs">
+                      {matricula.idEstudiante?.nombre?.charAt(0)?.toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {matricula.idEstudiante?.nombre} {matricula.idEstudiante?.apellido}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {matricula.idEstudiante?.tipoDocumento}: {matricula.idEstudiante?.nroDocumento}
+                    </div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-green-600">
+                    S/ {matricula.costoMatricula || '0.00'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {matricula.fechaIngreso ? new Date(matricula.fechaIngreso).toLocaleDateString('es-ES') : 'Sin fecha'}
+                  </div>
+                </div>
+              </div>
+              <div className="mt-1 text-xs text-gray-500">
+                Método: {matricula.metodoPago || 'No especificado'} •
+                Año: {matricula.anioEscolar || 'N/A'}
+              </div>
+            </div>
+          ))}
         </div>
+      );
+    }
+  },
+  {
+    Header: 'Total Hijos',
+    accessor: 'matriculas',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-center">
+        <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${
+          (value?.length || 0) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+        }`}>
+          {value?.length || 0}
+        </span>
       </div>
     )
   },
@@ -699,26 +1050,19 @@ export const parentsColumns = [
         }) : 'Sin fecha'}
       </div>
     )
-  },
-  {
-    Header: 'Última Actualización',
-    accessor: 'actualizado',
-    type: 'date',
-    sortable: true,
-    Cell: ({ value }) => (
-      <div className="text-sm text-gray-600">
-        {value ? new Date(value).toLocaleDateString('es-PE', {
-          year: 'numeric',
-          month: 'short',
-          day: 'numeric'
-        }) : 'Sin actualización'}
-      </div>
-    )
   }
 ];
 
 // Filtros para padres
 export const parentsFilters = {
+  tipoApoderado: {
+    label: 'Tipo de Apoderado',
+    placeholder: 'Todos los tipos',
+    options: [
+      { value: 'Padre', label: 'Padre' },
+      { value: 'Madre', label: 'Madre' }
+    ]
+  },
   tipoDocumentoIdentidad: {
     label: 'Tipo de Documento',
     placeholder: 'Todos los tipos',
@@ -726,16 +1070,6 @@ export const parentsFilters = {
       { value: 'DNI', label: 'DNI' },
       { value: 'Carnet de Extranjería', label: 'Carnet de Extranjería' },
       { value: 'Pasaporte', label: 'Pasaporte' }
-    ]
-  },
-  creado: {
-    label: 'Fecha de Registro',
-    placeholder: 'Todas las fechas',
-    options: [
-      { value: 'hoy', label: 'Hoy' },
-      { value: 'semana', label: 'Esta semana' },
-      { value: 'mes', label: 'Este mes' },
-      { value: 'año', label: 'Este año' }
     ]
   }
 };
@@ -923,31 +1257,7 @@ export const matriculaColumns = [
 ];
 
 // Filtros para matrícula
-export const matriculaFilters = {
-  grado: {
-    label: 'Grado',
-    placeholder: 'Todos los grados',
-    options: [
-      { value: 'PreNatal', label: 'PreNatal' },
-      { value: 'Inicial', label: 'Inicial' },
-      { value: '1°', label: '1° Primaria' },
-      { value: '2°', label: '2° Primaria' },
-      { value: '3°', label: '3° Primaria' },
-      { value: '4°', label: '4° Primaria' },
-      { value: '5°', label: '5° Primaria' },
-      { value: '6°', label: '6° Primaria' }
-    ]
-  },
-  metodoPago: {
-    label: 'Método de Pago',
-    placeholder: 'Todos los métodos',
-    options: [
-      { value: 'Efectivo', label: 'Efectivo' },
-      { value: 'Transferencia', label: 'Transferencia' },
-      { value: 'Tarjeta', label: 'Tarjeta' }
-    ]
-  }
-};
+export const matriculaFilters = {};
 
 // Configuración de columnas para aulas
 export const aulasColumns = [
@@ -1197,5 +1507,113 @@ export const usuariosFilters = {
       { value: 'true', label: 'Activos' },
       { value: 'false', label: 'Inactivos' }
     ]
+  }
+};
+
+// Configuración de columnas para roles
+export const rolesColumns = [
+  {
+    Header: 'ID Rol',
+    accessor: 'idRol',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="font-mono text-xs text-gray-600">
+        {value ? value.slice(0, 8) + '...' : 'N/A'}
+      </div>
+    )
+  },
+  {
+    Header: 'Nombre del Rol',
+    accessor: 'nombre',
+    sortable: true,
+    Cell: ({ value, row }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center">
+          <span className="text-purple-600 font-bold text-sm">
+            {value?.charAt(0)?.toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">{value}</div>
+          <div className="text-sm text-gray-500">{row.descripcion || 'Sin descripción'}</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Descripción',
+    accessor: 'descripcion',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="max-w-xs truncate">
+        {value || (
+          <span className="text-gray-400 italic">Sin descripción</span>
+        )}
+      </div>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estaActivo',
+    sortable: true,
+    Cell: ({ value }) => {
+      const isActive = value === true || value === 'true' || value === 1;
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+          isActive 
+            ? 'bg-green-100 text-green-800' 
+            : 'bg-red-100 text-red-800'
+        }`}>
+          {isActive ? 'Activo' : 'Inactivo'}
+        </span>
+      );
+    }
+  },
+  {
+    Header: 'Fecha Creación',
+    accessor: 'creado',
+    type: 'date',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-600">
+        {value ? new Date(value).toLocaleDateString('es-ES', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        }) : 'Sin fecha'}
+      </div>
+    )
+  },
+  {
+    Header: 'Última Actualización',
+    accessor: 'actualizado',
+    type: 'date',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-600">
+        {value ? new Date(value).toLocaleDateString('es-ES', { 
+          day: '2-digit', 
+          month: '2-digit', 
+          year: 'numeric' 
+        }) : 'Sin fecha'}
+      </div>
+    )
+  }
+];
+
+// Filtros para roles
+export const rolesFilters = {
+  status: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'active', label: 'Activo' },
+      { value: 'inactive', label: 'Inactivo' }
+    ]
+  },
+  nombre: {
+    label: 'Nombre del Rol',
+    placeholder: 'Buscar por nombre',
+    type: 'text'
   }
 };

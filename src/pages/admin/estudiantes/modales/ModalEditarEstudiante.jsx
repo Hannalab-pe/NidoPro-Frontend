@@ -25,8 +25,9 @@ import { toast } from 'sonner';
 // Esquema de validación con Yup (solo campos editables)
 const validationSchema = yup.object({
   nombre: yup.string().required('El nombre es requerido').trim(),
-  apellido: yup.string().required('El apellido es requerido').trim()
-  // Campos excluidos (no editables): nroDocumento, tipoDocumento, fechaNacimiento, idRol, observaciones, contactosEmergencia
+  apellido: yup.string().required('El apellido es requerido').trim(),
+  observaciones: yup.string().max(500, 'Las observaciones no pueden exceder 500 caracteres')
+  // Campos excluidos (no editables): nroDocumento, tipoDocumento, fechaNacimiento, idRol, contactosEmergencia
 });
 
 // Componente FormField reutilizable
@@ -136,6 +137,10 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
       
       if (data.apellido !== estudiante.apellido) {
         dataToUpdate.apellido = data.apellido;
+      }
+      
+      if (data.observaciones !== estudiante.observaciones) {
+        dataToUpdate.observaciones = data.observaciones;
       }
       
       // Si no hay cambios, mostrar mensaje
@@ -282,17 +287,16 @@ const ModalEditarEstudiante = ({ isOpen, onClose, estudiante }) => {
 
                     {/* Observaciones */}
                     <FormSection title="Observaciones" icon={Heart} iconColor="text-purple-600">
-                      <FormField label="Observaciones" className="md:col-span-2">
+                      <FormField label="Observaciones" error={errors.observaciones?.message} className="md:col-span-2">
                         <textarea
                           {...register('observaciones')}
                           rows={3}
-                          className={`${inputClassName()} bg-gray-100 cursor-not-allowed`}
+                          className={inputClassName(errors.observaciones)}
                           placeholder="Observaciones adicionales sobre el estudiante..."
-                          disabled={true}
-                          readOnly
+                          disabled={isLoading}
                         />
                         <p className="text-xs text-gray-500 mt-1">
-                          ℹ️ Las observaciones no se pueden modificar desde aquí
+                          ℹ️ Máximo 500 caracteres
                         </p>
                       </FormField>
                     </FormSection>

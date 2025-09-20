@@ -1,51 +1,84 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   DollarSign, 
   CreditCard,
   TrendingUp,
   CheckCircle
 } from 'lucide-react';
-import { usePensionesTabla } from '../../../hooks/usePensiones';
+import { usePensionesTabla, usePensionesPorApoderados } from '../../../hooks/usePensiones';
+import { useStudents } from '../../../hooks/useStudents';
+import { useAulasParaPensiones, useEstudiantesAulaParaPensiones } from '../../../hooks/useAulas';
 import TablaPensiones from './tabla/TablaPensiones';
-import ModalAgregarPension from './modales/ModalAgregarPension';
 
 const Pensiones = () => {
-  // Hook para obtener datos de pensiones
-  const { data: pensiones = [], isLoading } = usePensionesTabla();
+  // Hook para obtener datos de pensiones (todas cuando no hay filtro)
+  const { data: pensiones = [], isLoading: loadingPensiones } = usePensionesTabla();
+
+  // Hook para obtener lista de estudiantes
+  const { students: estudiantes = [], loading: estudiantesLoading } = useStudents();
+
+  // Hook para obtener aulas
+  const { aulas, loadingAulas } = useAulasParaPensiones();
 
   // Estados locales para UI
-  const [showModal, setShowModal] = useState(false);
-  const [selectedPension, setSelectedPension] = useState(null);
+  const [selectedAula, setSelectedAula] = useState('');
+  const [selectedEstudiante, setSelectedEstudiante] = useState('');
 
-  // Calcular estadísticas
-  const totalPensiones = pensiones.length;
-  const montoTotal = pensiones.reduce((sum, pension) => sum + (Number(pension.monto) || 0), 0);
-  const pensionesActivas = pensiones.filter(pension => 
-    pension.estadoPago !== 'cancelada' && pension.estadoPago !== 'anulada'
+  // Hook para obtener estudiantes del aula seleccionada
+  const { estudiantes: estudiantesAula, loadingEstudiantes: loadingEstudiantesAula } = useEstudiantesAulaParaPensiones(selectedAula);
+
+  // Extraer IDs únicos de apoderados de los estudiantes del aula
+  const apoderadosIdsUnicos = useMemo(() => {
+    if (!selectedAula || !estudiantesAula || estudiantesAula.length === 0) {
+      return [];
+    }
+    
+    const ids = estudiantesAula
+      .map(est => est.infoApoderado?.apoderado?.idApoderado)
+      .filter(id => id); // Filtrar valores undefined/null
+    
+    // Eliminar duplicados
+    return [...new Set(ids)];
+  }, [estudiantesAula, selectedAula]);
+
+  // Hook para obtener pensiones de los apoderados del aula seleccionada
+  const { data: pensionesPorApoderados = [], isLoading: loadingPensionesApoderados } = usePensionesPorApoderados(apoderadosIdsUnicos);
+
+  // Determinar qué pensiones mostrar
+  const pensionesAMostrar = selectedAula ? pensionesPorApoderados : pensiones;
+  const isLoading = selectedAula ? (loadingPensionesApoderados || loadingEstudiantesAula) : loadingPensiones;
+
+  // Lista de estudiantes a mostrar (todos o solo del aula seleccionada)
+  const estudiantesDisponibles = selectedAula ? estudiantesAula : estudiantes;
+
+  // Crear opciones dinámicas para el filtro de estudiantes
+  const estudianteOptions = useMemo(() => {
+    return estudiantesDisponibles.map(estudiante => ({
+      value: estudiante.idEstudiante,
+      label: `${estudiante.nombre} ${estudiante.apellido} - ${estudiante.tipoDocumento}: ${estudiante.nroDocumento}`
+    }));
+  }, [estudiantesDisponibles]);
+
+  // Crear opciones dinámicas para el filtro de aulas
+  const aulaOptions = useMemo(() => {
+    return aulas.map(aula => ({
+      value: aula.idAula,
+      label: aula.seccion
+    }));
+  }, [aulas]);
+
+  // Calcular estadísticas basadas en pensiones a mostrar
+  const totalPensiones = pensionesAMostrar.length;
+  const montoTotal = pensionesAMostrar.reduce((sum, pension) => sum + (Number(pension.montoTotal) || 0), 0);
+  const pensionesActivas = pensionesAMostrar.filter(pension => 
+    pension.estadoPension === 'PENDIENTE' || pension.estadoPension === 'VENCIDO'
   ).length;
   const promedioMonto = totalPensiones > 0 ? (montoTotal / totalPensiones).toFixed(2) : '0.00';
 
-  // Funciones para manejar las acciones de la tabla
-  const handleAdd = () => {
-    setShowModal(true);
-  };
-
-  const handleEdit = (pension) => {
-    setSelectedPension(pension);
-    // TODO: Implementar modal de edición
-    console.log('Editar pensión:', pension);
-  };
-
-  const handleDelete = (pension) => {
-    setSelectedPension(pension);
-    // TODO: Implementar modal de eliminación
-    console.log('Eliminar pensión:', pension);
-  };
-
-  const handleView = (pension) => {
-    setSelectedPension(pension);
-    // TODO: Implementar modal de vista
-    console.log('Ver pensión:', pension);
+  // Manejar cambio de aula
+  const handleAulaChange = (aulaId) => {
+    setSelectedAula(aulaId);
+    setSelectedEstudiante(''); // Resetear filtro de estudiante cuando cambia el aula
   };
 
   return (
@@ -105,19 +138,15 @@ const Pensiones = () => {
 
       {/* Componente de Tabla de Pensiones */}
       <TablaPensiones
-        pensiones={pensiones}
+        pensiones={pensionesAMostrar}
         loading={isLoading}
-        onAdd={handleAdd}
-        onEdit={handleEdit}
-        onDelete={handleDelete}
-        onView={handleView}
+        // Props para filtro de aulas
+        aulas={aulas}
+        selectedAula={selectedAula}
+        onAulaChange={handleAulaChange}
+        loadingAulas={loadingAulas}
       />
 
-      {/* Modal para agregar pensión */}
-      <ModalAgregarPension
-        isOpen={showModal}
-        onClose={() => setShowModal(false)}
-      />
     </div>
   );
 };

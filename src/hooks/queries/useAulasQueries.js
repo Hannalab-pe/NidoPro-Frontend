@@ -1,6 +1,7 @@
 // src/hooks/queries/useAulasQueries.js
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { aulaService } from '../../services/aulaService';
+import { estudianteService } from '../../services/estudianteService';
 import { toast } from 'sonner';
 
 // Claves de query para aulas
@@ -266,9 +267,21 @@ export const useEstudiantesByAula = (idAula, options = {}) => {
     queryFn: async () => {
       try {
         console.log('🔍 Obteniendo estudiantes del aula:', idAula);
-        const resultado = await aulaService.obtenerEstudiantesPorAula(idAula);
+        const resultado = await estudianteService.getEstudiantesPorAula(idAula);
         console.log('✅ Estudiantes obtenidos:', resultado);
-        return resultado;
+        
+        // Manejar diferentes estructuras de respuesta del backend
+        if (resultado.success && resultado.estudiantes) {
+          return resultado.estudiantes;
+        } else if (resultado.success && resultado.info?.data) {
+          return resultado.info.data;
+        } else if (resultado.data) {
+          return resultado.data;
+        } else if (Array.isArray(resultado)) {
+          return resultado;
+        }
+        
+        return [];
       } catch (error) {
         console.error('❌ Error al obtener estudiantes del aula:', error);
         throw error;
@@ -312,7 +325,7 @@ export const useEstudiantesByTrabajadorAulas = (idTrabajador, options = {}) => {
       
       // Obtener estudiantes de todas las aulas en paralelo
       const promesas = aulaIds.map(idAula => 
-        aulaService.obtenerEstudiantesPorAula(idAula)
+        estudianteService.getEstudiantesPorAula(idAula)
       );
 
       const resultados = await Promise.all(promesas);

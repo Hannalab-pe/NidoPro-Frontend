@@ -306,44 +306,65 @@ const ModalVerEstudiante = ({ isOpen, onClose, estudiante }) => {
                   )}
 
                   {/* Información Académica - Solo si existe */}
-                  {(estudiante.grado || estudiante.seccion || estudiante.aula) && (
-                    <div className="bg-white rounded-lg p-4">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <GraduationCap className="w-5 h-5 mr-2 text-green-600" />
-                        Información Académica
-                      </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {(estudiante.grado || estudiante.grade) && (
-                          <InfoField
-                            label="Grado"
-                            value={estudiante.grado || estudiante.grade}
-                            icon={GraduationCap}
-                          />
-                        )}
-                        {(estudiante.seccion || estudiante.section) && (
-                          <InfoField
-                            label="Sección"
-                            value={estudiante.seccion || estudiante.section}
-                            icon={BookOpen}
-                          />
-                        )}
-                        {(estudiante.aula || estudiante.classroom) && (
-                          <InfoField
-                            label="Aula"
-                            value={estudiante.aula || estudiante.classroom}
-                            icon={School}
-                          />
-                        )}
-                        {estudiante.turno && (
-                          <InfoField
-                            label="Turno"
-                            value={estudiante.turno}
-                            icon={Clock}
-                          />
-                        )}
+                  {(() => {
+                    // Buscar la matrícula activa más reciente
+                    const matriculaActiva = estudiante.matriculas?.find(m => m.matriculaAula?.estado === 'activo') || estudiante.matriculas?.[0];
+                    const aula = matriculaActiva?.matriculaAula?.aula;
+                    const grado = aula?.idGrado;
+                    
+                    return (aula || grado || estudiante.grado || estudiante.seccion) ? (
+                      <div className="bg-white rounded-lg p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                          <GraduationCap className="w-5 h-5 mr-2 text-green-600" />
+                          Información Académica
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {grado?.grado && (
+                            <InfoField
+                              label="Grado"
+                              value={grado.grado}
+                              icon={GraduationCap}
+                            />
+                          )}
+                          {aula?.seccion && (
+                            <InfoField
+                              label="Aula"
+                              value={aula.seccion}
+                              icon={School}
+                            />
+                          )}
+                          {matriculaActiva?.anioEscolar && (
+                            <InfoField
+                              label="Año Escolar"
+                              value={matriculaActiva.anioEscolar}
+                              icon={Calendar}
+                            />
+                          )}
+                          {matriculaActiva?.matriculaAula?.estado && (
+                            <InfoField
+                              label="Estado Matrícula"
+                              value={matriculaActiva.matriculaAula.estado === 'activo' ? 'Activa' : 'Inactiva'}
+                              icon={UserCheck}
+                            />
+                          )}
+                          {matriculaActiva?.fechaIngreso && (
+                            <InfoField
+                              label="Fecha de Ingreso"
+                              value={new Date(matriculaActiva.fechaIngreso).toLocaleDateString('es-ES')}
+                              icon={Calendar}
+                            />
+                          )}
+                          {matriculaActiva?.costoMatricula && (
+                            <InfoField
+                              label="Costo Matrícula"
+                              value={`S/ ${parseFloat(matriculaActiva.costoMatricula).toFixed(2)}`}
+                              icon={CreditCard}
+                            />
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : null;
+                  })()}
 
                   {/* Información de Padres/Apoderados - Solo si existe */}
                   {(estudiante.apoderados || estudiante.padres) && (
