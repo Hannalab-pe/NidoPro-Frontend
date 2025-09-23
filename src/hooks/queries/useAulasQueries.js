@@ -300,41 +300,48 @@ export const useEstudiantesByAula = (idAula, options = {}) => {
  */
 export const useEstudiantesByTrabajadorAulas = (idTrabajador, options = {}) => {
   // Primero obtenemos las aulas del trabajador
-  const { 
-    data: aulasData, 
-    isLoading: loadingAulas, 
-    error: errorAulas 
+  const {
+    data: aulasData,
+    isLoading: loadingAulas,
+    error: errorAulas
   } = useAulasByTrabajador(idTrabajador, { enabled: !!idTrabajador });
 
   console.log('🏫 Aulas del trabajador:', aulasData);
 
-  // Extraemos los IDs de las aulas
-  const aulaIds = aulasData?.aulas?.map(aula => aula.id_aula || aula.idAula || aula.idAula) || [];
+  // Extraemos los IDs de las aulas - aseguramos que siempre sea un array
+  const aulaIds = Array.isArray(aulasData?.aulas)
+    ? aulasData.aulas.map(aula => aula.id_aula || aula.idAula || aula.id).filter(Boolean)
+    : [];
   console.log('🆔 IDs de aulas extraídos:', aulaIds);
   console.log('🏫 Estructura completa de aulas:', aulasData?.aulas);
 
-  // Obtenemos los estudiantes de cada aula usando useQuery para cada una
+  // SIEMPRE llamamos a useQuery, pero lo deshabilitamos cuando no hay aulas
   const estudiantesQueries = useQuery({
-    queryKey: ['estudiantes-trabajador-aulas', idTrabajador, aulaIds],
+    queryKey: ['estudiantes-trabajador-aulas', idTrabajador, aulaIds.sort().join(',')],
     queryFn: async () => {
       if (aulaIds.length === 0) {
-        return [];
+        return {
+          estudiantes: [],
+          aulas: [],
+          totalEstudiantes: 0,
+          totalAulas: 0
+        };
       }
 
       console.log('🔍 Obteniendo estudiantes para aulas:', aulaIds);
-      
+
       // Obtener estudiantes de todas las aulas en paralelo
-      const promesas = aulaIds.map(idAula => 
+      const promesas = aulaIds.map(idAula =>
         estudianteService.getEstudiantesPorAula(idAula)
       );
 
       const resultados = await Promise.all(promesas);
-      
+
       // Combinar todos los estudiantes de todas las aulas
       const todosLosEstudiantes = resultados
         .filter(resultado => resultado?.estudiantes)
         .flatMap(resultado => resultado.estudiantes)
-        .filter((estudiante, index, array) => 
+        .filter((estudiante, index, array) =>
           // Eliminar duplicados basados en idEstudiante (la propiedad correcta del backend)
           index === array.findIndex(e => e.idEstudiante === estudiante.idEstudiante)
         );

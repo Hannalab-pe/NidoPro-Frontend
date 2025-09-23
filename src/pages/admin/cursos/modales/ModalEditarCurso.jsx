@@ -17,8 +17,15 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
   useEffect(() => {
     if (curso && isOpen) {
       setFormData({
-        nombre: curso.nombreCurso || curso.nombre || '',
+        nombreCurso: curso.nombreCurso || curso.nombre || '',
         descripcion: curso.descripcion || ''
+      });
+      setErrors({});
+    } else if (!isOpen) {
+      // Reset form when modal closes
+      setFormData({
+        nombreCurso: '',
+        descripcion: ''
       });
       setErrors({});
     }
@@ -43,7 +50,7 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.nombre.trim()) {
+    if (!formData.nombreCurso.trim()) {
       newErrors.nombre = 'El nombre del curso es obligatorio';
     }
 
@@ -67,7 +74,7 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
       setLoading(true);
       console.log('🚀 Actualizando curso:', { id: curso.idCurso || curso.id, ...formData });
 
-      await onSave(curso.idCurso || curso.id, formData);
+      await onSave(formData);
 
     } catch (error) {
       console.error('❌ Error al actualizar curso:', error);
@@ -155,8 +162,8 @@ const ModalEditarCurso = ({ isOpen, onClose, onSave, curso }) => {
                     </label>
                     <input
                       type="text"
-                      name="nombre"
-                      value={formData.nombre}
+                      name="nombreCurso"
+                      value={formData.nombreCurso}
                       onChange={handleInputChange}
                       placeholder="Ej: Matemáticas Avanzadas"
                       className={inputClassName(errors.nombre)}

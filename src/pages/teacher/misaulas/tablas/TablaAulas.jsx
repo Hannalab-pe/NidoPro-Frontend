@@ -12,14 +12,11 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import aulaService from '../../../../services/aulaService';
-import EstudiantesAulaModal from '../modales/EstudiantesAulaModal';
 
-const TablaAulas = () => {
+const TablaAulas = ({ onVerEstudiantes }) => {
   const [aulas, setAulas] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedAula, setSelectedAula] = useState(null);
-  const [showEstudiantesModal, setShowEstudiantesModal] = useState(false);
 
   // Cargar aulas al montar el componente
   useEffect(() => {
@@ -65,13 +62,9 @@ const TablaAulas = () => {
   const handleVerEstudiantes = (aula) => {
     console.log('👀 Ver estudiantes clickeado:', aula);
     console.log('🆔 ID del aula:', aula.id_aula);
-    setSelectedAula(aula);
-    setShowEstudiantesModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowEstudiantesModal(false);
-    setSelectedAula(null);
+    if (onVerEstudiantes) {
+      onVerEstudiantes(aula);
+    }
   };
 
   const getEstadoColor = (estado) => {
@@ -127,45 +120,6 @@ const TablaAulas = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header con estadísticas */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-blue-50 rounded-lg p-4">
-            <div className="flex items-center">
-              <BookOpen className="w-8 h-8 text-blue-600 mr-3" />
-              <div>
-                <p className="text-blue-800 font-semibold text-lg">{aulas.length}</p>
-                <p className="text-blue-600 text-sm">Total Aulas</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-purple-50 rounded-lg p-4">
-            <div className="flex items-center">
-              <GraduationCap className="w-8 h-8 text-purple-600 mr-3" />
-              <div>
-                <p className="text-purple-800 font-semibold text-lg">
-                  {aulas.filter(aula => aula.estado?.toLowerCase() === 'activa').length}
-                </p>
-                <p className="text-purple-600 text-sm">Aulas Activas</p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-orange-50 rounded-lg p-4">
-            <div className="flex items-center">
-              <AlertCircle className="w-8 h-8 text-orange-600 mr-3" />
-              <div>
-                <p className="text-orange-800 font-semibold text-lg">
-                  {Math.round(aulas.reduce((total, aula) => total + (aula.cantidadEstudiantes || 0), 0) / aulas.length)}
-                </p>
-                <p className="text-orange-600 text-sm">Promedio por Aula</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* Grid de cards de aulas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {(aulas || []).map((aula, index) => (
@@ -217,13 +171,6 @@ const TablaAulas = () => {
           </div>
         ))}
       </div>
-
-      {/* Modal de estudiantes */}
-      <EstudiantesAulaModal 
-        isOpen={showEstudiantesModal}
-        onClose={handleCloseModal}
-        aula={selectedAula}
-      />
     </div>
   );
 };

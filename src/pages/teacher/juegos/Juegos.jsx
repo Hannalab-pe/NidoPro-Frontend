@@ -10,11 +10,25 @@ import {
   Brain,
   Lightbulb,
   Trophy,
-  Heart
+  Heart,
+  Maximize,
+  Minimize,
+  Triangle,
+  Circle,
+  Square,
+  Zap,
+  Music,
+  Book
 } from 'lucide-react';
 
 const Juegos = () => {
   const [juegoActivo, setJuegoActivo] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Funciones para pantalla completa
+  const toggleFullscreen = () => {
+    setIsFullscreen(!isFullscreen);
+  };
 
   // Componente de Juego de Conteo
   const JuegoConteo = () => {
@@ -415,6 +429,456 @@ const Juegos = () => {
     );
   };
 
+  // Componente de Juego de Formas Geométricas
+  const JuegoFormas = () => {
+    const [formaActual, setFormaActual] = useState(null);
+    const [opciones, setOpciones] = useState([]);
+    const [puntos, setPuntos] = useState(0);
+    const [mensaje, setMensaje] = useState('¡Elige la forma correcta!');
+    const [correcto, setCorrecto] = useState(null);
+
+    const formas = [
+      { nombre: 'Círculo', emoji: '⭕', color: 'bg-red-400' },
+      { nombre: 'Cuadrado', emoji: '⬜', color: 'bg-blue-400' },
+      { nombre: 'Triángulo', emoji: '🔺', color: 'bg-green-400' },
+      { nombre: 'Estrella', emoji: '⭐', color: 'bg-yellow-400' },
+      { nombre: 'Corazón', emoji: '❤️', color: 'bg-pink-400' },
+      { nombre: 'Rombo', emoji: '💎', color: 'bg-purple-400' }
+    ];
+
+    const generarNuevaPregunta = () => {
+      const formaCorrecta = formas[Math.floor(Math.random() * formas.length)];
+      const formasIncorrectas = formas.filter(f => f.nombre !== formaCorrecta.nombre);
+      
+      // Seleccionar 3 opciones incorrectas aleatorias
+      const opcionesIncorrectas = [];
+      while (opcionesIncorrectas.length < 3) {
+        const opcion = formasIncorrectas[Math.floor(Math.random() * formasIncorrectas.length)];
+        if (!opcionesIncorrectas.includes(opcion)) {
+          opcionesIncorrectas.push(opcion);
+        }
+      }
+      
+      // Mezclar todas las opciones
+      const todasLasOpciones = [formaCorrecta, ...opcionesIncorrectas].sort(() => Math.random() - 0.5);
+      
+      setFormaActual(formaCorrecta);
+      setOpciones(todasLasOpciones);
+      setMensaje('¡Elige la forma correcta!');
+      setCorrecto(null);
+    };
+
+    const verificarRespuesta = (formaSeleccionada) => {
+      if (formaSeleccionada.nombre === formaActual.nombre) {
+        setPuntos(puntos + 1);
+        setMensaje('¡Correcto! 🎉');
+        setCorrecto(true);
+        setTimeout(() => {
+          generarNuevaPregunta();
+        }, 1500);
+      } else {
+        setMensaje('¡Inténtalo de nuevo! 😊');
+        setCorrecto(false);
+      }
+    };
+
+    useEffect(() => {
+      generarNuevaPregunta();
+    }, []);
+
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold text-indigo-600 mb-2">🔷 Juego de Formas</h3>
+          <p className="text-lg text-gray-600">Puntos: <span className="font-bold text-indigo-600">{puntos}</span></p>
+        </div>
+
+        {formaActual && (
+          <div className="text-center mb-8">
+            <div className={`text-8xl mb-4 ${formaActual.color} rounded-lg p-4 inline-block`}>
+              {formaActual.emoji}
+            </div>
+            <p className="text-xl font-semibold text-gray-700">
+              ¿Qué forma es esta?
+            </p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {opciones.map((forma, index) => (
+            <button
+              key={index}
+              onClick={() => verificarRespuesta(forma)}
+              className="bg-gray-100 hover:bg-gray-200 p-4 rounded-lg text-4xl transition-colors"
+            >
+              {forma.emoji}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className={`text-lg font-semibold ${correcto === true ? 'text-green-600' : correcto === false ? 'text-red-600' : 'text-gray-700'}`}>
+            {mensaje}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Juego de Colores
+  const JuegoColores = () => {
+    const [colorActual, setColorActual] = useState(null);
+    const [opciones, setOpciones] = useState([]);
+    const [puntos, setPuntos] = useState(0);
+    const [mensaje, setMensaje] = useState('¡Elige el color correcto!');
+    const [correcto, setCorrecto] = useState(null);
+
+    const colores = [
+      { nombre: 'Rojo', color: 'bg-red-500', texto: 'text-red-600' },
+      { nombre: 'Azul', color: 'bg-blue-500', texto: 'text-blue-600' },
+      { nombre: 'Verde', color: 'bg-green-500', texto: 'text-green-600' },
+      { nombre: 'Amarillo', color: 'bg-yellow-500', texto: 'text-yellow-600' },
+      { nombre: 'Naranja', color: 'bg-orange-500', texto: 'text-orange-600' },
+      { nombre: 'Morado', color: 'bg-purple-500', texto: 'text-purple-600' }
+    ];
+
+    const generarNuevaPregunta = () => {
+      const colorCorrecto = colores[Math.floor(Math.random() * colores.length)];
+      const coloresIncorrectos = colores.filter(c => c.nombre !== colorCorrecto.nombre);
+      
+      // Seleccionar 2 opciones incorrectas
+      const opcionesIncorrectas = coloresIncorrectos.slice(0, 2);
+      
+      // Mezclar todas las opciones
+      const todasLasOpciones = [colorCorrecto, ...opcionesIncorrectas].sort(() => Math.random() - 0.5);
+      
+      setColorActual(colorCorrecto);
+      setOpciones(todasLasOpciones);
+      setMensaje('¡Elige el color correcto!');
+      setCorrecto(null);
+    };
+
+    const verificarRespuesta = (colorSeleccionado) => {
+      if (colorSeleccionado.nombre === colorActual.nombre) {
+        setPuntos(puntos + 1);
+        setMensaje('¡Excelente! 🎨');
+        setCorrecto(true);
+        setTimeout(() => {
+          generarNuevaPregunta();
+        }, 1500);
+      } else {
+        setMensaje('¡Sigue intentando! 🌈');
+        setCorrecto(false);
+      }
+    };
+
+    useEffect(() => {
+      generarNuevaPregunta();
+    }, []);
+
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold text-pink-600 mb-2">🎨 Juego de Colores</h3>
+          <p className="text-lg text-gray-600">Puntos: <span className="font-bold text-pink-600">{puntos}</span></p>
+        </div>
+
+        {colorActual && (
+          <div className="text-center mb-8">
+            <div className={`w-24 h-24 ${colorActual.color} rounded-full mx-auto mb-4 shadow-lg`}></div>
+            <p className="text-xl font-semibold text-gray-700">
+              ¿Qué color es este?
+            </p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-3 gap-4 mb-6">
+          {opciones.map((color, index) => (
+            <button
+              key={index}
+              onClick={() => verificarRespuesta(color)}
+              className={`w-20 h-20 ${color.color} rounded-full mx-auto shadow-lg hover:scale-110 transition-transform`}
+            >
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className={`text-lg font-semibold ${correcto === true ? 'text-green-600' : correcto === false ? 'text-red-600' : 'text-gray-700'}`}>
+            {mensaje}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Juego de Animales
+  const JuegoAnimales = () => {
+    const [animalActual, setAnimalActual] = useState(null);
+    const [opciones, setOpciones] = useState([]);
+    const [puntos, setPuntos] = useState(0);
+    const [mensaje, setMensaje] = useState('¡Encuentra el animal!');
+    const [correcto, setCorrecto] = useState(null);
+
+    const animales = [
+      { nombre: 'Perro', emoji: '🐕', sonido: '¡Guau!' },
+      { nombre: 'Gato', emoji: '🐱', sonido: '¡Miau!' },
+      { nombre: 'Vaca', emoji: '🐄', sonido: '¡Muu!' },
+      { nombre: 'Oveja', emoji: '🐑', sonido: '¡Bee!' },
+      { nombre: 'Pato', emoji: '🦆', sonido: '¡Cuac!' },
+      { nombre: 'Gallina', emoji: '🐔', sonido: '¡Cocorocó!' },
+      { nombre: 'Cerdo', emoji: '🐷', sonido: '¡Oink!' },
+      { nombre: 'Caballo', emoji: '🐎', sonido: '¡Relincho!' }
+    ];
+
+    const generarNuevaPregunta = () => {
+      const animalCorrecto = animales[Math.floor(Math.random() * animales.length)];
+      const animalesIncorrectos = animales.filter(a => a.nombre !== animalCorrecto.nombre);
+      
+      // Seleccionar 3 opciones incorrectas
+      const opcionesIncorrectas = animalesIncorrectos.slice(0, 3);
+      
+      // Mezclar todas las opciones
+      const todasLasOpciones = [animalCorrecto, ...opcionesIncorrectas].sort(() => Math.random() - 0.5);
+      
+      setAnimalActual(animalCorrecto);
+      setOpciones(todasLasOpciones);
+      setMensaje('¡Encuentra el animal!');
+      setCorrecto(null);
+    };
+
+    const verificarRespuesta = (animalSeleccionado) => {
+      if (animalSeleccionado.nombre === animalActual.nombre) {
+        setPuntos(puntos + 1);
+        setMensaje(`${animalActual.sonido} ¡Correcto! 🎉`);
+        setCorrecto(true);
+        setTimeout(() => {
+          generarNuevaPregunta();
+        }, 2000);
+      } else {
+        setMensaje('¡Inténtalo de nuevo! 🐾');
+        setCorrecto(false);
+      }
+    };
+
+    useEffect(() => {
+      generarNuevaPregunta();
+    }, []);
+
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold text-orange-600 mb-2">🐾 Juego de Animales</h3>
+          <p className="text-lg text-gray-600">Puntos: <span className="font-bold text-orange-600">{puntos}</span></p>
+        </div>
+
+        {animalActual && (
+          <div className="text-center mb-8">
+            <div className="text-6xl mb-4">{animalActual.emoji}</div>
+            <p className="text-xl font-semibold text-gray-700">
+              ¿Dónde está el {animalActual.nombre.toLowerCase()}?
+            </p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {opciones.map((animal, index) => (
+            <button
+              key={index}
+              onClick={() => verificarRespuesta(animal)}
+              className="bg-gray-100 hover:bg-gray-200 p-6 rounded-lg text-4xl transition-colors hover:scale-105"
+            >
+              {animal.emoji}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className={`text-lg font-semibold ${correcto === true ? 'text-green-600' : correcto === false ? 'text-red-600' : 'text-gray-700'}`}>
+            {mensaje}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Juego de Números
+  const JuegoNumeros = () => {
+    const [numeroActual, setNumeroActual] = useState(0);
+    const [opciones, setOpciones] = useState([]);
+    const [puntos, setPuntos] = useState(0);
+    const [mensaje, setMensaje] = useState('¡Elige el número correcto!');
+    const [correcto, setCorrecto] = useState(null);
+
+    const generarNuevaPregunta = () => {
+      const numeroCorrecto = Math.floor(Math.random() * 10) + 1; // 1-10
+      const opcionesIncorrectas = [];
+      
+      // Generar opciones incorrectas
+      while (opcionesIncorrectas.length < 3) {
+        const opcion = Math.floor(Math.random() * 10) + 1;
+        if (opcion !== numeroCorrecto && !opcionesIncorrectas.includes(opcion)) {
+          opcionesIncorrectas.push(opcion);
+        }
+      }
+      
+      // Mezclar todas las opciones
+      const todasLasOpciones = [numeroCorrecto, ...opcionesIncorrectas].sort(() => Math.random() - 0.5);
+      
+      setNumeroActual(numeroCorrecto);
+      setOpciones(todasLasOpciones);
+      setMensaje('¡Elige el número correcto!');
+      setCorrecto(null);
+    };
+
+    const verificarRespuesta = (numeroSeleccionado) => {
+      if (numeroSeleccionado === numeroActual) {
+        setPuntos(puntos + 1);
+        setMensaje('¡Número correcto! ⭐');
+        setCorrecto(true);
+        setTimeout(() => {
+          generarNuevaPregunta();
+        }, 1500);
+      } else {
+        setMensaje('¡Sigue practicando! 🔢');
+        setCorrecto(false);
+      }
+    };
+
+    useEffect(() => {
+      generarNuevaPregunta();
+    }, []);
+
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold text-teal-600 mb-2">🔢 Juego de Números</h3>
+          <p className="text-lg text-gray-600">Puntos: <span className="font-bold text-teal-600">{puntos}</span></p>
+        </div>
+
+        <div className="text-center mb-8">
+          <div className="text-8xl mb-4 font-bold text-teal-600">
+            {numeroActual}
+          </div>
+          <p className="text-xl font-semibold text-gray-700">
+            ¿Qué número ves?
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {opciones.map((numero, index) => (
+            <button
+              key={index}
+              onClick={() => verificarRespuesta(numero)}
+              className="bg-teal-100 hover:bg-teal-200 p-6 rounded-lg text-4xl font-bold text-teal-700 transition-colors hover:scale-105"
+            >
+              {numero}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className={`text-lg font-semibold ${correcto === true ? 'text-green-600' : correcto === false ? 'text-red-600' : 'text-gray-700'}`}>
+            {mensaje}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
+  // Componente de Juego de Vocales
+  const JuegoVocales = () => {
+    const [letraActual, setLetraActual] = useState('');
+    const [opciones, setOpciones] = useState([]);
+    const [puntos, setPuntos] = useState(0);
+    const [mensaje, setMensaje] = useState('¡Encuentra la vocal!');
+    const [correcto, setCorrecto] = useState(null);
+
+    const vocales = ['A', 'E', 'I', 'O', 'U'];
+    const consonantes = ['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M', 'N', 'P', 'Q', 'R', 'S', 'T', 'V', 'W', 'X', 'Y', 'Z'];
+
+    const generarNuevaPregunta = () => {
+      const esVocal = Math.random() < 0.7; // 70% vocales, 30% consonantes
+      let letraCorrecta;
+      
+      if (esVocal) {
+        letraCorrecta = vocales[Math.floor(Math.random() * vocales.length)];
+        setMensaje('¡Encuentra la vocal!');
+      } else {
+        letraCorrecta = consonantes[Math.floor(Math.random() * consonantes.length)];
+        setMensaje('¡Encuentra la consonante!');
+      }
+      
+      // Generar opciones mezcladas
+      const todasLasLetras = esVocal ? vocales : consonantes;
+      const letrasIncorrectas = todasLasLetras.filter(l => l !== letraCorrecta);
+      
+      // Seleccionar 3 opciones incorrectas
+      const opcionesIncorrectas = letrasIncorrectas.slice(0, 3);
+      
+      // Mezclar todas las opciones
+      const todasLasOpciones = [letraCorrecta, ...opcionesIncorrectas].sort(() => Math.random() - 0.5);
+      
+      setLetraActual(letraCorrecta);
+      setOpciones(todasLasOpciones);
+      setCorrecto(null);
+    };
+
+    const verificarRespuesta = (letraSeleccionada) => {
+      if (letraSeleccionada === letraActual) {
+        setPuntos(puntos + 1);
+        setMensaje('¡Letra correcta! 📚');
+        setCorrecto(true);
+        setTimeout(() => {
+          generarNuevaPregunta();
+        }, 1500);
+      } else {
+        setMensaje('¡Inténtalo de nuevo! ✏️');
+        setCorrecto(false);
+      }
+    };
+
+    useEffect(() => {
+      generarNuevaPregunta();
+    }, []);
+
+    return (
+      <div className="bg-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+        <div className="text-center mb-6">
+          <h3 className="text-2xl font-bold text-cyan-600 mb-2">📚 Juego de Letras</h3>
+          <p className="text-lg text-gray-600">Puntos: <span className="font-bold text-cyan-600">{puntos}</span></p>
+        </div>
+
+        <div className="text-center mb-8">
+          <div className="text-8xl mb-4 font-bold text-cyan-600 bg-cyan-50 rounded-lg p-8 inline-block">
+            {letraActual}
+          </div>
+          <p className="text-xl font-semibold text-gray-700">
+            {mensaje}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {opciones.map((letra, index) => (
+            <button
+              key={index}
+              onClick={() => verificarRespuesta(letra)}
+              className="bg-cyan-100 hover:bg-cyan-200 p-6 rounded-lg text-4xl font-bold text-cyan-700 transition-colors hover:scale-105"
+            >
+              {letra}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center">
+          <p className={`text-lg font-semibold ${correcto === true ? 'text-green-600' : correcto === false ? 'text-red-600' : 'text-gray-700'}`}>
+            {mensaje}
+          </p>
+        </div>
+      </div>
+    );
+  };
+
   // Lista de juegos disponibles
   const juegosDisponibles = [
     {
@@ -440,22 +904,75 @@ const Juegos = () => {
       icono: <Brain className="w-8 h-8" />,
       color: 'bg-green-500',
       componente: <JuegoEncontrarParejas />
+    },
+    {
+      id: 'formas',
+      titulo: 'Juego de Formas',
+      descripcion: 'Aprende formas geométricas',
+      icono: <Triangle className="w-8 h-8" />,
+      color: 'bg-indigo-500',
+      componente: <JuegoFormas />
+    },
+    {
+      id: 'colores',
+      titulo: 'Juego de Colores',
+      descripcion: 'Identifica y nombra colores',
+      icono: <Palette className="w-8 h-8" />,
+      color: 'bg-pink-500',
+      componente: <JuegoColores />
+    },
+    {
+      id: 'animales',
+      titulo: 'Juego de Animales',
+      descripcion: 'Conoce animales y sus sonidos',
+      icono: <Smile className="w-8 h-8" />,
+      color: 'bg-orange-500',
+      componente: <JuegoAnimales />
+    },
+    {
+      id: 'numeros',
+      titulo: 'Juego de Números',
+      descripcion: 'Reconoce números del 1 al 10',
+      icono: <Zap className="w-8 h-8" />,
+      color: 'bg-teal-500',
+      componente: <JuegoNumeros />
+    },
+    {
+      id: 'letras',
+      titulo: 'Juego de Letras',
+      descripcion: 'Aprende vocales y consonantes',
+      icono: <Book className="w-8 h-8" />,
+      color: 'bg-cyan-500',
+      componente: <JuegoVocales />
     }
   ];
 
   if (juegoActivo) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
-        <div className="max-w-4xl mx-auto">
+      <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6'}`}>
+        <div className={`max-w-4xl mx-auto ${isFullscreen ? 'w-full h-full p-6' : ''}`}>
           <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Juegos Educativos</h1>
-            <button
-              onClick={() => setJuegoActivo(null)}
-              className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
-            >
-              <X className="w-4 h-4" />
-              Volver al Menú
-            </button>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">Juegos Educativos</h1>
+              <p className="text-sm text-blue-600 font-medium">🌟 NidoPro - Educación que Inspira</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <button
+                onClick={toggleFullscreen}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+                title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+              >
+                {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+                {isFullscreen ? "Salir" : "Pantalla Completa"}
+              </button>
+              <button
+                onClick={() => setJuegoActivo(null)}
+                className="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center gap-2"
+              >
+                <X className="w-4 h-4" />
+                Volver al Menú
+              </button>
+            </div>
           </div>
           
           {juegoActivo.componente}
@@ -465,12 +982,22 @@ const Juegos = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className={`flex flex-col ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-6'}`}>
+      <div className={`max-w-6xl mx-auto ${isFullscreen ? 'w-full h-full p-6' : ''}`}>
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-800 mb-4">🎮 Juegos Educativos para Niños</h1>
-          <p className="text-xl text-gray-600">¡Aprende jugando con diversión!</p>
+        <div className="flex items-center justify-between mb-12">
+          <div className="text-center flex-1">
+            <h1 className="text-4xl font-bold text-gray-800 mb-4">🎮 Juegos Educativos para Niños</h1>
+            <p className="text-xl text-gray-600 mb-2">¡Aprende jugando con diversión!</p>
+            <p className="text-lg text-blue-600 font-semibold">🌟 NidoPro - Educación que Inspira 🌟</p>
+          </div>
+          <button
+            onClick={toggleFullscreen}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors ml-4"
+            title={isFullscreen ? "Salir de pantalla completa" : "Pantalla completa"}
+          >
+            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+          </button>
         </div>
 
         {/* Juegos Grid */}

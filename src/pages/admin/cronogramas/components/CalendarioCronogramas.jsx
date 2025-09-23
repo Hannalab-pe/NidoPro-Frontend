@@ -88,14 +88,7 @@ const CalendarioCronogramas = ({
     window.addEventListener('resize', checkScreenSize);
 
     return () => window.removeEventListener('resize', checkScreenSize);
-  }, [view, currentView, onView, propIsMobile]);
-
-  // Actualizar vista cuando cambie la prop view
-  useEffect(() => {
-    if (!isMobile && view) {
-      setCurrentView(view);
-    }
-  }, [view, isMobile]);
+  }, [view, onView, propIsMobile]);
 
   // Debug: ver eventos recibidos
   console.log('📅 Eventos recibidos en calendario admin:', events);

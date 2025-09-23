@@ -1,4 +1,5 @@
-// Exportaciones del módulo de asignaciones de aula
+// Exportaciones del módulo de aulas
+export { default as Aulas } from './Aulas';
 export { default as AsignacionAula } from './AsignacionAula';
 export { default as TablaAulas } from './tablas/TablaAula';
 

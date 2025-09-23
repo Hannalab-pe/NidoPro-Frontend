@@ -103,10 +103,10 @@ const asignacionesColumns = [
     Cell: ({ row }) => (
       <div>
         <div className="text-sm text-gray-900">
-          {row.idTrabajador?.telefono || 'Sin teléfono'}
+          <span className="font-medium">TELF:</span> {row.idTrabajador?.telefono || 'Sin teléfono'}
         </div>
         <div className="text-sm text-gray-500">
-          {row.idTrabajador?.nroDocumento || 'Sin documento'}
+          <span className="font-medium">DNI:</span> {row.idTrabajador?.nroDocumento || 'Sin documento'}
         </div>
       </div>
     )
@@ -126,7 +126,7 @@ const asignacionesColumns = [
   }
 ];
 
-// Filtros para asignaciones de aula
+// Filtros para asignaciones de aula (comentado - solo búsqueda habilitada)
 const asignacionesFilters = {
   seccion: {
     label: 'Sección',
@@ -220,7 +220,6 @@ const TablaAulas = ({
           export: false,
           refresh: true
         }}
-        filters={asignacionesFilters}
         addButtonText="Nueva Asignación"
         loadingMessage="Cargando asignaciones..."
         emptyMessage="No hay asignaciones de aula registradas"

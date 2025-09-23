@@ -94,7 +94,7 @@ const Cursos = () => {
 
       if (cursoSeleccionado) {
         // Actualizar curso existente
-        await cursoService.update(cursoSeleccionado.id, cursoData);
+        await cursoService.update(cursoSeleccionado.idCurso, cursoData);
         toast.success('Curso actualizado exitosamente');
       } else {
         // Crear nuevo curso
@@ -115,7 +115,7 @@ const Cursos = () => {
     try {
       console.log('🗑️ Eliminando curso:', cursoSeleccionado);
 
-      await cursoService.delete(cursoSeleccionado.id);
+      await cursoService.delete(cursoSeleccionado.idCurso);
       toast.success('Curso eliminado exitosamente');
 
       // Recargar lista de cursos

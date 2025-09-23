@@ -59,20 +59,28 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.fecha) {
-      newErrors.fecha = 'La fecha es requerida';
-    }
+    // Si estamos editando, solo validar descripción
+    if (evaluacion) {
+      if (!formData.descripcion.trim()) {
+        newErrors.descripcion = 'La descripción es requerida';
+      }
+    } else {
+      // Si estamos creando, validar todos los campos
+      if (!formData.fecha) {
+        newErrors.fecha = 'La fecha es requerida';
+      }
 
-    if (!formData.descripcion.trim()) {
-      newErrors.descripcion = 'La descripción es requerida';
-    }
+      if (!formData.descripcion.trim()) {
+        newErrors.descripcion = 'La descripción es requerida';
+      }
 
-    if (!formData.idCurso) {
-      newErrors.idCurso = 'Debe seleccionar un curso';
-    }
+      if (!formData.idCurso) {
+        newErrors.idCurso = 'Debe seleccionar un curso';
+      }
 
-    if (!formData.tipoEvaluacion) {
-      newErrors.tipoEvaluacion = 'El tipo de evaluación es requerido';
+      if (!formData.tipoEvaluacion) {
+        newErrors.tipoEvaluacion = 'El tipo de evaluación es requerido';
+      }
     }
 
     setErrors(newErrors);
@@ -101,19 +109,23 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
       }
 
       // Preparar los datos para enviar
-      const dataToSend = {
-        fecha: formData.fecha,
-        descripcion: formData.descripcion.trim(),
-        tipoEvaluacion: formData.tipoEvaluacion,
-        idCurso: formData.idCurso
-      };
+      const dataToSend = evaluacion
+        ? {
+            descripcion: formData.descripcion.trim()
+          }
+        : {
+            fecha: formData.fecha,
+            descripcion: formData.descripcion.trim(),
+            tipoEvaluacion: formData.tipoEvaluacion,
+            idCurso: formData.idCurso
+          };
 
       // Determinar si es creación o edición
       const url = evaluacion
         ? `https://nidopro.up.railway.app/api/v1/evaluacion/${evaluacion.idEvaluacion}`
         : 'https://nidopro.up.railway.app/api/v1/evaluacion';
 
-      const method = evaluacion ? 'PUT' : 'POST';
+      const method = evaluacion ? 'PATCH' : 'POST';
 
       const response = await fetch(url, {
         method: method,
@@ -182,7 +194,7 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
                 >
                   <span className="flex items-center">
                     <FileText className="w-5 h-5 mr-2 text-green-600" />
-                    {evaluacion ? 'Editar Evaluación' : 'Crear Nueva Evaluación'}
+                    {evaluacion ? 'Editar Descripción de Evaluación' : 'Crear Nueva Evaluación'}
                   </span>
                   <button
                     type="button"
@@ -192,6 +204,14 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
                     <X className="w-5 h-5" />
                   </button>
                 </Dialog.Title>
+
+                {evaluacion && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-700">
+                      💡 Solo puedes editar la descripción de la evaluación. Los otros campos están bloqueados para mantener la integridad de los datos.
+                    </p>
+                  </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="mt-4">
                   <div className="space-y-4">
@@ -207,7 +227,10 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
                           name="fecha"
                           value={formData.fecha}
                           onChange={handleInputChange}
+                          disabled={evaluacion ? true : false}
                           className={`w-full pl-3 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            evaluacion ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                          } ${
                             errors.fecha ? 'border-red-500' : 'border-gray-300'
                           }`}
                           min={new Date().toISOString().split('T')[0]} // No permitir fechas pasadas
@@ -250,7 +273,10 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
                         name="tipoEvaluacion"
                         value={formData.tipoEvaluacion}
                         onChange={handleInputChange}
+                        disabled={evaluacion ? true : false}
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          evaluacion ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                        } ${
                           errors.tipoEvaluacion ? 'border-red-500' : 'border-gray-300'
                         }`}
                       >
@@ -276,7 +302,10 @@ const CrearEvaluacionModal = ({ isOpen, onClose, onSuccess, evaluacion, cursos }
                           name="idCurso"
                           value={formData.idCurso}
                           onChange={handleInputChange}
+                          disabled={evaluacion ? true : false}
                           className={`w-full pl-3 pr-10 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                            evaluacion ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                          } ${
                             errors.idCurso ? 'border-red-500' : 'border-gray-300'
                           }`}
                         >

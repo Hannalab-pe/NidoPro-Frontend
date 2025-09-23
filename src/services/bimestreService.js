@@ -33,4 +33,34 @@ export const bimestreService = {
     const response = await bimestreApi.get('/bimestre');
     return response.data;
   },
+
+  async generarBimestresAutomaticos(idPeriodo) {
+    try {
+      console.log('📤 Generando bimestres automáticos para período:', idPeriodo);
+
+      const response = await bimestreApi.post(`/bimestre/generar-automaticos/${idPeriodo}`);
+      console.log('📥 Bimestres generados:', response.data);
+
+      return response.data?.info?.data || response.data?.data || response.data;
+    } catch (error) {
+      console.error('Error al generar bimestres:', error);
+      throw new Error(error.response?.data?.message || 'Error al generar bimestres');
+    }
+  },
+
+  async actualizarFechasMasivo(bimestresData) {
+    try {
+      console.log('📤 Actualizando fechas de bimestres masivamente:', bimestresData);
+
+      const response = await bimestreApi.patch('/bimestre/actualizar-fechas-masivo', {
+        bimestres: bimestresData
+      });
+      console.log('📥 Fechas de bimestres actualizadas:', response.data);
+
+      return response.data?.info?.data || response.data?.data || response.data;
+    } catch (error) {
+      console.error('Error al actualizar fechas de bimestres:', error);
+      throw new Error(error.response?.data?.message || 'Error al actualizar fechas de bimestres');
+    }
+  }
 };

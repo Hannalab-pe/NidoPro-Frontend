@@ -33,7 +33,6 @@ const TablaGrados = ({
         import: false,
         export: true
       }}
-      filters={gradosFilters}
       addButtonText="Agregar Grado"
       loadingMessage="Cargando grados..."
       emptyMessage="No hay grados registrados"

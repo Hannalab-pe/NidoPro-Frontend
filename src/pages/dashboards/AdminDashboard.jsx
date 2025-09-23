@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 import { useAuthStore } from "../../store";
 import { useAdminDashboard } from "../../hooks/useAdminDashboard";
+import { useNotifications } from "../../hooks/useNotifications";
 import { DashboardBarChart, FinancialTrendChart, CategoryPieChart } from "../../components/charts";
 import { 
   BarChart3, 
@@ -29,7 +32,8 @@ import {
   RefreshCw,
   MessageCircle,
   Bot,
-  Shield
+  Shield,
+  Bell
 } from "lucide-react";
 
 // Importar todos los componentes de administración
@@ -38,7 +42,7 @@ import Matricula from '../admin/matricula/Matricula';
 import Trabajadores from '../admin/trabajadores/Trabajadores';
 import Padres from '../admin/padres/Padres';
 import AsignacionAula from '../admin/aulas/AsignacionAula';
-import Aulas from '../admin/aula/Aulas';
+import Aulas from '../admin/aulas/Aulas';
 import GestionFinanciera from '../admin/finanzas/GestionFinanciera';
 import MovimientosCaja from '../admin/finanzas/movimientos/MovimientosCaja';
 import PagosPensiones from '../admin/finanzas/pensiones/PagosPensiones';
@@ -60,11 +64,14 @@ import Seguros from '../admin/seguros/Seguros';
 import AIChat from '../admin/iachat/AIChat';
 import BimestralDocente from '../admin/bimestralDocente/BimestralDocente';
 import Roles from '../admin/roles/Roles';
+import AsignacionCursos from '../admin/asignacion-cursos/AsignacionCursos';
 
 const AdminDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [financeComponent, setFinanceComponent] = useState("GestionFinanciera");
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const { logout, user } = useAuthStore();
 
   // Usar el hook personalizado para obtener datos reales del dashboard
@@ -77,6 +84,23 @@ const AdminDashboard = () => {
     financialStats,
     students // Agregar estudiantes para debug
   } = useAdminDashboard();
+
+  // Hook para obtener notificaciones del usuario
+  const { data: notifications = [], isLoading: notificationsLoading } = useNotifications(user?.id);
+
+  // Effect para cerrar el dropdown de notificaciones al hacer click fuera
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isNotificationsOpen && !event.target.closest('.notifications-dropdown')) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationsOpen]);
 
   // Effect para escuchar eventos de cambio de vista en finanzas
   React.useEffect(() => {
@@ -110,6 +134,7 @@ const AdminDashboard = () => {
     // 📚 ACADÉMICO
     { id: "matricula", label: "Matrícula", icon: GraduationCap, category: "academico" },
     { id: "cursos", label: "Gestión de Cursos", icon: BookOpen, category: "academico" },
+    { id: "asignacion-cursos", label: "Asignación de Cursos", icon: UserCheck, category: "academico" },
     { id: "grados", label: "Grados Académicos", icon: School, category: "academico" },
     { id: "planificaciones", label: "Planificaciones", icon: FileText, category: "academico" },
     { id: "cronogramas", label: "Cronogramas", icon: Calendar, category: "academico" },
@@ -162,6 +187,20 @@ const AdminDashboard = () => {
     if (sectionId === "finances") {
       setFinanceComponent("GestionFinanciera");
     }
+  };
+
+  // Función para manejar el logout con confirmación
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false);
+    logout();
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalOpen(false);
   };
 
   // Función para renderizar el componente de finanzas según el estado
@@ -287,8 +326,8 @@ const AdminDashboard = () => {
            </div>
           {/* Logout Button */}
           <button 
-            className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-            onClick={logout}
+            className="w-full flex items-center bg-red-50 space-x-3 px-4 py-3 text-red-600 hover:bg-red-100 cursor-pointer rounded-lg transition-colors duration-200"
+            onClick={handleLogoutClick}
           >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Cerrar Sesión</span>
@@ -321,6 +360,63 @@ const AdminDashboard = () => {
                   day: 'numeric' 
                 })}
               </p>
+            </div>
+
+            {/* Notifications Dropdown */}
+            <div className="relative notifications-dropdown">
+              <button
+                className="relative p-2 text-white hover:text-gray-300 transition-colors duration-200"
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              >
+                <Bell className="w-6 h-6" />
+                {notifications.length > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                  <div className="py-1">
+                    <div className="px-4 py-2 border-b border-gray-200">
+                      <h3 className="text-sm font-medium text-gray-900">Notificaciones</h3>
+                    </div>
+                    
+                    {notificationsLoading ? (
+                      <div className="px-4 py-3 text-sm text-gray-500">
+                        Cargando notificaciones...
+                      </div>
+                    ) : notifications.length > 0 ? (
+                      <div className="max-h-64 overflow-y-auto">
+                        {notifications.map((notification, index) => (
+                          <div key={index} className="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0">
+                                <Bell className="w-5 h-5 text-blue-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-900">
+                                  {notification.mensaje || notification.titulo || 'Nueva notificación'}
+                                </p>
+                                {notification.fecha && (
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {new Date(notification.fecha).toLocaleDateString('es-ES')}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        Sin notificaciones por leer
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
@@ -552,6 +648,7 @@ const AdminDashboard = () => {
           {activeSection === "asignacion-aula" && <AsignacionAula />}
           {activeSection === "aulas" && <Aulas />}
           {activeSection === "cursos" && <Cursos />}
+          {activeSection === "asignacion-cursos" && <AsignacionCursos />}
           {activeSection === "finances" && renderFinanceComponent()}
           {activeSection === "pensiones" && <Pensiones />}
           {activeSection === "reports" && <Reportes />}
@@ -567,6 +664,70 @@ const AdminDashboard = () => {
           {activeSection === "ai-chat" && <AIChat />}
         </div>
       </main>
+
+      {/* Modal de confirmación de logout */}
+      <Transition appear show={isLogoutModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={handleCancelLogout}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-md bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                    <LogOut className="w-6 h-6 text-red-600" />
+                  </div>
+
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 text-center mb-2">
+                    ¿Cerrar sesión?
+                  </Dialog.Title>
+
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500 text-center">
+                      ¿Estás seguro de que quieres cerrar sesión? Perderás el acceso a tu cuenta administrativa.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex space-x-3">
+                    <button
+                      type="button"
+                      className="flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                      onClick={handleCancelLogout}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+                      onClick={handleConfirmLogout}
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };

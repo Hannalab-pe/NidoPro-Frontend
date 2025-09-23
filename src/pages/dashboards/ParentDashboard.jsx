@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuthStore } from "../../store";
 import { useParentDashboard } from "../../hooks/useParentDashboard";
+import { useNotifications } from "../../hooks/useNotifications";
+import { Dialog, Transition } from "@headlessui/react";
+import { Fragment } from "react";
+import axios from 'axios';
+import { toast } from 'sonner';
 import {
   BarChart3,
   FileText,
@@ -13,7 +18,6 @@ import {
   Star,
   CheckCircle,
   User,
-  Menu,
   X,
   TrendingUp,
   ChevronRight,
@@ -21,7 +25,9 @@ import {
   RefreshCw,
   AlertCircle,
   Bot,
-  Gamepad2
+  Gamepad2,
+  Menu,
+  DollarSign
 } from "lucide-react";
 import Reportes from "../parent/reportes/Reportes";
 import Tareas from "../parent/tareas/Tareas";
@@ -30,11 +36,18 @@ import Anotaciones from '../parent/anotaciones/Anotaciones';
 import Cronograma from '../parent/cronograma/Cronograma';
 import ParentAIChat from '../parent/iachat/ParentAIChat';
 import Juegos from '../teacher/juegos/Juegos';
+import Pensiones from '../parent/pensiones/Pensiones';
 
 const ParentDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, user } = useAuthStore();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isPasswordChangeModalOpen, setIsPasswordChangeModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const { logout, user, updateUser } = useAuthStore();
   
   // Hook personalizado para datos del dashboard familiar
   const { 
@@ -44,6 +57,30 @@ const ParentDashboard = () => {
     refreshData,
     estadisticas 
   } = useParentDashboard();
+
+  // Verificar si el usuario necesita cambiar contraseña
+  useEffect(() => {
+    if (user?.cambioContrasena === false) {
+      setIsPasswordChangeModalOpen(true);
+    }
+  }, [user]);
+
+  // Hook para obtener notificaciones del usuario
+  const { data: notifications = [], isLoading: notificationsLoading } = useNotifications(user?.id);
+
+  // Effect para cerrar el dropdown de notificaciones al hacer click fuera
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isNotificationsOpen && !event.target.closest('.notifications-dropdown')) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationsOpen]);
 
   const menuItems = [
     // 📊 DASHBOARD
@@ -59,7 +96,10 @@ const ParentDashboard = () => {
     { id: "anotaciones", label: "Anotaciones", icon: Bell, category: "academico" },
 
     // 👥 GESTIÓN DE ESTUDIANTES
-    { id: "attendance", label: "Asistencia", icon: CheckCircle, category: "gestion" }
+    { id: "attendance", label: "Asistencia", icon: CheckCircle, category: "gestion" },
+
+    // 💰 GESTIÓN FINANCIERA
+    { id: "pensiones", label: "Pensiones", icon: DollarSign, category: "financiero" }
   ];
 
   // Función para obtener la etiqueta de categoría
@@ -68,7 +108,8 @@ const ParentDashboard = () => {
       dashboard: "Dashboard",
       herramientas: "Herramientas Educativas",
       academico: "Trabajo Académico",
-      gestion: "Gestión de Estudiantes"
+      gestion: "Gestión de Estudiantes",
+      financiero: "Gestión Financiera"
     };
     return labels[category] || category;
   };
@@ -161,6 +202,59 @@ const ParentDashboard = () => {
     setIsMobileMenuOpen(false);
   };
 
+  // Función para manejar el logout con confirmación
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false);
+    logout();
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalOpen(false);
+  };
+
+  const handlePasswordChange = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error('Por favor completa todos los campos');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const response = await axios.patch(`/api/v1/usuario/${user.id}/forzar-cambio-contrasena`, {
+        nuevaContrasena: newPassword,
+        confirmarContrasena: confirmPassword
+      });
+
+      // Actualizar el estado del usuario para indicar que ya cambió la contraseña
+      updateUser({ ...user, cambioContrasena: true });
+      
+      toast.success('Contraseña cambiada exitosamente');
+      setIsPasswordChangeModalOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Error al cambiar contraseña:', error);
+      toast.error('Error al cambiar la contraseña. Inténtalo de nuevo.');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   const renderOverview = () => (
     <div className="space-y-6 lg:space-y-8">
       {/* Información del hijo */}
@@ -187,8 +281,17 @@ const ParentDashboard = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
         {quickStats.map((stat, index) => {
           const IconComponent = stat.icon;
+          // Las primeras dos cards (Total de Tareas y Tareas Pendientes) llevan a la sección de tareas
+          const isTaskCard = index < 2;
+          
           return (
-            <div key={index} className="bg-white p-4 lg:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+            <div 
+              key={index} 
+              className={`bg-white p-4 lg:p-6 rounded-xl shadow-sm hover:shadow-md transition-shadow ${
+                isTaskCard ? 'cursor-pointer hover:bg-yellow-50' : ''
+              }`}
+              onClick={isTaskCard ? () => setActiveSection("tasks") : undefined}
+            >
               <div className="flex items-center justify-between mb-4">
                 <div 
                   className="p-3 rounded-lg"
@@ -205,6 +308,11 @@ const ParentDashboard = () => {
                   {stat.change}
                 </span>
               </div>
+              {isTaskCard && (
+                <div className="mt-3 text-xs text-green-600 font-medium">
+                  Click para ver detalles →
+                </div>
+              )}
             </div>
           );
         })}
@@ -234,7 +342,10 @@ const ParentDashboard = () => {
       {/* Tareas recientes */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100">
         <div className="flex items-center justify-between p-4 lg:p-6 border-b border-gray-100">
-          <h3 className="flex items-center space-x-2 text-lg font-semibold text-gray-900">
+          <h3 
+            className="flex items-center space-x-2 text-lg font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors"
+            onClick={() => setActiveSection("tasks")}
+          >
             <BookOpen className="w-5 h-5 text-yellow-500" />
             <span>Tareas Recientes</span>
           </h3>
@@ -361,6 +472,8 @@ const ParentDashboard = () => {
         return <Juegos />;
       case "attendance":
         return <Asistencia />;
+      case "pensiones":
+        return <Pensiones />;
       default:
         return renderOverview();
     }
@@ -456,7 +569,7 @@ const ParentDashboard = () => {
           {/* Logout Button */}
           <button 
             className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-            onClick={logout}
+            onClick={handleLogoutClick}
           >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Cerrar Sesión</span>
@@ -490,7 +603,62 @@ const ParentDashboard = () => {
               </p>
             </div>
             <div className="flex items-center space-x-2 lg:space-x-4">
-              
+              {/* Notifications Dropdown */}
+              <div className="relative notifications-dropdown">
+                <button
+                  className="relative p-2 text-white hover:text-gray-300 transition-colors duration-200"
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                >
+                  <Bell className="w-6 h-6" />
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                    <div className="py-1">
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <h3 className="text-sm font-medium text-gray-900">Notificaciones</h3>
+                      </div>
+                      
+                      {notificationsLoading ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          Cargando notificaciones...
+                        </div>
+                      ) : notifications.length > 0 ? (
+                        <div className="max-h-64 overflow-y-auto">
+                          {notifications.map((notification, index) => (
+                            <div key={index} className="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                              <div className="flex items-start space-x-3">
+                                <div className="flex-shrink-0">
+                                  <Bell className="w-5 h-5 text-yellow-500" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-900">
+                                    {notification.mensaje || notification.titulo || 'Nueva notificación'}
+                                  </p>
+                                  {notification.fecha && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {new Date(notification.fecha).toLocaleDateString('es-ES')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Sin notificaciones por leer
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -499,6 +667,170 @@ const ParentDashboard = () => {
           {renderContent()}
         </div>
       </main>
+
+      {/* Modal de confirmación de logout */}
+      <Transition appear show={isLogoutModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={handleCancelLogout}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/20 backdrop-blur-md bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <div className="flex items-center justify-center w-12 h-12 mx-auto bg-red-100 rounded-full mb-4">
+                    <LogOut className="w-6 h-6 text-red-600" />
+                  </div>
+
+                  <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900 text-center mb-2">
+                    ¿Cerrar sesión?
+                  </Dialog.Title>
+
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500 text-center">
+                      ¿Estás seguro de que quieres cerrar sesión? Perderás el acceso a tu cuenta familiar.
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex space-x-3">
+                    <button
+                      type="button"
+                      className="flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors duration-200"
+                      onClick={handleCancelLogout}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+                      onClick={handleConfirmLogout}
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Modal de cambio de contraseña obligatorio */}
+      <Transition appear show={isPasswordChangeModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => {}}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <User className="w-6 h-6 text-yellow-600" />
+                    </div>
+                  </div>
+
+                  <Dialog.Title as="h3" className="text-lg font-semibold text-center text-gray-900 mb-2">
+                    Cambio de Contraseña Requerido
+                  </Dialog.Title>
+
+                  <p className="text-sm text-gray-600 text-center mb-6">
+                    Por seguridad, debes cambiar tu contraseña antes de continuar usando el sistema.
+                  </p>
+
+                  <form onSubmit={(e) => { e.preventDefault(); handlePasswordChange(); }} className="space-y-4">
+                    <div>
+                      <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nueva Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        id="newPassword"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                        placeholder="Ingresa tu nueva contraseña"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmar Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                        placeholder="Repite tu nueva contraseña"
+                        required
+                      />
+                    </div>
+
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isChangingPassword}
+                    >
+                      {isChangingPassword ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Cambiando...
+                        </>
+                      ) : (
+                        'Cambiar Contraseña'
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mt-3 text-xs text-gray-500 text-center">
+                    La contraseña debe tener al menos 6 caracteres
+                  </div>
+                  </form>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };

@@ -21,9 +21,11 @@ import {
   AlertTriangle,
   RefreshCw
 } from 'lucide-react';
-import { ModalAgregarNota } from './modales';
+import { ModalAgregarNota, ModalEditarNota } from './modales';
+import ModalConfirmarEliminar from './modales/ModalConfirmarEliminar';
 import { useAuthStore } from '../../../store/useAuthStore';
 import { useAnotacionesByTrabajador } from '../../../hooks/queries/useAnotacionesQueries';
+import { useAnotaciones } from '../../../hooks/useAnotaciones';
 import { AnotacionCard } from './components';
 
 const Notas = () => {
@@ -32,6 +34,10 @@ const Notas = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [editingNote, setEditingNote] = useState(null);
   const [showModalAgregar, setShowModalAgregar] = useState(false);
+  const [showModalEditar, setShowModalEditar] = useState(false);
+  const [showModalEliminar, setShowModalEliminar] = useState(false);
+  const [anotacionSeleccionada, setAnotacionSeleccionada] = useState(null);
+  const [anotacionAEliminar, setAnotacionAEliminar] = useState(null);
 
   // Hooks para datos
   const { user } = useAuthStore();
@@ -50,6 +56,9 @@ const Notas = () => {
       refetchOnMount: true 
     }
   );
+
+  // Hook para operaciones CRUD de anotaciones
+  const { deleteAnotacion, deleting } = useAnotaciones();
 
   // Debug logs
   console.log('📝 Datos del trabajador:', {
@@ -203,14 +212,27 @@ const Notas = () => {
 
   // Handlers para las acciones
   const handleEditAnotacion = (anotacion) => {
-    setEditingNote(anotacion);
-    // Aquí podrías abrir un modal de edición
-    console.log('Editar anotación:', anotacion);
+    setAnotacionSeleccionada(anotacion);
+    setShowModalEditar(true);
   };
 
   const handleDeleteAnotacion = (anotacion) => {
-    // Aquí podrías mostrar un modal de confirmación
-    console.log('Eliminar anotación:', anotacion);
+    setAnotacionAEliminar(anotacion);
+    setShowModalEliminar(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!anotacionAEliminar) return;
+
+    try {
+      await deleteAnotacion(anotacionAEliminar.idAnotacionAlumno);
+      refetchAnotaciones(); // Recargar la lista después de eliminar
+      setShowModalEliminar(false);
+      setAnotacionAEliminar(null);
+    } catch (error) {
+      console.error('Error al eliminar anotación:', error);
+      // El error ya se maneja en el hook useAnotaciones
+    }
   };
 
   const handleRefresh = () => {
@@ -255,8 +277,24 @@ const Notas = () => {
     refetchAnotaciones();
   };
 
+  const handleModalEditarSuccess = () => {
+    refetchAnotaciones();
+    setShowModalEditar(false);
+    setAnotacionSeleccionada(null);
+  };
+
   const handleCloseModal = () => {
     setShowModalAgregar(false);
+  };
+
+  const handleCloseModalEditar = () => {
+    setShowModalEditar(false);
+    setAnotacionSeleccionada(null);
+  };
+
+  const handleCloseModalEliminar = () => {
+    setShowModalEliminar(false);
+    setAnotacionAEliminar(null);
   };
 
   return (
@@ -514,10 +552,28 @@ const Notas = () => {
       )}
 
       {/* Modal para agregar nueva anotación */}
-      <ModalAgregarNota 
+      <ModalAgregarNota
         isOpen={showModalAgregar}
         onClose={handleCloseModal}
         onSuccess={handleModalSuccess}
+      />
+
+      {/* Modal para editar anotación */}
+      <ModalEditarNota
+        isOpen={showModalEditar}
+        onClose={handleCloseModalEditar}
+        onSuccess={handleModalEditarSuccess}
+        anotacion={anotacionSeleccionada}
+      />
+
+      {/* Modal para confirmar eliminación */}
+      <ModalConfirmarEliminar
+        isOpen={showModalEliminar}
+        onClose={handleCloseModalEliminar}
+        onConfirm={handleConfirmDelete}
+        titulo="Eliminar Anotación"
+        mensaje={`¿Estás seguro de que quieres eliminar la anotación "${anotacionAEliminar?.titulo}"? Esta acción no se puede deshacer.`}
+        loading={deleting}
       />
     </div>
   );

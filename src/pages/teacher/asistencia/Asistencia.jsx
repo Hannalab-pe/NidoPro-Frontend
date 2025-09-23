@@ -203,21 +203,21 @@ const Asistencia = () => {
           console.log('✅ Procesando asistencia existente:', asistenciaExistente);
           if (asistenciaExistente.asistio === true || asistenciaExistente.asistio === 'true') {
             if (asistenciaExistente.observaciones === 'Presente') {
-              asistenciasIniciales[idEstudiante] = 'presente';
+              asistenciasIniciales[idEstudiante] = { estado: 'presente', observaciones: 'Presente' };
             } else if (asistenciaExistente.observaciones === 'Tardanza') {
-              asistenciasIniciales[idEstudiante] = 'tardanza';
+              asistenciasIniciales[idEstudiante] = { estado: 'tardanza', observaciones: 'Tardanza' };
             } else if (asistenciaExistente.observaciones === 'Justificado') {
-              asistenciasIniciales[idEstudiante] = 'justificado';
+              asistenciasIniciales[idEstudiante] = { estado: 'justificado', observaciones: 'Justificado' };
             } else {
-              asistenciasIniciales[idEstudiante] = 'presente';
+              asistenciasIniciales[idEstudiante] = { estado: 'presente', observaciones: asistenciaExistente.observaciones || 'Presente' };
             }
           } else if (asistenciaExistente.asistio === false || asistenciaExistente.asistio === 'false') {
-            asistenciasIniciales[idEstudiante] = 'ausente';
+            asistenciasIniciales[idEstudiante] = { estado: 'ausente', observaciones: asistenciaExistente.observaciones || 'Ausente' };
           } else {
-            asistenciasIniciales[idEstudiante] = '';
+            asistenciasIniciales[idEstudiante] = { estado: '', observaciones: '' };
           }
         } else {
-          asistenciasIniciales[idEstudiante] = '';
+          asistenciasIniciales[idEstudiante] = { estado: '', observaciones: '' };
         }
       });
       
@@ -226,10 +226,13 @@ const Asistencia = () => {
     }
   }, [asistenciasRegistradas.length, estudiantes.length]); // Solo cuando cambian las cantidades
 
-  const handleAsistenciaChange = (estudianteId, estado) => {
+  const handleAsistenciaChange = (estudianteId, estado, observaciones = null) => {
     setAsistencias(prev => ({
       ...prev,
-      [estudianteId]: estado
+      [estudianteId]: {
+        estado: estado,
+        observaciones: observaciones !== null ? observaciones : (prev[estudianteId]?.observaciones || '')
+      }
     }));
   };
 
@@ -249,28 +252,28 @@ const Asistencia = () => {
       hora: hora, // ← HORA VA AQUÍ, NO EN CADA ASISTENCIA
       idAula: selectedAula.id_aula || selectedAula.idAula,
       asistencias: Object.entries(asistencias)
-        .filter(([_, estado]) => estado !== '') // Solo enviar asistencias que tienen estado
-        .map(([estudianteId, estado]) => {
+        .filter(([_, asistenciaData]) => asistenciaData.estado !== '') // Solo enviar asistencias que tienen estado
+        .map(([estudianteId, asistenciaData]) => {
           // Convertir el estado local al formato del backend
           let asistio = true;
-          let observaciones = 'Presente';
+          let observaciones = asistenciaData.observaciones || 'Presente';
           
-          switch (estado) {
+          switch (asistenciaData.estado) {
             case 'presente':
               asistio = true;
-              observaciones = 'Presente';
+              if (!asistenciaData.observaciones) observaciones = 'Presente';
               break;
             case 'ausente':
               asistio = false;
-              observaciones = 'Ausente';
+              if (!asistenciaData.observaciones) observaciones = 'Ausente';
               break;
             case 'tardanza':
               asistio = true;
-              observaciones = 'Tardanza';
+              if (!asistenciaData.observaciones) observaciones = 'Tardanza';
               break;
             case 'justificado':
               asistio = true;
-              observaciones = 'Justificado';
+              if (!asistenciaData.observaciones) observaciones = 'Justificado';
               break;
           }
           
@@ -638,7 +641,7 @@ const Asistencia = () => {
               <div className="grid gap-4">
                 {estudiantesFiltrados.map((estudiante, index) => {
                   const idEstudiante = estudiante.id_estudiante || estudiante.idEstudiante;
-                  const estadoActual = asistencias[idEstudiante] || '';
+                  const asistenciaActual = asistencias[idEstudiante] || { estado: '', observaciones: '' };
                   
                   return (
                     <div
@@ -659,21 +662,33 @@ const Asistencia = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-4">
+                        {/* Campo de observaciones */}
+                        <div className="flex items-center space-x-2">
+                          <label className="text-sm font-medium text-gray-700">Observaciones:</label>
+                          <input
+                            type="text"
+                            placeholder="Opcional..."
+                            value={asistenciaActual.observaciones}
+                            onChange={(e) => handleAsistenciaChange(idEstudiante, asistenciaActual.estado, e.target.value)}
+                            className="px-3 py-1 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-40"
+                          />
+                        </div>
+
                         {/* Estado actual */}
-                        {estadoActual && (
-                          <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${getEstadoColor(estadoActual)}`}>
-                            {getEstadoIcon(estadoActual)}
-                            <span className="capitalize">{estadoActual}</span>
+                        {asistenciaActual.estado && (
+                          <div className={`flex items-center space-x-1 px-2 py-1 rounded-full text-xs font-medium border ${getEstadoColor(asistenciaActual.estado)}`}>
+                            {getEstadoIcon(asistenciaActual.estado)}
+                            <span className="capitalize">{asistenciaActual.estado}</span>
                           </div>
                         )}
 
                         {/* Botones de estado */}
                         <div className="flex space-x-1">
                           <button
-                            onClick={() => handleAsistenciaChange(idEstudiante, 'presente')}
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'presente', asistenciaActual.observaciones)}
                             className={`p-2 rounded-md transition-colors ${
-                              estadoActual === 'presente'
+                              asistenciaActual.estado === 'presente'
                                 ? 'bg-green-600 text-white'
                                 : 'bg-gray-100 hover:bg-green-100 text-gray-600 hover:text-green-600'
                             }`}
@@ -683,9 +698,9 @@ const Asistencia = () => {
                           </button>
 
                           <button
-                            onClick={() => handleAsistenciaChange(idEstudiante, 'ausente')}
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'ausente', asistenciaActual.observaciones)}
                             className={`p-2 rounded-md transition-colors ${
-                              estadoActual === 'ausente'
+                              asistenciaActual.estado === 'ausente'
                                 ? 'bg-red-600 text-white'
                                 : 'bg-gray-100 hover:bg-red-100 text-gray-600 hover:text-red-600'
                             }`}
@@ -695,9 +710,9 @@ const Asistencia = () => {
                           </button>
 
                           <button
-                            onClick={() => handleAsistenciaChange(idEstudiante, 'tardanza')}
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'tardanza', asistenciaActual.observaciones)}
                             className={`p-2 rounded-md transition-colors ${
-                              estadoActual === 'tardanza'
+                              asistenciaActual.estado === 'tardanza'
                                 ? 'bg-yellow-600 text-white'
                                 : 'bg-gray-100 hover:bg-yellow-100 text-gray-600 hover:text-yellow-600'
                             }`}
@@ -707,9 +722,9 @@ const Asistencia = () => {
                           </button>
 
                           <button
-                            onClick={() => handleAsistenciaChange(idEstudiante, 'justificado')}
+                            onClick={() => handleAsistenciaChange(idEstudiante, 'justificado', asistenciaActual.observaciones)}
                             className={`p-2 rounded-md transition-colors ${
-                              estadoActual === 'justificado'
+                              asistenciaActual.estado === 'justificado'
                                 ? 'bg-blue-600 text-white'
                                 : 'bg-gray-100 hover:bg-blue-100 text-gray-600 hover:text-blue-600'
                             }`}
@@ -718,9 +733,9 @@ const Asistencia = () => {
                             <BookOpen className="w-4 h-4" />
                           </button>
 
-                          {estadoActual && (
+                          {asistenciaActual.estado && (
                             <button
-                              onClick={() => handleAsistenciaChange(idEstudiante, '')}
+                              onClick={() => handleAsistenciaChange(idEstudiante, '', '')}
                               className="p-2 rounded-md bg-gray-100 hover:bg-gray-200 text-gray-600"
                               title="Limpiar"
                             >

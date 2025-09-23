@@ -88,7 +88,7 @@ export const anotacionService = {
    */
   async update(id, anotacionData) {
     try {
-      const response = await axiosInstance.put(`/anotaciones-estudiante/${id}`, anotacionData);
+      const response = await axiosInstance.patch(`/anotaciones-estudiante/${id}`, anotacionData);
       return response.data;
     } catch (error) {
       console.error('Error updating anotacion:', error);

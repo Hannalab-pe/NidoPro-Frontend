@@ -35,6 +35,8 @@ function App() {
   }, []);
 
   // Verificar si necesita cambiar contraseña después de autenticarse
+  // DESHABILITADO: Ahora se maneja en cada dashboard individualmente
+  /*
   useEffect(() => {
     if (isAuthenticated && user && user.cambioContrasena === false) {
       setShowPasswordModal(true);
@@ -42,6 +44,7 @@ function App() {
       setShowPasswordModal(false);
     }
   }, [isAuthenticated, user]);
+  */
 
   const handlePasswordChangeSuccess = (success) => {
     if (success) {

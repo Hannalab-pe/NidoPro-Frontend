@@ -21,16 +21,22 @@ import {
 } from 'lucide-react';
 import CalendarioCronogramas from './components/CalendarioCronogramas';
 import ModalDetalleEvento from './modales/ModalDetalleEvento';
+import ModalAgregarActividad from './modales/ModalAgregarActividad';
 import { useAulasAdmin } from '../../../hooks/queries/useAulasQueries';
 import { useCronogramaPorAula } from '../../../hooks/queries/useCronogramaQueries';
+import cronogramaService from '../../../services/cronogramaService';
+import { useAuth } from '../../../hooks/useAuth';
 
 const Cronogramas = () => {
+  const { getCurrentUser } = useAuth();
+  const currentUser = getCurrentUser();
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedView, setSelectedView] = useState('month'); // month por defecto en desktop
   const [selectedDay, setSelectedDay] = useState(new Date());
   const [showCalendar, setShowCalendar] = useState(true); // Para alternar entre vista calendario y tabla
   const [selectedEvent, setSelectedEvent] = useState(null); // Evento seleccionado
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false); // Modal de detalle
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false); // Modal de agregar
   const [selectedAula, setSelectedAula] = useState(null); // Aula seleccionada
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState(''); // Para filtrar aulas
@@ -124,6 +130,48 @@ const Cronogramas = () => {
     setSelectedEvent(null);
   };
 
+  // Handler para abrir modal de agregar
+  const handleOpenAddModal = () => {
+    setIsAddModalOpen(true);
+  };
+
+  // Handler para cerrar modal de agregar
+  const handleCloseAddModal = () => {
+    setIsAddModalOpen(false);
+  };
+
+  // Handler para guardar nueva actividad
+  const handleSaveActivity = async (activityData) => {
+    try {
+      console.log('💾 Guardando actividad:', activityData);
+
+      // Solo agregar el ID del trabajador si no está ya presente
+      const activityWithUser = {
+        ...activityData,
+        ...(activityData.idTrabajador ? {} : { idTrabajador: currentUser?.id || currentUser?.idUsuario || '' })
+      };
+
+      console.log('📤 Datos finales a enviar:', activityWithUser);
+
+      // Crear la actividad usando el servicio
+      await cronogramaService.crearActividad(activityWithUser);
+
+      // Mostrar mensaje de éxito
+      // toast.success('Actividad creada exitosamente');
+
+      // Refrescar el cronograma si hay un aula seleccionada
+      if (selectedAula?.idAula) {
+        refetchCronograma();
+      }
+
+      handleCloseAddModal();
+    } catch (error) {
+      console.error('❌ Error al guardar actividad:', error);
+      // toast.error('Error al crear la actividad');
+      throw error; // Re-throw para que el modal maneje el error
+    }
+  };
+
   // Función para transformar datos del cronograma al formato del calendario
   const transformarCronogramaParaCalendario = (cronogramaDatos) => {
     if (!Array.isArray(cronogramaDatos)) {
@@ -195,6 +243,15 @@ const Cronogramas = () => {
             <p className="text-sm text-gray-600">Vista general de actividades por aula</p>
           </div>
         </div>
+
+        {/* Botón para agregar actividad */}
+        <button
+          onClick={handleOpenAddModal}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Agregar Actividad
+        </button>
       </div>
 
       {/* Selector de Aula */}
@@ -342,6 +399,13 @@ const Cronogramas = () => {
         isOpen={isDetailModalOpen}
         onClose={handleCloseModal}
         evento={selectedEvent}
+      />
+
+      {/* Modal para agregar nueva actividad */}
+      <ModalAgregarActividad
+        isOpen={isAddModalOpen}
+        onClose={handleCloseAddModal}
+        onSave={handleSaveActivity}
       />
     </div>
   );

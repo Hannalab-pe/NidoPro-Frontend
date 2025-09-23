@@ -2,93 +2,33 @@ import React, { useState, useEffect } from 'react';
 import { X, Settings, Loader2 } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { toast } from 'sonner';
+import { useGenerarBimestresAutomaticos } from '../../../../hooks/queries/useBimestreQueries';
+import { usePeriodosEscolares } from '../../../../hooks/queries/usePeriodoEscolarQueries';
 
 const GenerarBimestresModal = ({ isOpen, onClose }) => {
-  const [periodos, setPeriodos] = useState([]);
   const [selectedPeriodo, setSelectedPeriodo] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [loadingPeriodos, setLoadingPeriodos] = useState(true);
 
-  // Obtener períodos escolares al abrir el modal
-  useEffect(() => {
-    if (isOpen) {
-      fetchPeriodos();
-    }
-  }, [isOpen]);
+  // Hooks
+  const { data: periodosData = [], isLoading: loadingPeriodos } = usePeriodosEscolares();
+  const generarBimestresMutation = useGenerarBimestresAutomaticos();
 
-  const fetchPeriodos = async () => {
-    try {
-      setLoadingPeriodos(true);
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
-      const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('auth-storage'))?.state?.token;
-
-      const response = await fetch(`${API_BASE_URL}/periodo-escolar`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al obtener períodos escolares');
-      }
-
-      const result = await response.json();
-
-      if (result.success && result.periodos) {
-        setPeriodos(result.periodos);
-      } else {
-        throw new Error('Formato de respuesta inválido');
-      }
-    } catch (error) {
-      console.error('Error fetching periodos:', error);
-      toast.error('Error al cargar los períodos escolares');
-    } finally {
-      setLoadingPeriodos(false);
-    }
-  };
+  // Extraer periodos del response
+  const periodos = periodosData || [];
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!selectedPeriodo) {
-      toast.error('Por favor selecciona un período escolar');
       return;
     }
 
-    setLoading(true);
-
     try {
-      const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://nidopro.up.railway.app/api/v1';
-      const token = localStorage.getItem('token') || JSON.parse(localStorage.getItem('auth-storage'))?.state?.token;
-
-      const response = await fetch(`${API_BASE_URL}/bimestre/generar-automaticos/${selectedPeriodo}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al generar bimestres');
-      }
-
-      const result = await response.json();
-
-      toast.success('Bimestres generados exitosamente');
+      await generarBimestresMutation.mutateAsync(selectedPeriodo);
       onClose();
-
-      // Reset form
       setSelectedPeriodo('');
-
     } catch (error) {
       console.error('Error generating bimestres:', error);
-      toast.error(error.message || 'Error al generar bimestres');
-    } finally {
-      setLoading(false);
+      // El error ya se maneja en el hook
     }
   };
 
@@ -191,17 +131,17 @@ const GenerarBimestresModal = ({ isOpen, onClose }) => {
                       type="button"
                       onClick={onClose}
                       className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                      disabled={loading}
+                      disabled={generarBimestresMutation.isPending}
                     >
                       Cancelar
                     </button>
                     <button
                       type="submit"
-                      disabled={loading || !selectedPeriodo || loadingPeriodos}
+                      disabled={generarBimestresMutation.isPending || !selectedPeriodo || loadingPeriodos}
                       className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 disabled:bg-purple-400 disabled:cursor-not-allowed rounded-lg transition-colors flex items-center space-x-2"
                     >
-                      {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                      <span>{loading ? 'Generando...' : 'Generar Bimestres'}</span>
+                      {generarBimestresMutation.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
+                      <span>{generarBimestresMutation.isPending ? 'Generando...' : 'Generar Bimestres'}</span>
                     </button>
                   </div>
                 </form>

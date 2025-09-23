@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Calendar, Save } from 'lucide-react';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
-import { toast } from 'sonner';
+import { useCrearPeriodoEscolar } from '../../../../hooks/queries/usePeriodoEscolarQueries';
 
 const CrearPeriodoModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
@@ -12,7 +12,8 @@ const CrearPeriodoModal = ({ isOpen, onClose }) => {
     estaActivo: true,
     descripcion: ''
   });
-  const [loading, setLoading] = useState(false);
+
+  const crearPeriodoMutation = useCrearPeriodoEscolar();
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -24,25 +25,9 @@ const CrearPeriodoModal = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/periodo-escolar`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al crear el período escolar');
-      }
-
-      const result = await response.json();
-
-      toast.success('Período escolar creado exitosamente');
+      await crearPeriodoMutation.mutateAsync(formData);
       onClose();
 
       // Reset form
@@ -53,12 +38,9 @@ const CrearPeriodoModal = ({ isOpen, onClose }) => {
         estaActivo: true,
         descripcion: ''
       });
-
     } catch (error) {
       console.error('Error:', error);
-      toast.error('Error al crear el período escolar');
-    } finally {
-      setLoading(false);
+      // El error ya se maneja en el hook
     }
   };
 
@@ -198,15 +180,15 @@ const CrearPeriodoModal = ({ isOpen, onClose }) => {
                     </button>
                     <button
                       type="submit"
-                      disabled={loading}
+                      disabled={crearPeriodoMutation.isPending}
                       className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                     >
-                      {loading ? (
+                      {crearPeriodoMutation.isPending ? (
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                       ) : (
                         <Save className="w-4 h-4" />
                       )}
-                      <span>{loading ? 'Creando...' : 'Crear'}</span>
+                      <span>{crearPeriodoMutation.isPending ? 'Creando...' : 'Crear'}</span>
                     </button>
                   </div>
                 </form>

@@ -1,207 +1,160 @@
-import React, { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import * as yup from 'yup';
-import { X, School } from 'lucide-react';
-import { useAulasHook } from '../../../../hooks/useAulas';
-import Button from '../../../../components/common/Button';
-import Input from '../../../../components/common/Input';
-
-// Schema de validación
-const aulaSchema = yup.object({
-  seccion: yup
-    .string()
-    .required('La sección es requerida')
-    .min(1, 'La sección debe tener al menos 1 carácter')
-    .max(5, 'La sección no puede tener más de 5 caracteres'),
-  cantidadEstudiantes: yup
-    .number()
-    .required('La cantidad de estudiantes es requerida')
-    .min(0, 'La cantidad no puede ser negativa')
-    .max(50, 'La cantidad no puede ser mayor a 50'),
-  capacidadMaxima: yup
-    .number()
-    .min(1, 'La capacidad mínima es 1')
-    .max(50, 'La capacidad máxima es 50'),
-  descripcion: yup
-    .string()
-    .max(200, 'La descripción no puede tener más de 200 caracteres'),
-  ubicacion: yup
-    .string()
-    .max(100, 'La ubicación no puede tener más de 100 caracteres'),
-  equipamiento: yup
-    .string()
-    .max(300, 'El equipamiento no puede tener más de 300 caracteres')
-});
+﻿import React, { useState, useEffect } from 'react';
+import { X, Users, Save } from 'lucide-react';
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
+import { useUpdateAula } from '../../../../hooks/queries/useAulasQueries';
+import { toast } from 'sonner';
 
 const ModalEditarAula = ({ isOpen, onClose, aula }) => {
-  const { updateAula, updating } = useAulasHook();
+  const [cantidadEstudiantes, setCantidadEstudiantes] = useState('');
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    setValue
-  } = useForm({
-    resolver: yupResolver(aulaSchema)
-  });
+  const updateAulaMutation = useUpdateAula();
 
   // Cargar datos del aula cuando se abre el modal
   useEffect(() => {
     if (isOpen && aula) {
-      setValue('seccion', aula.seccion || '');
-      setValue('cantidadEstudiantes', aula.cantidadEstudiantes || 0);
-      setValue('capacidadMaxima', aula.capacidadMaxima || 30);
-      setValue('descripcion', aula.descripcion || '');
-      setValue('ubicacion', aula.ubicacion || '');
-      setValue('equipamiento', aula.equipamiento || '');
-      setValue('estado', aula.estado || 'activa');
+      setCantidadEstudiantes(aula.cantidadEstudiantes || 0);
     }
-  }, [isOpen, aula, setValue]);
+  }, [isOpen, aula]);
 
-  const onSubmit = async (data) => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!aula?.idAula) {
+      toast.error('Error: No se pudo identificar el aula');
+      return;
+    }
+
     try {
-      await updateAula(aula.idAula || aula.id, data);
+      await updateAulaMutation.mutateAsync({
+        id: aula.idAula,
+        cantidadEstudiantes: parseInt(cantidadEstudiantes) || 0
+      });
+
+      toast.success('Aula actualizada exitosamente', {
+        description: `Capacidad máxima actualizada a ${cantidadEstudiantes}`
+      });
+
       onClose();
     } catch (error) {
       console.error('Error al actualizar aula:', error);
+      toast.error('Error al actualizar aula', {
+        description: error.message || 'Ocurrió un error inesperado'
+      });
     }
   };
 
   const handleClose = () => {
-    reset();
+    setCantidadEstudiantes('');
     onClose();
   };
 
-  if (!isOpen || !aula) return null;
-
   return (
-    <div className="fixed inset-0 bg-black/20 bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b">
-          <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <School className="w-6 h-6 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900">Editar Aula</h2>
-              <p className="text-sm text-gray-500">Actualiza la información del aula</p>
-            </div>
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-50" onClose={handleClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black/20 backdrop-blur-sm" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                {/* Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <Users className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <Dialog.Title as="h3" className="text-lg font-semibold text-gray-900">
+                        Editar Capacidad Máxima
+                      </Dialog.Title>
+                      <p className="text-sm text-gray-500">
+                        Aula Sección {aula?.seccion}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleClose}
+                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <X className="w-5 h-5 text-gray-500" />
+                  </button>
+                </div>
+
+                {/* Form */}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Capacidad Máxima
+                    </label>
+                    <input
+                      type="number"
+                      value={cantidadEstudiantes}
+                      onChange={(e) => setCantidadEstudiantes(e.target.value)}
+                      min="0"
+                      max="50"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="0"
+                      required
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Capacidad actual: {aula?.cantidadEstudiantes || 0}
+                    </p>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex justify-end space-x-3 pt-4 border-t">
+                    <button
+                      type="button"
+                      onClick={handleClose}
+                      className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors"
+                      disabled={updateAulaMutation.isPending}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={updateAulaMutation.isPending}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {updateAulaMutation.isPending ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          Actualizando...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="w-4 h-4" />
+                          Actualizar
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </Dialog.Panel>
+            </Transition.Child>
           </div>
-          <button
-            onClick={handleClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
         </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
-          {/* Información básica */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Sección"
-              placeholder="Ej: A, B, C"
-              error={errors.seccion?.message}
-              {...register('seccion')}
-            />
-            
-            <Input
-              label="Cantidad de Estudiantes"
-              type="number"
-              placeholder="0"
-              error={errors.cantidadEstudiantes?.message}
-              {...register('cantidadEstudiantes')}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Input
-              label="Capacidad Máxima"
-              type="number"
-              placeholder="30"
-              error={errors.capacidadMaxima?.message}
-              {...register('capacidadMaxima')}
-            />
-            
-            <Input
-              label="Ubicación"
-              placeholder="Ej: Primer piso, Edificio A"
-              error={errors.ubicacion?.message}
-              {...register('ubicacion')}
-            />
-          </div>
-
-          {/* Estado */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Estado
-            </label>
-            <select
-              {...register('estado')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="activa">Activa</option>
-              <option value="inactiva">Inactiva</option>
-            </select>
-          </div>
-
-          {/* Descripción */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Descripción
-            </label>
-            <textarea
-              {...register('descripcion')}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Descripción del aula..."
-            />
-            {errors.descripcion && (
-              <p className="mt-1 text-sm text-red-600">{errors.descripcion.message}</p>
-            )}
-          </div>
-
-          {/* Equipamiento */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Equipamiento
-            </label>
-            <textarea
-              {...register('equipamiento')}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="Proyector, pizarra digital, computadoras..."
-            />
-            {errors.equipamiento && (
-              <p className="mt-1 text-sm text-red-600">{errors.equipamiento.message}</p>
-            )}
-          </div>
-
-          {/* Buttons */}
-          <div className="flex justify-end space-x-3 pt-4 border-t">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={handleClose}
-              disabled={updating}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              loading={updating}
-              disabled={updating}
-            >
-              {updating ? 'Actualizando...' : 'Actualizar Aula'}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </div>
+      </Dialog>
+    </Transition>
   );
 };
 

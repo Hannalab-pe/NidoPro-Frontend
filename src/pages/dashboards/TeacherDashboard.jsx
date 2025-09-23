@@ -1,7 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment } from 'react';
 import { useAuthStore } from "../../store";
 import { useTeacherDashboard } from "../../hooks/useTeacherDashboard";
+import { useNotifications, useUnreadNotifications } from "../../hooks/useNotifications";
 import { StudentsByClassroomChart, GradesDistributionChart } from "../../components/charts/TeacherCharts";
+import axios from 'axios';
+import { toast } from 'sonner';
 import { 
   BarChart3, 
   MessageCircle, 
@@ -23,7 +28,9 @@ import {
   FileText,
   BookOpen,
   CircleUser,
-  RefreshCw
+  RefreshCw,
+  Bell,
+  User
 } from "lucide-react";
 
 // Importar los componentes que creamos
@@ -41,10 +48,22 @@ import { Tareas } from '../teacher/tareas';
 import Evaluaciones from '../teacher/evaluaciones/Evaluaciones';
 import { EvaluacionesEstudiantes } from '../teacher/evaluaciones';
 
+// Importar el componente de Notificaciones
+import Notificaciones from '../teacher/notificaciones/Notificaciones';
+
+// Importar el componente SplitText para animaciones
+import SplitText from '../../components/common/SplitText';
+
 const TeacherDashboard = () => {
   const [activeSection, setActiveSection] = useState("overview");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { logout, user } = useAuthStore();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isPasswordChangeModalOpen, setIsPasswordChangeModalOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const { logout, user, updateUser } = useAuthStore();
   
   // Hook personalizado para datos del profesor
   const { 
@@ -54,6 +73,30 @@ const TeacherDashboard = () => {
     error, 
     refreshData 
   } = useTeacherDashboard();
+
+  // Hook para obtener notificaciones no leídas del usuario (para la campanita del dashboard)
+  const { data: unreadNotifications = [], isLoading: notificationsLoading } = useUnreadNotifications(user?.id);
+
+  // Verificar si el usuario necesita cambiar contraseña
+  useEffect(() => {
+    if (user?.cambioContrasena === false) {
+      setIsPasswordChangeModalOpen(true);
+    }
+  }, [user]);
+
+  // Effect para cerrar el dropdown de notificaciones al hacer click fuera
+  React.useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isNotificationsOpen && !event.target.closest('.notifications-dropdown')) {
+        setIsNotificationsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isNotificationsOpen]);
 
   const menuItems = [
     // 📊 DASHBOARD
@@ -72,11 +115,13 @@ const TeacherDashboard = () => {
     { id: "planificaciones", label: "Planificaciones", icon: FileText, category: "academico" },
 
     // 👥 GESTIÓN DE ESTUDIANTES
-    { id: "students", label: "Mis Alumnos", icon: Users, category: "gestion" },
     { id: "classrooms", label: "Mis Aulas", icon: School, category: "gestion" },
 
     // 📄 EVALUACIONES PERSONALES
-    { id: "evaluaciones", label: "Mis Evaluaciones", icon: FileText, category: "evaluaciones" }
+    { id: "evaluaciones", label: "Mis Evaluaciones", icon: FileText, category: "evaluaciones" },
+
+    // 🔔 NOTIFICACIONES
+    { id: "notificaciones", label: "Notificaciones", icon: Bell, category: "notificaciones" }
   ];
 
   // Calcular estadísticas dinámicas basadas en datos reales
@@ -141,6 +186,59 @@ const TeacherDashboard = () => {
     return labels[category] || category;
   };
 
+  // Función para manejar el logout con confirmación
+  const handleLogoutClick = () => {
+    setIsLogoutModalOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
+    setIsLogoutModalOpen(false);
+    logout();
+  };
+
+  const handleCancelLogout = () => {
+    setIsLogoutModalOpen(false);
+  };
+
+  const handlePasswordChange = async () => {
+    if (!newPassword || !confirmPassword) {
+      toast.error('Por favor completa todos los campos');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error('Las contraseñas no coinciden');
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const response = await axios.patch(`/api/v1/usuario/${user.id}/forzar-cambio-contrasena`, {
+        nuevaContrasena: newPassword,
+        confirmarContrasena: confirmPassword
+      });
+
+      // Actualizar el estado del usuario para indicar que ya cambió la contraseña
+      updateUser({ ...user, cambioContrasena: true });
+      
+      toast.success('Contraseña cambiada exitosamente');
+      setIsPasswordChangeModalOpen(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      console.error('Error al cambiar contraseña:', error);
+      toast.error('Error al cambiar la contraseña. Inténtalo de nuevo.');
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
   return (
     <div className="flex h-screen bg-gray-50 border-r">
       {/* Mobile menu overlay */}
@@ -162,7 +260,7 @@ const TeacherDashboard = () => {
             <span className="text-xl font-bold text-white">Nido Pro</span>
           </div>
           <button
-            className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+            className="lg:hidden p-2 text-white hover:text-gray-200"
             onClick={() => setIsMobileMenuOpen(false)}
           >
             <X className="w-6 h-6" />
@@ -214,7 +312,7 @@ const TeacherDashboard = () => {
         </nav>
         
         {/* User Info Card & Logout Button */}
-        <div className="mt-auto p-3 border-t border-gray-200">
+        <div className="mt-auto p-3 border-t border-gray-300 ">
           {/* User Info */}
            <div className="flex flex-row items-center bg-gray-200 rounded-xl px-3 py-2 mb-3 w-full shadow gap-3 hover:-translate-y-1 transition-all hover:bg-green-100 cursor-pointer">
              <div className="w-11 h-11 rounded-full border-2 border-green-500 shadow bg-green-100 flex items-center justify-center">
@@ -234,8 +332,8 @@ const TeacherDashboard = () => {
            </div>
           {/* Logout Button */}
           <button 
-            className="w-full flex items-center space-x-3 px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-            onClick={logout}
+            className="w-full flex items-center bg-red-50 text-red-600 space-x-3 px-4 py-3 hover:bg-red-100 cursor-pointer rounded-lg transition-colors duration-200"
+            onClick={handleLogoutClick}
           >
             <LogOut className="w-5 h-5" />
             <span className="font-medium">Cerrar Sesión</span>
@@ -250,7 +348,7 @@ const TeacherDashboard = () => {
           <div className="flex items-center justify-between">
             {/* Mobile menu button */}
             <button
-              className="lg:hidden p-2 text-gray-400 hover:text-gray-600"
+              className="lg:hidden p-2 text-white hover:text-gray-200"
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu className="w-6 h-6" />
@@ -271,7 +369,62 @@ const TeacherDashboard = () => {
             </div>
             
             <div className="flex items-center space-x-2 lg:space-x-4">
-              
+              {/* Notifications Dropdown */}
+              <div className="relative notifications-dropdown">
+                <button
+                  className="relative p-2 text-white hover:text-gray-300 transition-colors duration-200"
+                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+                >
+                  <Bell className="w-6 h-6" />
+                  {unreadNotifications.length > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {unreadNotifications.length}
+                    </span>
+                  )}
+                </button>
+
+                {isNotificationsOpen && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                    <div className="py-1">
+                      <div className="px-4 py-2 border-b border-gray-200">
+                        <h3 className="text-sm font-medium text-gray-900">Notificaciones</h3>
+                      </div>
+                      
+                      {notificationsLoading ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          Cargando notificaciones...
+                        </div>
+                      ) : unreadNotifications.length > 0 ? (
+                        <div className="max-h-64 overflow-y-auto">
+                          {unreadNotifications.map((notification, index) => (
+                            <div key={index} className="px-4 py-3 border-b border-gray-100 last:border-b-0 hover:bg-gray-50">
+                              <div className="flex items-start space-x-3">
+                                <div className="flex-shrink-0">
+                                  <Bell className="w-5 h-5 text-green-500" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-900">
+                                    {notification.titulo || notification.mensaje || 'Nueva notificación'}
+                                  </p>
+                                  {notification.fecha && (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                      {new Date(notification.fecha).toLocaleDateString('es-ES')}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                          Sin notificaciones por leer
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </header>
@@ -280,7 +433,20 @@ const TeacherDashboard = () => {
         <div className="p-4 lg:p-6 h-full overflow-y-auto">
           {activeSection === "overview" && (
             <div className="space-y-6 lg:space-y-8">
-              <h1 className="text-5xl font-bold mb-6 text-gray-700">Bienvenido, {user?.nombre || ''}</h1>
+              <SplitText
+                text={`Bienvenido,\n${user?.nombre || ''}`}
+                className="text-6xl font-bold mb-6 text-gray-700 whitespace-pre-line"
+                delay={50}
+                duration={0.6}
+                ease="power3.out"
+                splitType="chars"
+                from={{ opacity: 0, y: 40 }}
+                to={{ opacity: 1, y: 0 }}
+                threshold={0.1}
+                rootMargin="-100px"
+                textAlign="left"
+                tag="p"
+              />
               {/* Stats Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
                 {stats.map((stat, index) => {
@@ -374,6 +540,7 @@ const TeacherDashboard = () => {
           )}
 
           {/* Renderizar componentes */}
+          {activeSection === "notificaciones" && <Notificaciones />}
           {activeSection === "goals" && <Objetivos />}
           {activeSection === "ai-chat" && <AIChat />}
           {activeSection === "schedule" && <Horarios />}
@@ -388,6 +555,176 @@ const TeacherDashboard = () => {
           {activeSection === "evaluaciones" && <Evaluaciones />}
         </div>
       </main>
+
+      {/* Modal de confirmación de logout */}
+      <Transition appear show={isLogoutModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={handleCancelLogout}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/40 backdrop-blur-md bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                      <LogOut className="w-6 h-6 text-red-600" />
+                    </div>
+                  </div>
+
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900 text-center mb-2"
+                  >
+                    ¿Seguro que quieres salir?
+                  </Dialog.Title>
+
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-500 text-center">
+                      Estás a punto de cerrar sesión en <span className="font-semibold text-green-600">NidoPro</span>.
+                      ¿Estás seguro de que quieres continuar?
+                    </p>
+                  </div>
+
+                  <div className="mt-6 flex space-x-3">
+                    <button
+                      type="button"
+                      className="flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                      onClick={handleCancelLogout}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      className="flex-1 inline-flex justify-center rounded-md border border-transparent bg-red-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                      onClick={handleConfirmLogout}
+                    >
+                      Sí, salir
+                    </button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
+
+      {/* Modal de cambio de contraseña obligatorio */}
+      <Transition appear show={isPasswordChangeModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => {}}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30 backdrop-blur-sm bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <div className="flex items-center justify-center mb-4">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                      <User className="w-6 h-6 text-green-600" />
+                    </div>
+                  </div>
+
+                  <Dialog.Title as="h3" className="text-lg font-semibold text-center text-gray-900 mb-2">
+                    Cambio de Contraseña Requerido
+                  </Dialog.Title>
+
+                  <p className="text-sm text-gray-600 text-center mb-6">
+                    Por seguridad, debes cambiar tu contraseña antes de continuar usando el sistema.
+                  </p>
+
+                  <form onSubmit={(e) => { e.preventDefault(); handlePasswordChange(); }} className="space-y-4">
+                    <div>
+                      <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                        Nueva Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        id="newPassword"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        placeholder="Ingresa tu nueva contraseña"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                        Confirmar Contraseña
+                      </label>
+                      <input
+                        type="password"
+                        id="confirmPassword"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                        placeholder="Repite tu nueva contraseña"
+                        required
+                      />
+                    </div>
+
+                  <div className="mt-6">
+                    <button
+                      type="submit"
+                      className="w-full inline-flex justify-center items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={isChangingPassword}
+                    >
+                      {isChangingPassword ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                          Cambiando...
+                        </>
+                      ) : (
+                        'Cambiar Contraseña'
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="mt-3 text-xs text-gray-500 text-center">
+                    La contraseña debe tener al menos 6 caracteres
+                  </div>
+                  </form>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </div>
   );
 };

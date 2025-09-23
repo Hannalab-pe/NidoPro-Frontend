@@ -116,3 +116,9 @@ export const estudianteService = {
     }
   }
 };
+
+export default {
+  getEstudiantesPorAula: estudianteService.getEstudiantesPorAula,
+  obtenerEstudiantePorId: estudianteService.obtenerEstudiantePorId,
+  obtenerCronogramaPorAula: estudianteService.obtenerCronogramaPorAula
+};

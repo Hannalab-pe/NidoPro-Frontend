@@ -152,7 +152,7 @@ export const aulaService = {
         }
       });
 
-      const response = await api.put(`/aula/${id}`, payload);
+      const response = await api.patch(`/aula/${id}`, payload);
       console.log('✅ Aula actualizada exitosamente:', response.data);
       return response.data;
     } catch (error) {

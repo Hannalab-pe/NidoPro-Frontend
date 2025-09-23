@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '../services/authService';
 import { storage } from '../utils';
@@ -45,9 +45,9 @@ export const useAuth = () => {
     return !!storage.get('userToken');
   };
 
-  const getCurrentUser = () => {
+  const getCurrentUser = useCallback(() => {
     return storage.get('userData');
-  };
+  }, []);
 
   return {
     login,

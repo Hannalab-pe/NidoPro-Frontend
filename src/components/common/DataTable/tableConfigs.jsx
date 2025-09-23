@@ -1,4 +1,5 @@
 import React from 'react';
+import { BookOpen, Users } from 'lucide-react';
 import StudentAvatar from '../StudentAvatar';
 
 /**
@@ -1614,6 +1615,254 @@ export const rolesFilters = {
   nombre: {
     label: 'Nombre del Rol',
     placeholder: 'Buscar por nombre',
+    type: 'text'
+  }
+};
+
+// Configuración de columnas para asignaciones de cursos
+export const asignacionCursosColumns = [
+  {
+    Header: 'Docente',
+    accessor: 'idTrabajador',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="flex items-center space-x-3">
+        <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+          <span className="text-sm font-medium text-blue-600">
+            {value?.nombre?.charAt(0)?.toUpperCase()}{value?.apellido?.charAt(0)?.toUpperCase()}
+          </span>
+        </div>
+        <div>
+          <div className="font-medium text-gray-900">{`${value?.nombre || ''} ${value?.apellido || ''}`.trim()}</div>
+          <div className="text-sm text-gray-500">{value?.correo || 'Sin correo'}</div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Curso',
+    accessor: 'idCurso',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div>
+        <div className="font-medium text-gray-900">{value?.nombreCurso || 'Sin nombre'}</div>
+        <div className="text-sm text-gray-500">{value?.descripcion || 'Sin descripción'}</div>
+      </div>
+    )
+  },
+  {
+    Header: 'Fecha de Asignación',
+    accessor: 'fechaAsignacion',
+    sortable: true,
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-900">
+        {value ? new Date(value).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }) : 'Sin fecha'}
+      </div>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estaActivo',
+    type: 'status',
+    sortable: true,
+    Cell: ({ value }) => (
+      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+        value ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+      }`}>
+        {value ? 'Activo' : 'Inactivo'}
+      </span>
+    )
+  }
+];
+
+// Filtros para asignaciones de cursos
+export const asignacionCursosFilters = {
+  'idTrabajador.nombre': {
+    label: 'Docente',
+    placeholder: 'Buscar por docente',
+    type: 'text'
+  },
+  'idCurso.nombreCurso': {
+    label: 'Curso',
+    placeholder: 'Buscar por curso',
+    type: 'text'
+  },
+  estaActivo: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'true', label: 'Activos' },
+      { value: 'false', label: 'Inactivos' }
+    ]
+  }
+};
+
+// Configuración de columnas para cursos
+export const cursosColumns = [
+  {
+    Header: 'Curso',
+    accessor: 'nombreCurso',
+    Cell: ({ value, row }) => (
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <span className="text-blue-600 text-lg">📚</span>
+          </div>
+        </div>
+        <div className="ml-4">
+          <div className="text-sm font-medium text-gray-900">{value}</div>
+          <div className="text-sm text-gray-500 truncate max-w-xs">
+            {row.descripcion || 'Sin descripción'}
+          </div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Estado',
+    accessor: 'estaActivo',
+    Cell: ({ value }) => {
+      const getEstadoColor = (estado) => {
+        return estado
+          ? 'bg-green-100 text-green-800'
+          : 'bg-red-100 text-red-800';
+      };
+
+      return (
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getEstadoColor(value)}`}>
+          {value ? 'Activo' : 'Inactivo'}
+        </span>
+      );
+    }
+  }
+];
+
+// Filtros para cursos
+export const cursosFilters = {
+  nombreCurso: {
+    label: 'Nombre del curso',
+    placeholder: 'Buscar por nombre',
+    type: 'text'
+  },
+  estaActivo: {
+    label: 'Estado',
+    placeholder: 'Todos los estados',
+    options: [
+      { value: 'true', label: 'Activos' },
+      { value: 'false', label: 'Inactivos' }
+    ]
+  }
+};
+
+// Configuración de columnas para evaluaciones docentes
+export const evaluacionesColumns = [
+  {
+    Header: 'Docente',
+    accessor: 'idTrabajador',
+    Cell: ({ value }) => (
+      <div className="flex items-center">
+        <div className="flex-shrink-0">
+          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+            <span className="text-blue-600 text-lg">👨‍🏫</span>
+          </div>
+        </div>
+        <div className="ml-4">
+          <div className="text-sm font-medium text-gray-900">
+            {value?.nombre} {value?.apellido}
+          </div>
+          <div className="text-sm text-gray-500">
+            {value?.idRol?.nombre || 'Docente'}
+          </div>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Motivo',
+    accessor: 'motivo',
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-900 font-medium">{value}</div>
+    )
+  },
+  {
+    Header: 'Descripción',
+    accessor: 'descripcion',
+    Cell: ({ value }) => (
+      <div className="text-sm text-gray-900 max-w-xs">
+        <div className="flex items-start gap-2">
+          <span className="text-gray-400">💬</span>
+          <span className="truncate" title={value}>
+            {value && value.length > 60 ? value.substring(0, 60) + '...' : value}
+          </span>
+        </div>
+      </div>
+    )
+  },
+  {
+    Header: 'Fecha',
+    accessor: 'fechaCreacion',
+    Cell: ({ value }) => {
+      const formatearFecha = (fecha) => {
+        if (!fecha) return 'N/A';
+        return new Date(fecha).toLocaleDateString('es-ES', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      };
+
+      return (
+        <div className="flex items-center gap-2">
+          <span className="text-gray-400">📅</span>
+          <span className="text-sm text-gray-900">
+            {formatearFecha(value)}
+          </span>
+        </div>
+      );
+    }
+  },
+  {
+    Header: 'Archivo',
+    accessor: 'archivoUrl',
+    Cell: ({ value }) => {
+      if (value) {
+        return (
+          <a
+            href={value}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full hover:bg-green-200 transition-colors"
+          >
+            <span>📎</span>
+            Ver archivo
+          </a>
+        );
+      } else {
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded-full">
+            <span>📄</span>
+            Sin archivo
+          </span>
+        );
+      }
+    }
+  }
+];
+
+// Filtros para evaluaciones
+export const evaluacionesFilters = {
+  motivo: {
+    label: 'Motivo',
+    placeholder: 'Buscar por motivo',
+    type: 'text'
+  },
+  'idTrabajador.nombre': {
+    label: 'Docente',
+    placeholder: 'Buscar por docente',
     type: 'text'
   }
 };

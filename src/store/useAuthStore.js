@@ -74,6 +74,13 @@ const useAuthStore = create(
         }));
       },
 
+      // Actualizar usuario completo
+      updateUser: (userData) => {
+        set((state) => ({
+          user: { ...state.user, ...userData },
+        }));
+      },
+
       // Verificar si el usuario tiene un permiso específico
       hasPermission: (permission) => {
         const { permissions } = get();

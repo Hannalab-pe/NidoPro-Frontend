@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, BookOpen, FileText, UserCheck } from 'lucide-react';
+import { Plus, Calendar, BookOpen, FileText, UserCheck, Edit } from 'lucide-react';
 import { toast } from 'sonner';
 import CrearEvaluacionModal from './modales/CrearEvaluacionModal';
 import EvaluarEstudianteModal from './modales/EvaluarEstudianteModal';
@@ -104,12 +104,6 @@ const EvaluacionesEstudiantes = () => {
     });
   };
 
-  // Función para obtener el nombre del curso por ID
-  const getCursoNombre = (idCurso) => {
-    const curso = cursos.find(c => c.idCurso === idCurso);
-    return curso ? curso.nombreCurso : 'Curso no encontrado';
-  };
-
   // Función para manejar la creación de nueva evaluación
   const handleCrearEvaluacion = () => {
     setSelectedEvaluacion(null);
@@ -126,6 +120,12 @@ const EvaluacionesEstudiantes = () => {
   const handleEvaluarEstudiante = (evaluacion) => {
     setSelectedEvaluacion(evaluacion);
     setIsEvaluarModalOpen(true);
+  };
+
+  // Función para manejar la edición de evaluación
+  const handleEditarEvaluacion = (evaluacion) => {
+    setSelectedEvaluacion(evaluacion);
+    setIsModalOpen(true);
   };
 
   // Función para manejar el cierre del modal de evaluación
@@ -203,11 +203,8 @@ const EvaluacionesEstudiantes = () => {
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Descripción
                     </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Tipo
-                    </th>
-                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                      Curso
                     </th>
                     <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Acciones
@@ -228,26 +225,30 @@ const EvaluacionesEstudiantes = () => {
                           <span className="text-xs sm:text-sm">{evaluacion.descripcion}</span>
                         </div>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {evaluacion.tipoEvaluacion || 'EXAMEN'}
                         </span>
                       </td>
-                      <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-900 hidden md:table-cell">
-                        <div className="flex items-center">
-                          <BookOpen className="w-4 h-4 mr-2 text-gray-400" />
-                          <span className="text-xs sm:text-sm">{getCursoNombre(evaluacion.idCurso)}</span>
-                        </div>
-                      </td>
                       <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button
-                          onClick={() => handleEvaluarEstudiante(evaluacion)}
-                          className="w-full sm:w-auto inline-flex items-center justify-center px-2 sm:px-3 py-2 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
-                        >
-                          <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                          <span className="hidden sm:inline">Calificar</span>
-                          <span className="sm:hidden">Evaluar</span>
-                        </button>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <button
+                            onClick={() => handleEditarEvaluacion(evaluacion)}
+                            className="w-full sm:w-auto inline-flex items-center justify-center px-2 sm:px-3 py-2 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+                          >
+                            <Edit className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Editar</span>
+                            <span className="sm:hidden">Edit</span>
+                          </button>
+                          <button
+                            onClick={() => handleEvaluarEstudiante(evaluacion)}
+                            className="w-full sm:w-auto inline-flex items-center justify-center px-2 sm:px-3 py-2 border border-transparent text-xs sm:text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
+                          >
+                            <UserCheck className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                            <span className="hidden sm:inline">Calificar</span>
+                            <span className="sm:hidden">Evaluar</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
