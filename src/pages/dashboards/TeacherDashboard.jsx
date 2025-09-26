@@ -50,9 +50,6 @@ import { Tareas } from "../teacher/tareas";
 import Evaluaciones from "../teacher/evaluaciones/Evaluaciones";
 import { EvaluacionesEstudiantes } from "../teacher/evaluaciones";
 
-// Importar el componente de Notificaciones
-import Notificaciones from "../teacher/notificaciones/Notificaciones";
-
 // Importar el componente SplitText para animaciones
 import SplitText from "../../components/common/SplitText";
 
@@ -138,15 +135,7 @@ const TeacherDashboard = () => {
       label: "Mis Evaluaciones",
       icon: FileText,
       category: "evaluaciones",
-    },
-
-    // 🔔 NOTIFICACIONES
-    {
-      id: "notificaciones",
-      label: "Notificaciones",
-      icon: Bell,
-      category: "notificaciones",
-    },
+    }
   ];
 
   // Calcular estadísticas dinámicas basadas en datos reales
@@ -546,7 +535,6 @@ const TeacherDashboard = () => {
           )}
 
           {/* Renderizar componentes */}
-          {activeSection === "notificaciones" && <Notificaciones />}
           {activeSection === "goals" && <Objetivos />}
           {activeSection === "ai-chat" && <AIChat />}
           {activeSection === "schedule" && <Horarios />}
